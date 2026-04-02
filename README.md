@@ -212,6 +212,27 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 
 ## Changelog
 
+### v1.4.6 (2026-04-02)
+🔧 **API Field Name Fixes**
+
+#### Bug Fixes
+- 🐛 **FalKlingClient field name corrections** — Use correct fal.ai official field names
+  - `image_url` → `start_image_url` (first frame control)
+  - `tail_image_url` → `end_image_url` (last frame control)
+- 🐛 **YunwuKlingOmniClient parameter corrections**
+  - `audio` boolean → `sound: "on"/"off"` string
+  - `_file_to_base64()` returns plain base64 instead of data URI format
+
+#### Tested
+- ✅ Text-to-video (prompt only)
+- ✅ Image-to-video (start_image_url, character preserved correctly)
+- ✅ Multi-reference video (image_urls + @Image1/@Image2, with audio)
+
+### v1.4.5 (2026-04-02)
+🔧 **API Field Name Fixes (Initial)**
+
+- Same fixes as v1.4.6, initial release
+
 ### v1.4.4 (2026-04-02)
 📚 **Yunwu Provider Documentation Enhancement**
 
