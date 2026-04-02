@@ -180,7 +180,13 @@ Create project directory `~/video-gen-projects/{project_name}_{timestamp}/`, out
 - Note: Affects number of shots and pacing
 
 **Question 3: Aspect Ratio**
-- Options: 9:16 (Douyin/Xiaohongshu) | 16:9 (Bilibili/YouTube) | 1:1 (Instagram)
+1. 9:16 Vertical
+   Portrait for TikTok/Instagram Stories/YouTube Shorts
+2. 16:9 Horizontal (Recommended)
+   Landscape for YouTube/broad viewing
+3. 1:1 Square
+   Square for Instagram feed/Facebook
+4. Type something else
 - Note: Choose based on publishing platform
 
 **Question 4: Music Needs**
