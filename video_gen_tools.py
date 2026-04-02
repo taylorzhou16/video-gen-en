@@ -800,7 +800,7 @@ class YunwuKlingOmniClient:
             "prompt": prompt,
             "duration": str(duration),
             "mode": mode,
-            "audio": audio,
+            "sound": "on" if audio else "off",  # API spec requires "sound" with values "on"/"off"
             "aspect_ratio": aspect_ratio
         }
 
@@ -873,7 +873,7 @@ class YunwuKlingOmniClient:
         return result
 
     async def _file_to_base64(self, file_path: str) -> Optional[str]:
-        """Convert file to base64"""
+        """Convert file to base64 (plain base64 string for yunwu API)"""
         if not os.path.exists(file_path):
             logger.warning(f"⚠️ file does not exist: {file_path}")
             return None
@@ -887,12 +887,9 @@ class YunwuKlingOmniClient:
         with open(result["output_path"], 'rb') as f:
             image_data = f.read()
 
-        base64_data = base64.b64encode(image_data).decode('utf-8')
-        ext = os.path.splitext(result["output_path"])[1].lower()
-        mime_map = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp'}
-        mime_type = mime_map.get(ext, 'image/jpeg')
-
-        return f"data:{mime_type};base64,{base64_data}"
+        # Return plain base64 string (no data URI prefix)
+        # yunwu API expects plain base64, not data:image/xxx;base64,... format
+        return base64.b64encode(image_data).decode('utf-8')
 
     async def _wait_for_completion(self, task_id: str, max_wait: int = 600) -> Optional[str]:
         """Waiting for task completion"""
@@ -1584,17 +1581,17 @@ class FalKlingClient:
             "generate_audio": generate_audio
         }
 
-        # First frame/single image
+        # First frame/single image (fal.ai uses start_image_url)
         if image_url:
-            payload["image_url"] = self._prepare_image_url(image_url)
+            payload["start_image_url"] = self._prepare_image_url(image_url)
 
-        # Multi-reference images
+        # Multi-reference images (fal.ai uses image_urls, reference in prompt as @Image1, @Image2)
         if image_urls:
             payload["image_urls"] = [self._prepare_image_url(img) for img in image_urls]
 
-        # last frame
+        # Last frame (fal.ai uses end_image_url)
         if tail_image_url:
-            payload["tail_image_url"] = self._prepare_image_url(tail_image_url)
+            payload["end_image_url"] = self._prepare_image_url(tail_image_url)
 
         return await self._submit_and_wait(payload, output)
 
