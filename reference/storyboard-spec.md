@@ -6,12 +6,13 @@
 - Character Registration and Reference Guidelines
 - Storyboard Design Principles and Duration Limits
 - shot_id Naming Rules
-- T2V/I2V/Omni Selection Rules
+- T2V/I2V/Omni/Seedance Selection Rules
 - First Frame Generation Strategy
 - Dialogue Integration in video_prompt
 - Storyboard JSON Format
 - V3-Omni Two-stage Structure
 - Multi-shot Mode (Kling / Kling Omni)
+- **Seedance Smart Shot Cutting Mode**
 - Review Check Mechanism
 - Present to User for Confirmation
 
@@ -601,6 +602,137 @@ Both Kling and Kling Omni support multi-shot single-take.
 | Simple narrative | multi_shot + intelligence |
 | Material mashup (vlog, showcase) | Single shot generate one by one |
 | Simple short video (<10s) | Single shot text2video |
+
+---
+
+## Seedance Smart Shot Cutting Mode
+
+**Core Feature**: Time-segmented prompt auto triggers multi-shot, execution phase merges multiple shots in same scene into one API call.
+
+**⚠️ Key Limit: Duration can only be 5/10/15s (enum values)**
+
+In **Phase 3 Storyboard Design Phase**, when choosing Seedance backend, must ensure each scene's total duration is **5, 10 or 15 seconds** (only these three values, not other durations like 8s, 12s).
+
+### Duration Planning in Design Phase (Phase 3)
+
+**Seedance Backend Duration Design Rules**:
+
+| Scene Total Duration | ✅ Allowed | ❌ Not Allowed |
+|---------------------|------------|----------------|
+| 5s | ✓ | - |
+| 10s | ✓ | - |
+| 15s | ✓ | - |
+| 8s, 12s, 18s etc. | - | ✗ (API doesn't support) |
+
+**Design Flow**:
+```
+Choose Seedance → Determine scene total duration (must be 5/10/15) → Allocate shot durations
+```
+
+**Example**:
+- Target 15s scene → shots: 3s + 3s + 4s + 5s = 15s ✓
+- Target 10s scene → shots: 3s + 3s + 4s = 10s ✓
+- Target 18s scene → ✗ Not allowed, need to split into 15s + 3s (second segment needs separate processing)
+
+### Design Principles
+
+**Shot Structure Remains Unchanged**: Seedance only merges in execution phase, doesn't change storyboard's `scenes → shots` structure.
+
+| Model | Execution Method |
+|-------|-----------------|
+| Kling/Vidu/Omni | Each shot calls API separately |
+| **Seedance** | Multiple shots in same scene merged into one API call (time-segmented prompt) |
+
+### Scene → Video Segment Division Rules
+
+| Scene Duration | Shot Count | Video Segment Planning |
+|---------------|------------|----------------------|
+| ≤15s | Any number (e.g. 3-5 shots) | **Single video segment**, time segments cover all shots |
+| 16-30s | Many (e.g. 6-10 shots) | **2-3 video segments**, segmented coverage (e.g. 15s + 15s) |
+| >30s | Very many (e.g. >10 shots) | **3+ video segments**, segmented coverage |
+| Scene switch | - | **Independent video segments each**, no cross-Scene merging |
+
+### Execution Phase Processing Flow
+
+**Example**: Scene 1 contains 4 shots (total 15s)
+
+```json
+{
+  "scene_id": "scene_1",
+  "shots": [
+    {"shot_id": "scene1_shot1", "duration": 3, "description": "Pick apple"},
+    {"shot_id": "scene1_shot2", "duration": 3, "description": "Put in shaker"},
+    {"shot_id": "scene1_shot3", "duration": 4, "description": "Product closeup"},
+    {"shot_id": "scene1_shot4", "duration": 5, "description": "Raise cup display"}
+  ]
+}
+```
+
+**Seedance Execution Logic**:
+
+1. Identify `generation_backend = "seedance"`
+2. Merge scene_1's 4 shots (total 15s) into one API call
+3. Generate storyboard image (one per video segment)
+4. Generate time-segmented prompt:
+   ```
+   0-3s: Pick apple...;
+   3-6s: Put in shaker...;
+   6-10s: Product closeup...;
+   10-15s: Raise cup display...;
+   ```
+5. Call Seedance API
+
+### Time-segmented Prompt Format
+
+```
+Referencing the {segment_id}_frame composition for scene layout and character positioning.
+
+@image1 (character reference), [viewpoint setting] [theme/style];
+
+Overall: [Shot overall action summary]
+
+Segmented actions ({duration}s):
+0-Xs: [Scene] + [Action] + [Camera] + [Rhythm] + [Sound/Dialogue];
+X-Xs: [Cut] + [Scene] + [Action] + [Camera] + [Rhythm] + [Sound/Dialogue];
+...
+
+Maintain {aspect_ratio} composition, don't break aspect ratio
+{BGM constraint}
+```
+
+### image_urls Order Convention
+
+| index | Usage | Reference Method |
+|-------|-------|-----------------|
+| `image_urls[0]` | Storyboard image | `Referencing the {segment_id}_frame composition...` |
+| `image_urls[1]` | Character reference 1 | `@image1` |
+| `image_urls[2]` | Character reference 2 | `@image2` |
+
+### Seedance Storyboard Annotation Example
+
+```json
+{
+  "shot_id": "scene1_shot1",
+  "duration": 3,
+  "generation_mode": "seedance-video",
+  "generation_backend": "seedance",
+  "video_prompt": "Your hand picks a dewy Aksu red apple, fixed shot, steady rhythm, crisp apple collision sound",
+  "reference_images": [
+    "generated/frames/scene1_frame.png",
+    "materials/personas/emma_ref.jpg"
+  ],
+}
+```
+
+### Limitations and Notes
+
+| Limitation | Description |
+|------------|-------------|
+| Duration only supports 5/10/15s | Only these three enum values, no other durations |
+| Max 720p | Use Kling/Vidu when 1080p needed |
+| No first frame precise control | Storyboard image is reference, not first frame |
+| No reference audio | Cannot use audio_urls parameter |
+| Image reference syntax | Use `@imageN` (not `<<<image_N>>>`) |
 
 ---
 

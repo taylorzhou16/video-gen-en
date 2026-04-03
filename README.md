@@ -30,12 +30,13 @@ A Claude Code Skill that brings AI video editing capabilities into your conversa
 - ✅ **Creative Generation** - Interactive question cards, customized video creative plans
 - ✅ **Storyboard Design** - Generate storyboard scripts and video generation prompts
 - ✅ **AI Video Generation**
-  - **Kling v3**(default)：3-15s, precise first frame control, good visual quality
-  - **Kling v3 Omni**：3-15s, multi-reference images, best character consistency
-  - **Vidu Q3 Pro**（fallback）：image-to-video/text-to-video (5-10s)
+  - **Seedance**: 5/10/15s, smart shot cutting, multi-reference (up to 9 images)
+  - **Kling v3**: 3-15s, precise first frame control, good visual quality
+  - **Kling v3 Omni**: 3-15s, multi-reference images, best character consistency
+  - **Vidu Q3 Pro** (fallback): image-to-video/text-to-video (5-10s)
 - ✅ **AI Music Generation** - Suno V4.5 background music
-- ✅ **TTS Voice Synthesis** - Volcengine TTS
-- ✅ **AI Image Generation** - Gemini image generation
+- ✅ **TTS Voice Synthesis** - Gemini TTS (priority) / Volcengine TTS (fallback)
+- ✅ **AI Image Generation** - Gemini image generation (compass/fal/yunwu)
 - ✅ **Video Editing** - Transitions, subtitles, color grading, speed change, audio mixing
 
 ## Usage Recommendations
@@ -99,6 +100,10 @@ cp config.json.example config.json
 python video_gen_tools.py video --prompt "<description>" --duration 5 --output video.mp4
 python video_gen_tools.py video --image <first frame image> --prompt "<description>" --output video.mp4
 
+# Video generation (Seedance backend - smart shot cutting)
+python video_gen_tools.py video --backend seedance --prompt "time-segmented description..." --duration 10 --output video.mp4
+python video_gen_tools.py video --backend seedance --prompt "Referencing composition... @image1..." --image-list frame.png ref.jpg --duration 10 --output video.mp4
+
 # Video generation (Kling Omni backend - reference image mode)
 python video_gen_tools.py video --backend kling-omni --prompt "<<<image_1>>> in the scene" --image-list <reference_images> --output video.mp4
 
@@ -126,17 +131,23 @@ python video_gen_tools.py image --prompt "<description>" --style cinematic --out
 
 | Backend | Model | Duration | Features |
 |------|------|------|------|
+| **Seedance** | seedance-2.0 | 5/10/15s | Smart shot cutting, multi-reference (up to 9 images), audio-video sync output |
 | **Kling Omni** | kling-3.0-omni | 3-15s | multi-reference images(reference2video)、best character consistency、audio-video sync output |
 | **Kling** | kling-3.0 | 3-15s | precise first frame control(img2video)、good visual quality |
 | **Vidu**（fallback） | vidu-q3-pro | 5-10s | stable, fast, first frame control |
 
 **Key Differences**:
-- **Kling Omni** supports `reference2video`（multi-reference images），but **does not support `img2video`（first frame control）**
-- **Kling / Vidu** supports `img2video`（first frame control），but does notsupportsmulti-reference images
+- **Seedance / Kling Omni** support multi-reference images (character consistency), but **do NOT support first frame control**
+- **Kling / Vidu** support first frame control (img2video), but do NOT support multi-reference images
 
 **Selection Recommendations**:
-- Fiction films/short dramas, MV → **Kling Omni** (character consistency)
-- Vlog/documentary style, commercials (with real materials) → **Kling or Vidu** (first frame control)
+| Scenario | Priority Backend | Fallback Backend | Reason |
+|----------|------------------|------------------|--------|
+| **Fiction/Shorts** | **Seedance** | Kling-Omni | Smart shot cutting + multi-reference, character consistency |
+| **Commercial (No real materials)** | **Seedance** | Kling-Omni | Long shots + smart shot cutting |
+| **Commercial (With real materials)** | Kling-3.0 / Vidu | — | First frame precise control, real materials |
+| **MV Shorts** | **Seedance** | Kling-Omni | Long shots + music-driven |
+| **Vlog/Documentary** | Kling-3.0 | Vidu | First frame precise control, not Seedance |
 
 ### video_gen_editor.py
 
@@ -163,7 +174,7 @@ python video_gen_editor.py speed --video video.mp4 --rate 1.5 --output out.mp4
 ## Environment Variables
 
 ```bash
-# Yunwu API - for Vidu video generation + Gemini Image generation
+# Yunwu API - for Vidu/Kling/Kling-Omni video generation + image generation (yunwu proxy)
 export YUNWU_API_KEY="your-api-key"
 
 # Kling API - for Kling video generation
@@ -173,15 +184,24 @@ export KLING_SECRET_KEY="your-secret-key"
 # Suno Music generation
 export SUNO_API_KEY="your-api-key"
 
-# Volcengine TTS
+# Volcengine TTS (fallback)
 export VOLCENGINE_TTS_APP_ID="your-app-id"
 export VOLCENGINE_TTS_ACCESS_TOKEN="your-token"
+
+# fal.ai API - for image generation + Kling-Omni video (fal.ai proxy)
+export FAL_API_KEY="your-fal-api-key"
+
+# Compass API - for Gemini image generation + Gemini TTS (highest priority)
+export COMPASS_API_KEY="your-compass-api-key"
+
+# Seedance API - for Seedance video generation (piapi.ai proxy)
+export SEEDANCE_API_KEY="your-seedance-api-key"
 ```
 
 **Note**:
-- Gemini image generation uses Yunwu API
-- Kling/Kling-Omni video generation can use Yunwu API via `--provider yunwu` (as fallback for official API)
-- Uses the same YUNWU_API_KEY
+- **Image generation Provider priority**: compass → fal → yunwu
+- **Video generation Provider priority**: official → fal → yunwu
+- **TTS priority**: Gemini TTS (COMPASS_API_KEY) → Volcengine TTS (fallback)
 
 ## Workflow
 
@@ -211,6 +231,60 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 - httpx (HTTP client)
 
 ## Changelog
+
+### v1.5.1 (2026-04-03)
+🎤 **Gemini TTS Integration**
+
+#### New Features
+- ✨ **GeminiTTSClient** — New Gemini TTS client (via Compass API)
+  - Higher priority than Volcengine TTS
+  - Supports style prompts (prompt parameter)
+  - Supports inline emotion tags: `[brightly]`, `[sigh]`, `[pause]`
+  - Voices: Kore/Aoede/Charon/Orus etc.
+
+#### Voice Presets
+| Preset | Voice | Gender |
+|--------|-------|--------|
+| `female_narrator` | Kore | Female |
+| `female_gentle` | Aoede | Female (clear) |
+| `female_soft` | Zephyr | Female (soft) |
+| `male_narrator` | Charon | Male |
+| `male_warm` | Orus | Male (steady) |
+
+#### TTS Priority
+- **Gemini TTS** (COMPASS_API_KEY) → Volcengine TTS (VOLCENGINE_TTS_*)
+
+### v1.5.0 (2026-04-03)
+🎬 **Seedance Smart Shot Cutting + fal Image Generation**
+
+#### New Features
+- ✨ **SeedanceClient** — New Seedance video generation client (via piapi.ai proxy)
+  - Smart shot cutting: Time-segmented prompt auto triggers multi-shot
+  - Duration limits: Only supports 5/10/15s (three enum values)
+  - Aspect ratios: 16:9 / 9:16 / 4:3 / 3:4
+  - Image reference syntax: `@imageN` (not `<<<image_N>>>`)
+- ✨ **FalImageClient** — New fal.ai Gemini 3.1 Flash image generation client
+  - Text-to-image, image-to-image, multi-reference editing
+- ✨ **narration command** — video_gen_editor.py new narration synthesis command
+
+#### Architecture Optimization
+- 🔄 **Provider Priority Adjustment** — yunwu moved to last: `official → fal → yunwu`
+- 🔄 **visual_style Semantic Change** — From "backend selection" to "user photo processing"
+  - `realistic`: Seedance needs three-view generation first, Kling-Omni can use directly
+  - `anime`: Can use as reference image directly
+
+#### Documentation Fixes
+- 📝 **Seedance Duration Limits** — Fixed to 5/10/15s (not 4-15s range)
+- 📝 **Seedance Image Syntax** — Fixed to `@imageN`
+- 📝 **Removed 21:9** — Seedance doesn't support 21:9 aspect ratio
+- 📝 **Time-segmented Prompt Format** — Added complete template and examples
+
+#### File Changes
+- 📝 `video_gen_tools.py` — Added SeedanceClient, FalImageClient
+- 📝 `video_gen_editor.py` — Added narration command
+- 📝 `SKILL.md` — Added Seedance execution logic, time-segmented format, photo conversion flow
+- 📝 `reference/backend-guide.md` — Updated Provider priority, Seedance parameters
+- 📝 `reference/storyboard-spec.md` — Added Seedance duration planning chapter
 
 ### v1.4.6 (2026-04-02)
 🔧 **API Field Name Fixes**

@@ -20,17 +20,28 @@ For non-multimodal models, a vision model will be automatically called for image
 
 ### Provider Selection
 
+**Different backends support different providers**:
+
+| Backend | Supported Providers | Notes |
+|------|----------------|------|
+| `seedance` | **piapi only** | Seedance only has piapi provider, no yunwu/fal support |
+| `kling-omni` | official, yunwu, fal | Switch when official API hits limits |
+| `kling` | official, yunwu | Switch when official API hits limits |
+| `vidu` | **yunwu only** | Vidu only has yunwu provider |
+
 When Kling official API encounters rate limits (429), use `--provider yunwu` or `--provider fal`:
 
 ```bash
-# yunwu proxy (supports Vidu/Kling/Kling-Omni full range)
+# yunwu proxy (supports Vidu/Kling/Kling-Omni)
 python video_gen_tools.py video --provider yunwu --backend kling-omni --image-list ref.jpg ...
 
 # fal.ai proxy (only supports kling-omni)
 python video_gen_tools.py video --provider fal --backend kling-omni --image-list ref.jpg ...
 ```
 
-**Provider auto-selection priority**: Official API → yunwu → fal
+**Note**: Seedance doesn't need `--provider` specified since it only has piapi provider.
+
+**Provider auto-selection priority**: Official API → fal → yunwu
 
 ---
 
@@ -42,16 +53,40 @@ python video_gen_tools.py video --provider fal --backend kling-omni --image-list
 
 ### Backend Selection Overview
 
-| Model | Core Advantage | Recommended Scenarios |
-|-------|---------------|----------------------|
-| **Kling-3.0-Omni** (`kling-omni`) | image_list multi-reference, best character consistency | Fiction films/short dramas, MV clips (reference2video) |
-| **Kling-3.0** (`kling`) | Precise first frame control, good image quality | Vlog/documentary style, commercials (img2video) |
-| **Vidu Q3 Pro** (`vidu`) | Stable, fast | Fallback, quick processing of real materials |
+**Scenario-driven selection**:
 
-**Core Principles**:
-- **Use the same model for the same project**, do not mix
-- **Fiction films prioritize Kling-3.0-Omni** (reference2video)
-- **First frame control uses Kling-3.0 or Vidu** (img2video, Omni does not support first frame control)
+| Scenario | Priority Backend | Fallback Backend | Reason |
+|-----|---------|---------|------|
+| **Fiction films/short dramas** | **Seedance** | Kling-Omni | Smart shot cutting + multi-reference, character consistency |
+| **Commercials (no real materials)** | **Seedance** | Kling-Omni | Long shots + smart shot cutting |
+| **Commercials (with real materials)** | Kling-3.0 / Vidu | — | Precise first frame control, real materials |
+| **MV clips** | **Seedance** | Kling-Omni | Long shots + music-driven |
+| **Vlog/documentary style** | Kling-3.0 | Vidu | Precise first frame control, no Seedance |
+
+**visual_style only affects user photo processing (if user photos exist)**:
+
+| visual_style | User Photo Processing | Notes |
+|--------------|-------------|------|
+| `realistic` | **Seedance needs conversion** | User photos need 3-view generation first, then as reference |
+| `anime` | Direct use | Can be used as reference directly |
+| `mixed` | Per-scene processing | Realistic scenes need conversion, anime scenes direct use |
+
+**Seedance user photo conversion flow**:
+```
+User provides real photo →
+  ├── Call Gemini to generate 3-view (preserve face, body, figure details) →
+  │   - Front view
+  │   - Side view
+  │   - Full body proportion
+  ├── Select best angle as character reference →
+  └── Register to personas.json
+```
+
+**Key Rules**:
+- **Seedance prioritized for fictional content** (smart shot cutting is core advantage)
+- **Kling-Omni as fallback when Seedance fails**
+- **Use Kling/Vidu for real materials** (precise first frame control)
+- **Use same model for same project**, no mixing (except mixed mode)
 
 Detailed backend comparison and reference image strategy: See [reference/backend-guide.md](reference/backend-guide.md)
 
