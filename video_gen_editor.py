@@ -822,6 +822,7 @@ async def add_narration(
     # Build audio mixing
     audio_mix_parts = [f"[0:a]volume={video_volume}[video]"]
 
+    audio_counter = 0  # Actual added audio count
     for i, seg in enumerate(narration_segments):
         audio_file = None
         if narration_dir:
@@ -842,6 +843,7 @@ async def add_narration(
             continue
 
         inputs.extend(["-i", audio_file])
+        audio_counter += 1
 
         # Get time range
         time_range = seg.get("overall_time_range", "0-5")
@@ -853,9 +855,9 @@ async def add_narration(
 
         # Delay audio to correct time point
         # audio_idx: video is input 0, first narration is input 1, second is input 2...
-        audio_idx = i + 1
-        filter_parts.append(f"[{audio_idx}:a]adelay={int(start*1000)}|{int(start*1000)},volume={narration_volume}[narr{i}]")
-        audio_mix_parts.append(f"[narr{i}]")
+        audio_idx = audio_counter
+        filter_parts.append(f"[{audio_idx}:a]adelay={int(start*1000)}|{int(start*1000)},volume={narration_volume}[narr{audio_counter}]")
+        audio_mix_parts.append(f"[narr{audio_counter}]")
 
     # Mix all audio
     if len(audio_mix_parts) > 1:
