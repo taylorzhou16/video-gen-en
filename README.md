@@ -232,6 +232,44 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 
 ## Changelog
 
+### v1.6.1 (2026-04-07)
+🐛 **Bug Fixes**
+
+- 🐛 **Seedance auto-assembly mode image path resolution** — When CLI runs from a different directory than project, relative paths couldn't be resolved, causing `FileNotFoundError`. Added `resolve_path()` function to automatically convert relative paths to absolute paths
+- 🐛 **narration command audio_idx calculation error** — FFmpeg filter_complex audio input index calculation was wrong (`len(inputs) // 2` → `i + 1`), causing multi-narration scenes to reference non-existent input streams
+
+### v1.6.0 (2026-04-07)
+🔄 **Provider Architecture Refactor + Seedance 2 Upgrade**
+
+#### Deprecation Cleanup
+- 🗑️ **Removed yunwu video generation Provider** — Vidu/Kling/Kling-Omni yunwu providers deprecated, yunwu only retains Gemini image generation
+- 🗑️ **Removed FalImageClient** — Image generation now only has compass/yunwu providers
+- 🗑️ **Deprecated Volcengine TTS** — TTS now only uses Gemini TTS (via Compass API)
+- 🗑️ **Removed Vidu backend** — Vidu video generation no longer supported
+
+#### Seedance 2 Upgrade
+- ✨ **Extended duration support** — Changed from 5/10/15s enum values to 4-15s any integer
+- ✨ **Added 21:9 aspect ratio** — Supports cinematic widescreen ratio
+- ✨ **Added `--mode` parameter** — `text_to_video` / `first_last_frames` / `omni_reference`
+- ✨ **Added `--audio-urls` / `--video-urls`** — Supports audio/video references
+- ✨ **First-last frame control** — `mode: first_last_frames` supports precise first-last frame control
+
+#### Architecture Optimization
+- 🔄 **Simplified Provider matrix** — Video 4 backends (Seedance/Kling/Kling-Omni/Veo3), Image 2 providers (compass/yunwu)
+- 🔄 **Unified TTS to Gemini** — Removed Volcengine TTS call path
+- 📝 **Documentation fully updated** — SKILL.md, backend-guide.md, api-reference.md synchronized
+
+#### Currently Supported Models
+| Type | Model | Provider |
+|------|-------|----------|
+| Video | Seedance 2 | piapi |
+| Video | Kling v3 | official / fal |
+| Video | Kling v3 Omni | official / fal |
+| Video | Veo3 | compass |
+| Image | Gemini 3.1 Flash Image | compass / yunwu |
+| TTS | Gemini TTS | compass |
+| Music | Suno V3.5 | official |
+
 ### v1.5.1 (2026-04-03)
 🎤 **Gemini TTS Integration**
 
