@@ -2083,8 +2083,8 @@ class SeedanceClient:
         if mode is None:
             if video_urls or audio_urls:
                 mode = "omni_reference"
-            elif image_urls and len(image_urls) <= 2:
-                mode = "omni_reference"  # Default to omni_reference instead of first_last_frames
+            elif image_urls:
+                mode = "omni_reference"
             else:
                 mode = "text_to_video"
 
@@ -3855,9 +3855,12 @@ async def cmd_video(args):
 
                 image_list = getattr(args, 'image_list', None)
                 mode = getattr(args, 'mode', 'text_to_video')
-                # If mode is Kling std/pro, use default text_to_video
+                # If mode is Kling std/pro, auto-select based on reference images
                 if mode in ['std', 'pro']:
-                    mode = 'text_to_video'
+                    if image_list:
+                        mode = 'omni_reference'  # Use omni_reference when having reference images
+                    else:
+                        mode = 'text_to_video'  # Pure text-to-video
                 audio_urls = getattr(args, 'audio_urls', None)
                 video_urls = getattr(args, 'video_urls', None)
 
