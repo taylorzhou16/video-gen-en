@@ -2260,7 +2260,16 @@ class SeedanceClient:
 
                 elif status == "failed":
                     error = data.get("error", {})
-                    logger.error(f"Seedance task failed: {error.get('message', 'Unknown')}")
+                    logs = data.get("logs", [])
+                    # logs usually contains more detailed error reason
+                    error_detail = error.get("message", "Unknown")
+                    if logs:
+                        # Find first non-empty meaningful log
+                        for log in logs:
+                            if log and "restored" not in log.lower():
+                                error_detail = log
+                                break
+                    logger.error(f"❌ Seedance task failed: {error_detail}")
                     return None
 
                 await asyncio.sleep(10)
