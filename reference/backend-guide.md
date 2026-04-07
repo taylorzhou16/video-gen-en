@@ -84,7 +84,7 @@
 | Parameter | Value | Description |
 |-----------|-------|-------------|
 | `model` | `"seedance"` | Fixed value |
-| `task_type` | `"seedance-2-fast-preview"` / `"seedance-2-preview"` | Fast / High quality |
+| `task_type` | `"seedance-2-fast"` / `"seedance-2"` | Fast / High quality |
 | `prompt` | Text description | Supports `@imageN` image reference, supports time segments |
 | `duration` | 5 / 10 / 15 | Seconds (only these three enum values) |
 | `aspect_ratio` | 16:9/9:16/4:3/3:4 | Four ratios |

@@ -231,7 +231,7 @@ class Config:
         return self.get("SEEDANCE_API_KEY", "")
 
     SEEDANCE_BASE_URL: str = "https://api.piapi.ai"
-    SEEDANCE_MODEL: str = "seedance-2-fast-preview"  # or seedance-2-preview (high quality)
+    SEEDANCE_MODEL: str = "seedance-2-fast"  # or seedance-2 (high quality)
 
 
 Config = Config()
