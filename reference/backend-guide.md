@@ -3,6 +3,7 @@
 ## Table of Contents
 
 - Four Backend Capability Comparison
+- **Real-person Material Detection (Top-level Filtering)**
 - Backend Selection Decision Tree
 - Seedance Smart Multi-Shot Mode
 - Auto Selection Logic
@@ -18,17 +19,19 @@
 | Capability | Kling | Kling Omni | **Seedance 2** | **Veo3** |
 |------|-------|------------|----------------|----------|
 | **Backend Name** | `kling` | `kling-omni` | `seedance` | `veo3` |
-| **Provider** | official/fal | official/fal | piapi | **compass** |
+| **Provider** | official/fal | official/fal | **fal > piapi** | **compass** |
 | **Text-to-Video** | 3-15s | 3-15s | **4-15s (any integer)** | **4/6/8s** |
 | **Image-to-Video** | First frame image (precise control) | Use image_list instead | Storyboard + reference image | **First frame image** |
-| **image_list Multi-Reference** | -- | `<<<image_1>>>` reference | **`@image1` reference (max 12 images)** | -- |
+| **image_list Multi-Reference** | -- | `<<<image_1>>>` reference | **`@Image1` reference (max 9 images)** | -- |
 | **Smart Multi-Shot** | multi-shot parameter control | multi-shot parameter control | **Time-segmented prompt auto-trigger** | -- |
 | **First/Last Frame Control** | `--image` + `--tail-image` | -- | **Supported (mode: first_last_frames)** | `--image` (first frame) |
 | **Audio Reference** | -- | -- | **✓ audio_urls (mp3/wav ≤15s)** | -- |
 | **Audio-Video Simultaneous Output** | `--audio` | `--audio` | **✓ Auto-generate audio** | **✓ Auto-generate audio** |
+| **Resolution Parameter** | -- | -- | **480p/720p (fal only)** | -- |
+| **Seed Parameter** | -- | -- | **✓ (fal only)** | -- |
 | **Max Resolution** | 1080p | 1080p | **720p** ⚠️ | **720p** |
 | **Aspect Ratio** | 16:9/9:16/1:1 | 16:9/9:16/1:1 | **16:9/9:16/4:3/3:4/1:1/21:9/auto** | 16:9/9:16 |
-| **Best Use Case** | First frame precise control, scene consistency | Character consistency, multi-character | **Fiction/short drama, smart multi-shot, MV** | **High-quality realistic short films** |
+| **Best Use Case** | First frame precise control, scene consistency | Character consistency, multi-character | **Fiction/short drama, smart multi-shot, MV** | **Global fallback** |
 
 **Key Differences**:
 - Kling `--image` is a **first frame image** (video starts from this image)
@@ -38,21 +41,107 @@
 - **Seedance 2 supports first/last frame control**: Use `--mode first_last_frames` + `--image-list`
 - **Seedance 2 duration 4-15s** (any integer), **Veo3 duration only supports 4/6/8s** (enum values)
 
+**Execution Method Differences (Key)**:
+
+| Backend | Storyboard Level | Execution Method | Output |
+|------|----------|---------|------|
+| **Seedance** | **scene-level** (one image covers multiple shots) | Single API call generates entire scene | 1 video |
+| **Kling-Omni** | **shot-level** (one image per shot) | **Call API per shot** | N video clips |
+| Kling | shot-level (first frame image) | Call per shot | N video clips |
+| Veo3 | shot-level | Call per shot | N video clips |
+
+**Kling-Omni Must Execute at shot-level**:
+1. Generate storyboard for each shot: `generated/frames/{shot_id}_frame.png`
+2. Call API per shot: `--image-list {shot_frame} {character_reference}`
+3. Output N video clips (to be concatenated later)
+
+---
+
+## Real-person Material Detection (Top-level Filtering)
+
+**Conservative Strategy**: When visual_style = realistic and there are character reference images, disable Seedance backend and force fallback to Kling-Omni.
+
+### Detection Conditions
+
+Detect the following conditions during **Phase 2 Creative Design**:
+
+| visual_style | Has Character Reference | Seedance |
+|--------------|------------|----------|
+| **realistic** | Yes (any source) | **Disabled** |
+| realistic | No | Available |
+| **anime** | Yes | Available |
+| anime | No | Available |
+
+**Real-person Reference Image Definition**:
+- User-uploaded person photos (selfies, portraits, etc.)
+- AI-generated realistic style reference images (generated when `visual_style = realistic`)
+- **Does not include**: Anime style reference images, scene images without people
+
+### Disable Seedance Rule
+
+**Use conservative strategy to avoid moderation uncertainty**:
+
+```
+Detection Flow (Phase 2):
+Read creative.json → visual_style = realistic?
+                ↓ Yes
+Has character reference (user uploaded OR AI generated)?
+                ↓ Yes
+Disable Seedance → Force use Kling-Omni
+```
+
+**Strategy Explanation**:
+- Seedance moderation behavior is unstable, so it's uniformly disabled for safety
+- Kling-Omni has no real-person moderation restrictions, can normally process real-person reference images
+
+### Backend Selection Priority Adjustment
+
+| Real-person Material Detection Result | Backend Selection |
+|-----------------|---------|
+| **Has real-person material** | **Kling-Omni (forced)**, Seedance disabled |
+| No real-person material (anime style) | Seedance (preferred) > Kling-Omni |
+| No character reference images | Seedance (preferred) > Kling-Omni |
+
+**Write to creative.json (Phase 2)**:
+
+```json
+{
+  "visual_style": "realistic",
+  "backend_selection": {
+    "seedance_disabled": true,
+    "preferred_backend": "kling-omni",
+    "reason": "Real-person reference images trigger Seedance content_policy_violation"
+  }
+}
+```
+
+**After Phase 3 reads this field**, storyboard.json scene is automatically set to:
+
+```json
+{
+  "scene_id": "scene_1",
+  "generation_backend": "kling-omni",
+  "shots": [...]
+}
+```
+
 ---
 
 ## Backend Selection Decision Tree
 
-**Scenario-Driven Selection**:
+**Scenario-Driven Selection** (after real-person material detection):
 
-| Scenario | Priority Backend | Fallback Backend | Reason |
-|-----|---------|---------|------|
-| **Fiction/Short Drama** | **Seedance** | Kling-Omni | Smart multi-shot + multi-reference, character consistency |
-| **Commercial (No Real Footage)** | **Seedance** | Kling-Omni | Long shots + smart multi-shot |
-| **Commercial (With Real Footage)** | Kling-3.0 | — | First frame precise control, real footage |
-| **MV Short Film** | **Seedance** | Kling-Omni | Long shots + music-driven |
-| **Vlog/Documentary Style** | Kling-3.0 | Veo3 | First frame precise control, avoid Seedance |
-| **High-Quality Realistic Short** | Kling-3.0 | Veo3 | Veo3 as fallback only, 4/6/8s |
-| **Ultra-Short Shot (≤ 4s)** | Kling | Veo3 | Kling minimum 3s, Veo3 minimum 4s as fallback |
+| Scenario | Real-person Material | Priority Backend | Fallback Backend | Reason |
+|-----|---------|---------|---------|------|
+| **Fiction/Short Drama** | No (anime) | **Seedance** | Kling-Omni | Smart multi-shot + multi-reference |
+| **Fiction/Short Drama** | **Has real-person** | **Kling-Omni** | — | Real-person material disables Seedance |
+| **Commercial (No Real Footage)** | No | **Seedance** | Kling-Omni | Long shots + smart multi-shot |
+| **Commercial (With Real Footage)** | Yes | Kling-3.0 | — | First frame precise control, real footage |
+| **MV Short Film** | No (anime) | **Seedance** | Kling-Omni | Long shots + music-driven |
+| **MV Short Film** | **Has real-person** | **Kling-Omni** | — | Real-person material disables Seedance |
+| **Vlog/Documentary Style** | Yes | Kling-3.0 | Veo3 | First frame precise control, avoid Seedance |
+
+**Veo3 as Global Fallback Video Generation Model**: Unless users explicitly request Veo3, do not proactively call Veo3. Veo3 has fixed duration (4/6/8s), max resolution 720p, only use as final fallback when all other backends fail.
 
 **First Frame Control Capability Comparison**:
 
@@ -63,23 +152,25 @@
 | **Seedance** | ❌ Reference image | Storyboard is visual style reference, not first frame |
 | **Kling-Omni** | ❌ Reference image | Only reference2video, no img2video |
 
-**Core Principles**:
-1. **Need smart multi-shot → Seedance** (time segmentation auto-triggers multi-shot)
-2. **Need first frame control → Kling/Vidu** (only these two support it)
-3. **Seedance fails → Downgrade to Kling-Omni** (lose smart multi-shot, keep character consistency)
+**Core Principles** (priority from high to low):
+1. **Real-person material detection → Disable Seedance** (top-level filtering)
+2. **Need smart multi-shot → Seedance** (time segmentation auto-triggers multi-shot)
+3. **Need first frame control → Kling/Vidu** (only these two support it)
+4. **Seedance fails → Downgrade to Kling-Omni** (lose smart multi-shot, keep character consistency)
 
-### Quick Reference by Scenario
+### Quick Reference by Scenario (after Real-person Material Detection)
 
-| Scenario | Backend | Key Parameters |
-|------|------|---------|
-| **Fiction/Short Drama** | **Seedance** | `--backend seedance --image-list frame.png ref.jpg` |
-| **Commercial (No Real Footage)** | **Seedance** | Time-segmented prompt + storyboard |
-| **Commercial (With Real Footage)** | Kling-3.0 | `--image first_frame.png` |
-| **MV Short Film** | **Seedance** | Time-segmented prompt + storyboard |
-| **Vlog/Documentary Style** | Kling-3.0 | `--image first_frame.png` |
-| Need first/last frame animation | Kling | `--image first.png --tail-image last.png` |
-| High-quality realistic short | **Veo3** | `--backend veo3 --duration 8` |
-| Simple non-human scene / Quick prototype | Kling (default) or vidu | No special parameters needed |
+| Scenario | Real-person Material | Backend | Key Parameters |
+|------|---------|------|---------|
+| **Fiction/Short Drama** | No | **Seedance** | `--backend seedance --image-list frame.png ref.jpg` |
+| **Fiction/Short Drama** | **Yes** | **Kling-Omni** | `--backend kling-omni --image-list frame.png ref.jpg` (Seedance disabled) |
+| **Commercial (No Real Footage)** | No | **Seedance** | Time-segmented prompt + storyboard |
+| **Commercial (With Real Footage)** | Yes | Kling-3.0 | `--image first_frame.png` |
+| **MV Short Film** | No | **Seedance** | Time-segmented prompt + storyboard |
+| **MV Short Film** | **Yes** | **Kling-Omni** | Seedance disabled |
+| **Vlog/Documentary Style** | Yes | Kling-3.0 | `--image first_frame.png` |
+| Need first/last frame animation | — | Kling | `--image first.png --tail-image last.png` |
+| Simple non-human scene / Quick prototype | No | Kling (default) or vidu | No special parameters needed |
 
 ---
 
@@ -93,7 +184,7 @@
 |------|-----|------|
 | `model` | `"seedance"` | Fixed value |
 | `task_type` | `"seedance-2-fast"` / `"seedance-2"` | Fast / High quality |
-| `prompt` | Text description | Supports `@imageN` / `@videoN` / `@audioN` references, supports time segmentation |
+| `prompt` | Text description | Supports `@ImageN` / `@VideoN` / `@AudioN` references, supports time segmentation |
 | `mode` | `text_to_video` / `first_last_frames` / `omni_reference` | Generation mode (required) |
 | `duration` | **4-15 (any integer)** | Seconds (range 4-15) |
 | `aspect_ratio` | **21:9/16:9/4:3/1:1/3:4/9:16/auto** | Seven ratios |
@@ -115,7 +206,7 @@
 ```
 Referencing the {segment_id}_frame composition for scene layout and character positioning.
 
-@image1 (character reference image), [viewpoint setting] [theme/style];
+@Image1 (character reference image), [viewpoint setting] [theme/style];
 
 Overall: [overall camera movement summary]
 
@@ -132,7 +223,7 @@ Maintain {ratio} composition, do not break the aspect ratio
 ```
 Referencing the scene_1_seg_1_frame composition for scene layout and character positioning.
 
-@image1, first-person perspective fruit tea commercial; Element_Chuyue as female character;
+@Image1, first-person perspective fruit tea commercial; Element_Chuyue as female character;
 
 Overall: First-person perspective showing the complete fruit tea making process, from picking apples to presenting the final product, natural and smooth.
 
@@ -141,7 +232,7 @@ Segmented actions (10s):
 2-4s: Quick cut, your hand puts apple chunks into a shaker cup, adds ice and tea base, shakes vigorously, camera slightly follows, light and quick rhythm, ice collision sounds hit the beat;
 4-6s: First-person close-up of finished product, layered fruit tea pours into transparent cup, your hand gently squeezes milk foam, camera slowly pushes in, steady rhythm, liquid flowing sound;
 6-8s: Camera pushes in, pink label applied to cup, showing layered texture, relaxed rhythm, soft background sound;
-8-10s: First-person holding cup, @image2, fruit tea raised to camera, fixed shot, steady rhythm, cup label clearly visible, background audio: "Take a fresh sip";
+8-10s: First-person holding cup, @Image2, fruit tea raised to camera, fixed shot, steady rhythm, cup label clearly visible, background audio: "Take a fresh sip";
 
 Maintain landscape 16:9 composition, do not break the aspect ratio
 Background audio: "Fresh cut and shaken" "Take a fresh sip", female voice tone.
@@ -152,14 +243,14 @@ Background audio: "Fresh cut and shaken" "Take a fresh sip", female voice tone.
 | index | Purpose | Reference Method |
 |-------|------|---------|
 | `image_urls[0]` | Storyboard | `Referencing the {segment_id}_frame composition...` |
-| `image_urls[1]` | Character reference image 1 | `@image1` |
-| `image_urls[2]` | Character reference image 2 | `@image2` |
+| `image_urls[1]` | Character reference image 1 | `@Image1` |
+| `image_urls[2]` | Character reference image 2 | `@Image2` |
 | ... | ... | ... |
-| `image_urls[9]` | Character reference image 9 (max) | `@image9` |
+| `image_urls[9]` | Character reference image 9 (max) | `@Image9` |
 
 **Key Points**:
 1. **Storyboard is reference, not first frame precise control** — Provides overall visual style reference
-2. **Character reference images use `<<<image_N>>>` reference** — Unified syntax with Kling-Omni
+2. **Character reference images use `@Image1` reference** — fal format (piapi format will auto-convert)
 3. **Time segmentation auto-triggers smart multi-shot** — No `--multi-shot` parameter needed
 4. **Max 720p** — Use Kling or Vidu when 1080p is needed
 
@@ -177,7 +268,7 @@ python video_gen_tools.py video \
 # Image-to-Video (storyboard + character reference image)
 python video_gen_tools.py video \
   --backend seedance \
-  --prompt "Referencing the composition... @image1..." \
+  --prompt "Referencing the composition... @Image1..." \
   --image-list generated/frames/scene1_frame.png materials/personas/xiaomei_ref.jpg \
   --duration 10 \
   --output output.mp4
@@ -192,7 +283,6 @@ python video_gen_tools.py video \
 | **Commercial (With Real Footage)** | Kling-3.0 / Vidu | — | First frame precise control, real footage |
 | **MV Short Film** | **Seedance 2** | Kling-Omni | Long shots + music-driven |
 | **Vlog/Documentary Style** | Kling-3.0 | Vidu | First frame precise control, avoid Seedance |
-| **Ultra-Short Shot (≤ 4s)** | **Veo3** | Kling | Veo3 minimum 4s, Kling minimum 3s |
 
 ---
 
@@ -436,23 +526,71 @@ C. Cancel this generation
 Please choose:
 ```
 
-**Step 2: After user selects A, modify storyboard.json**
+**Step 2: After user selects A, re-run Kling-Omni flow**
 
+**Key Insight**: Seedance storyboard is **scene-level** (one image covers multiple shots), while Kling-Omni needs to execute at **shot-level**. Degradation is not a simple field migration, but requires re-running the complete Omni flow.
+
+**Processing Method**:
+1. **Preserve storyboard creative design** (style, duration, characters, aspect_ratio, etc.)
+2. **Re-plan storyboard at Kling-Omni shot-level standard**:
+   - Design `image_prompt` for each shot (storyboard generation prompt)
+   - Specify `frame_path` for each shot (`generated/frames/{shot_id}_frame.png`)
+   - Each shot's `video_prompt` references its own storyboard
+3. **Run complete Omni execution flow**:
+   - First generate storyboard for each shot (Gemini image generation)
+   - Then call Kling-Omni API per shot
+
+**Schema Change Example**:
 ```json
-// Original (Seedance)
+// Original (Seedance - scene-level)
 {
-  "generation_mode": "seedance-video",
-  "generation_backend": "seedance",
-  "reference_images": ["storyboard", "character_reference_1", "character_reference_2"]
+  "scene_id": "scene_1",
+  "shots": [
+    {
+      "generation_mode": "seedance-video",
+      "generation_backend": "seedance",
+      "reference_images": ["generated/frames/scene_1_frame.png", "character_reference"],
+      "seedance_merge_info": { "merged_shots": ["shot1", "shot2", "shot3"] }
+    },
+    { /* shot 2, shot 3 share the same storyboard */ }
+  ]
 }
 
-// Degraded (Kling-Omni)
+// After degradation (Kling-Omni - shot-level)
+// Need to re-design, refer to Omni best practices (see "Path A: Kling Omni" section)
 {
-  "generation_mode": "omni-video",
-  "generation_backend": "kling-omni",
-  "reference_images": ["character_reference_1", "character_reference_2"]
+  "scene_id": "scene_1",
+  "shots": [
+    {
+      "generation_mode": "omni-video",
+      "generation_backend": "kling-omni",
+      "image_prompt": "Cinematic frame for shot 1...",  // Added
+      "frame_path": "generated/frames/scene_1_shot_1_frame.png",  // Added
+      "reference_images": ["generated/frames/scene_1_shot_1_frame.png", "character_reference"],
+      "video_prompt": "Referencing scene_1_shot_1_frame composition..."  // Updated reference
+    },
+    {
+      "generation_mode": "omni-video",
+      "generation_backend": "kling-omni",
+      "image_prompt": "Cinematic frame for shot 2...",  // Added
+      "frame_path": "generated/frames/scene_1_shot_2_frame.png",  // Added
+      "reference_images": ["generated/frames/scene_1_shot_2_frame.png", "character_reference"],
+      "video_prompt": "Referencing scene_1_shot_2_frame composition..."
+    }
+  ]
 }
 ```
+
+**Execution Steps**:
+```
+1. Generate storyboard for each shot (Gemini + image_prompt + character_reference)
+2. Call Kling-Omni API per shot:
+   - --image-list {shot_frame} {character_reference}
+   - --prompt "Referencing {shot_id}_frame composition..."
+3. Output N video clips (instead of Seedance's 1 merged video)
+```
+
+**Reference**: See "Path A: Kling Omni" section for Omni best practices.
 
 **Step 3: Execute Kling-Omni**
 

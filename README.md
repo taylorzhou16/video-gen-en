@@ -2,9 +2,27 @@
 
 A Claude Code Skill that brings AI video editing capabilities into your conversations.
 
+## 🎥 Demo
+
+Website: [video-gen-5si.pages.dev](https://video-gen-5si.pages.dev/)
+
+Below are demo videos generated using video-gen:
+
+| # | Video Name | Type | Download |
+|---|---------|------|------|
+| 1 | Merry Christmas Mr Lawrence | Music Short | [demo3_merry_christmas.mp4](https://github.com/taylorzhou16/video-gen/releases/download/v1.0.0-demo/demo3_merry_christmas.mp4) |
+| 2 | Coffee & Bouldering Weekend | Vlog | [demo2_coffee_bouldering.mp4](https://github.com/taylorzhou16/video-gen/releases/download/v1.0.0-demo/demo2_coffee_bouldering.mp4) |
+| 3 | Disney Photo Collection Vlog | Vlog | [demo1_disney_vlog.mp4](https://github.com/taylorzhou16/video-gen/releases/download/v1.0.0-demo/demo1_disney_vlog.mp4) |
+| 4 | F1 Shanghai — Racing with Verstappen | Race Simulation | [demo4_f1_shanghai.mp4](https://github.com/taylorzhou16/video-gen/releases/download/v1.0.0-demo/demo4_f1_shanghai.mp4) |
+| 5 | A Helpful Little Story | Fictional Short | [demo5_helpful_story.mp4](https://github.com/taylorzhou16/video-gen/releases/download/v1.0.0-demo/demo5_helpful_story.mp4) |
+| 6 | The Milk Incident — Cutting Off My Supply | Fictional Short | [demo6_milk_incident.mp4](https://github.com/taylorzhou16/video-gen/releases/download/v1.0.0-demo/demo6_milk_incident.mp4) |
+| 7 | January Water Bill 1700 | Fictional Short | [demo7_water_fee.mp4](https://github.com/taylorzhou16/video-gen/releases/download/v1.0.0-demo/demo7_water_fee.mp4) |
+
+> 💡 Click the download link to play directly in your browser, or download to watch locally.
+
 ## 🏗️ Architecture
 
-**Core Concept**: Claude itself acts as the Director Agent, no additional Agent code needed.
+**Core Philosophy**: Claude itself is the Director Agent, no additional Agent code needed.
 
 ```
 ~/.claude/skills/video-gen/
@@ -27,38 +45,38 @@ A Claude Code Skill that brings AI video editing capabilities into your conversa
 ## ✨ Features
 
 - ✅ **Material Analysis** - Automatic recognition of image/video content, scenes, emotions
-- ✅ **Creative Generation** - Interactive question cards, customized video creative plans
+- ✅ **Creative Generation** - Interactive question cards for customized video creative plans
 - ✅ **Storyboard Design** - Generate storyboard scripts and video generation prompts
 - ✅ **AI Video Generation**
-  - **Seedance 2** (recommended for fiction): 4-15s, smart shot switching, multi-reference images, audio-video synchronized output
-  - **Kling v3**: 3-15s, precise first-frame control, good visual quality
-  - **Kling v3 Omni**: 3-15s, multi-reference images, best character consistency
-  - **Veo3**: 4/6/8s, high-quality realistic shorts
+  - **Seedance 2** (recommended for fictional content): 4-15 seconds, intelligent shot cutting, multiple reference images, synchronized audio-video output
+  - **Kling v3**: 3-15 seconds, precise first-frame control, excellent image quality
+  - **Kling v3 Omni**: 3-15 seconds, multiple reference images, best character consistency
+  - **Veo3**: 4/6/8 seconds, global fallback model
 - ✅ **AI Music Generation** - Suno V3.5 background music
 - ✅ **TTS Voice Synthesis** - Gemini TTS (multiple voices, style prompts)
 - ✅ **AI Image Generation** - Gemini 3.1 Flash Image (compass/yunwu)
-- ✅ **Video Editing** - Transitions, subtitles, color grading, speed change, audio mixing
+- ✅ **Video Editing** - Transitions, subtitles, color grading, speed changes, audio mixing
 
-## 💡 Usage Tips
+## 💡 Usage Recommendations
 
-### Recommended Model
+### Recommended Models
 
-**Recommended to use multimodal models (such as Kimi K2.5) for the best experience.**
+**It is recommended to use multimodal models (such as Kimi K2.5) for the best experience.**
 
-Multimodal models have stronger understanding of materials and can more accurately identify scenes, characters, emotions, and visual styles in images/videos. If your primary model is not multimodal, you can supplement visual understanding by calling the `/vision` skill.
+Multimodal models have stronger understanding of materials and can more accurately recognize scenes, characters, emotions, and visual styles in images/videos. If your primary model is not multimodal, you can use the `/vision` skill to supplement visual understanding capabilities.
 
 ### Guiding the Model
 
-Current capabilities are still relatively basic, **it is recommended to guide the model more during use**. For example:
+Current capabilities are still in early stages, **it is recommended to guide the model more during use**. For example:
 - Actively describe the desired video style, pace, and emotion
-- Provide specific modification suggestions for the storyboard plan
-- Provide timely feedback during the generation process to help the model adjust direction
+- Provide specific feedback on storyboard plans
+- Give timely feedback during the generation process to help the model adjust direction
 
 ### Project Positioning
 
-The original intention of this project is to fully leverage Claude Code Agent's intelligence capabilities, providing all video generation-related tools and capabilities, exploring the practical effects of AI-assisted video creation. **This is an exploratory project that is still constantly being updated and iterated.** You are welcome to try various creative ideas, and your usage feedback will help us continue to improve.
+The original intent of this project is to fully leverage Claude Code Agent's intelligence, providing all video generation-related tools and capabilities, exploring the practical effects of AI-assisted video creation. **This is an exploratory project that is still being continuously updated and iterated.** You are welcome to try various creative ideas; your usage feedback will help us continue to improve.
 
-**Flexible API Support**: The image and video generation APIs used in this project (such as Vidu, Gemini) can be replaced with providers you are familiar with. The API calls in `video_gen_tools.py` are clearly encapsulated, making it easy to integrate other service providers (such as OpenAI, Midjourney, Stability AI, etc.).
+**Flexible API Support**: The image and video generation APIs used in this project (such as Vidu, Gemini) can be replaced with your preferred channels. The API calls in `video_gen_tools.py` are clearly encapsulated, making it easy to integrate other providers (such as OpenAI, Midjourney, Stability AI, etc.).
 
 ## 🚀 Installation
 
@@ -72,7 +90,7 @@ cd ~/.claude/skills/video-gen && pip install -r requirements.txt
 
 # Configure API keys
 cp config.json.example config.json
-# Edit config.json to fill in your API keys
+# Edit config.json and fill in your API keys
 ```
 
 ## 📖 Usage
@@ -84,7 +102,7 @@ cp config.json.example config.json
 ### Examples
 
 ```bash
-# Complete creative process
+# Complete creative workflow
 /video-gen ~/Videos/travel_materials/
 
 # Continue a previous project
@@ -101,16 +119,16 @@ python video_gen_tools.py video --prompt "<description>" --duration 5 --output v
 python video_gen_tools.py video --image <first_frame_image> --prompt "<description>" --output video.mp4
 
 # Video generation (Kling Omni backend - reference image mode)
-python video_gen_tools.py video --backend kling-omni --prompt "<<<image_1>>> in the scene" --image-list <reference_images> --output video.mp4
+python video_gen_tools.py video --backend kling-omni --prompt "<<<image_1>>> in the scene" --image-list <reference_image> --output video.mp4
 
 # Video generation (Vidu backend - fallback/rapid prototyping)
 python video_gen_tools.py video --backend vidu --image <image> --prompt "<description>" --duration 5 --output video.mp4
 
 # Kling multi-shot mode
 python video_gen_tools.py video --prompt "<story_description>" --multi-shot --shot-type intelligence --duration 10
-python video_gen_tools.py video --prompt "<overall_description>" --multi-shot --shot-type customize --multi-prompt '[{"index":1,"prompt":"shot 1","duration":"3"}]' --duration 5
+python video_gen_tools.py video --prompt "<overall_description>" --multi-shot --shot-type customize --multi-prompt '[{"index":1,"prompt":"Shot 1","duration":"3"}]' --duration 5
 
-# Kling first/last frame control
+# Kling first and last frame control
 python video_gen_tools.py video --image <first_frame_image> --tail-image <last_frame_image> --prompt "<action_description>" --duration 5
 
 # Music generation
@@ -127,24 +145,25 @@ python video_gen_tools.py image --prompt "<description>" --style cinematic --out
 
 | Backend | Model | Duration | Features |
 |------|------|------|------|
-| **Seedance 2** | seedance-2 | 4-15s | Smart shot switching, multi-reference images (up to 9), first/last frame control, audio-video synchronized output |
-| **Kling Omni** | kling-3.0-omni | 3-15s | Multi-reference images (reference2video), character consistency, audio-video synchronized output |
-| **Kling** | kling-3.0 | 3-15s | Precise first-frame control (img2video), good visual quality |
-| **Veo3** | veo-3.1-generate-001 | 4/6/8s | High-quality realistic shorts, first-frame control, default audio |
+| **Seedance 2** | seedance-2 | 4-15s | Intelligent shot cutting, multiple reference images (up to 9), first/last frame control, synchronized audio-video output |
+| **Kling Omni** | kling-3.0-omni | 3-15s | Multiple reference images (reference2video), character consistency, synchronized audio-video output |
+| **Kling** | kling-3.0 | 3-15s | Precise first-frame control (img2video), excellent image quality |
+| **Veo3** | veo-3.1-generate-001 | 4/6/8s | Global fallback, first-frame control, default audio |
 
 **Key Differences**:
-- **Seedance 2 / Kling Omni** support multi-reference images (character consistency), Seedance 2 also supports first/last frame control
+- **Seedance 2 / Kling Omni** support multiple reference images (character consistency), Seedance 2 also supports first/last frame control
 - **Kling / Veo3** support precise first-frame control
 
 **Selection Recommendations**:
-| Scenario | Priority Backend | Fallback Backend | Reason |
+| Scenario | Preferred Backend | Fallback Backend | Reason |
 |-----|---------|---------|------|
-| **Fiction/Short Drama** | **Seedance 2** | Kling-Omni | Smart shot switching + multi-reference images |
-| **Commercial (no real materials)** | **Seedance 2** | Kling-Omni | Long shots + smart shot switching |
-| **Commercial (with real materials)** | Kling-3.0 | — | Precise first-frame control |
-| **MV Shorts** | **Seedance 2** | Kling-Omni | Long shots + music-driven |
-| **Vlog/Documentary** | Kling-3.0 | Veo3 | Precise first-frame control |
-| **High-quality Documentary Shorts** | Kling-3.0 | Veo3 | Veo3 as fallback only, 4/6/8s |
+| **Fictional content/Short drama** | **Seedance 2** | Kling-Omni | Intelligent shot cutting + multiple reference images |
+| **Advertisements (no real materials)** | **Seedance 2** | Kling-Omni | Long shots + intelligent shot cutting |
+| **Advertisements (with real materials)** | Kling-3.0 | — | Precise first-frame control |
+| **MV shorts** | **Seedance 2** | Kling-Omni | Long shots + music-driven |
+| **Vlog/Realistic content** | Kling-3.0 | Veo3 | Precise first-frame control |
+
+**Veo3 Note**: As the global fallback video generation model, do not proactively use Veo3 unless the user explicitly requests it.
 
 ### video_gen_editor.py
 
@@ -171,14 +190,14 @@ python video_gen_editor.py speed --video video.mp4 --rate 1.5 --output out.mp4
 ## 🔑 Environment Variables
 
 ```bash
-# Seedance API - Seedance 2 video generation (recommended for fiction/short drama)
+# Seedance API - Seedance 2 video generation (recommended for fictional content/short drama)
 export SEEDANCE_API_KEY="your-seedance-api-key"
 
-# Kling API - Kling v3 video generation (recommended for documentary/Vlog)
+# Kling API - Kling v3 video generation (recommended for realistic content/Vlog)
 export KLING_ACCESS_KEY="your-access-key"
 export KLING_SECRET_KEY="your-secret-key"
 
-# Veo3 API - Google Veo3 video generation (high-quality documentary shorts)
+# Veo3 API - Google Veo3 video generation (global fallback model)
 export COMPASS_API_KEY="your-compass-api-key"
 
 # Suno music generation
@@ -186,7 +205,7 @@ export SUNO_API_KEY="your-api-key"
 
 # Gemini image generation (compass priority)
 export COMPASS_API_KEY="your-compass-api-key"
-export YUNWU_API_KEY="your-yunwu-api-key"  # Backup
+export YUNWU_API_KEY="your-yunwu-api-key"  # backup
 ```
 
 **Note**:
@@ -235,19 +254,19 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 - 🗑️ **Remove yunwu video generation Provider** — Vidu/Kling/Kling-Omni yunwu providers all deprecated, yunwu only retains Gemini image generation
 - 🗑️ **Remove FalImageClient** — Image generation only retains compass/yunwu providers
 - 🗑️ **Deprecate Volcano Engine TTS** — TTS only retains Gemini TTS (via Compass API)
-- 🗑️ **Remove Vidu backend** — No longer support Vidu video generation
+- 🗑️ **Remove Vidu backend** — No longer supports Vidu video generation
 
 #### Seedance 2 Upgrade
-- ✨ **Duration support extended** — From 5/10/15s enum values to 4-15s any integer
-- ✨ **Add 21:9 aspect ratio** — Support for cinematic widescreen ratio
-- ✨ **Add `--mode` parameter** — `text_to_video` / `first_last_frames` / `omni_reference`
-- ✨ **Add `--audio-urls` / `--video-urls`** — Support audio/video references
+- ✨ **Extended duration support** — Changed from 5/10/15s enum values to any integer from 4-15s
+- ✨ **Added 21:9 aspect ratio** — Supports cinematic widescreen ratio
+- ✨ **Added `--mode` parameter** — `text_to_video` / `first_last_frames` / `omni_reference`
+- ✨ **Added `--audio-urls` / `--video-urls`** — Supports audio/video references
 - ✨ **First/last frame control** — `mode: first_last_frames` supports precise first/last frame control
 
 #### Architecture Optimization
-- 🔄 **Provider matrix simplified** — Video 4 backends (Seedance/Kling/Kling-Omni/Veo3), image 2 providers (compass/yunwu)
-- 🔄 **TTS unified to Gemini** — Remove Volcano Engine TTS call paths
-- 📝 **Comprehensive documentation update** — SKILL.md, backend-guide.md, api-reference.md synchronized updates
+- 🔄 **Provider matrix simplification** — Video 4 backends (Seedance/Kling/Kling-Omni/Veo3), Image 2 providers (compass/yunwu)
+- 🔄 **TTS unified to Gemini** — Removed Volcano Engine TTS call paths
+- 📝 **Documentation fully updated** — SKILL.md, backend-guide.md, api-reference.md synchronized updates
 
 #### Currently Supported Models
 | Type | Model | Provider |
@@ -265,30 +284,30 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 
 #### New Features
 - ✨ **GeminiTTSClient** — New Gemini TTS client (via Compass API)
-  - Priority over Volcano Engine TTS
-  - Support style prompts (prompt parameter)
-  - Support inline emotion tags: `[brightly]`, `[sigh]`, `[pause]`
-  - Voices: Kore/Aoede/Charon/Orus etc.
+  - Higher priority than Volcano Engine TTS
+  - Supports style prompts (prompt parameter)
+  - Supports inline emotion markers: `[brightly]`, `[sigh]`, `[pause]`
+  - Voices: Kore/Aoede/Charon/Orus, etc.
 
 #### Voice Presets
 | Preset | Voice | Gender |
 |------|------|------|
 | `female_narrator` | Kore | Female |
-| `female_gentle` | Aoede | Female (bright)|
-| `female_soft` | Zephyr | Female (soft)|
+| `female_gentle` | Aoede | Female (bright) |
+| `female_soft` | Zephyr | Female (soft) |
 | `male_narrator` | Charon | Male |
-| `male_warm` | Orus | Male (steady)|
+| `male_warm` | Orus | Male (steady) |
 
 #### TTS Priority
 - **Gemini TTS** (COMPASS_API_KEY) → Volcano Engine TTS (VOLCENGINE_TTS_*)
 
 ### v1.5.0 (2026-04-03)
-🎬 **Seedance Smart Shot Switching + fal Image Generation**
+🎬 **Seedance Intelligent Shot Cutting + fal Image Generation**
 
 #### New Features
 - ✨ **SeedanceClient** — New Seedance video generation client (via piapi.ai proxy)
-  - Smart shot switching: Time-segmented prompts auto-trigger multi-shot
-  - Duration limit: Only supports 5/10/15s (three enum values)
+  - Intelligent shot cutting: Time-segmented prompt auto-triggers multi-shot
+  - Duration limits: Only supports 5/10/15s (three enum values)
   - Aspect ratios: 16:9 / 9:16 / 4:3 / 3:4
   - Image reference syntax: `@imageN` (not `<<<image_N>>>`)
 - ✨ **FalImageClient** — New fal.ai Gemini 3.1 Flash image generation client
@@ -297,15 +316,15 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 
 #### Architecture Optimization
 - 🔄 **Provider priority adjustment** — yunwu moved to last: `official → fal → yunwu`
-- 🔄 **visual_style semantic change** — From "backend selection" to "user photo processing method"
+- 🔄 **visual_style semantic change** — Changed from "backend selection" to "user photo handling method"
   - `realistic`: Seedance needs to generate three-view conversion first, Kling-Omni can use directly
   - `anime`: Can be used as reference image directly
 
 #### Documentation Corrections
-- 📝 **Seedance duration limit** — Corrected to 5/10/15s (not 4-15s range)
+- 📝 **Seedance duration limits** — Corrected to 5/10/15s (not 4-15s range)
 - 📝 **Seedance image syntax** — Corrected to `@imageN`
 - 📝 **Remove 21:9** — Seedance does not support 21:9 aspect ratio
-- 📝 **Time-segmented prompt format** — Added complete templates and examples
+- 📝 **Time-segmented prompt format** — Added complete template and examples
 
 #### File Changes
 - 📝 `video_gen_tools.py` — Added SeedanceClient, FalImageClient
@@ -315,33 +334,33 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 - 📝 `reference/storyboard-spec.md` — Added Seedance duration planning chapter
 
 ### v1.4.6 (2026-04-02)
-🔧 **API Field Name Fix**
+🔧 **API Field Name Fixes**
 
 #### Bug Fixes
-- 🐛 **FalKlingClient field name correction** — Use fal.ai official correct field names
-  - `image_url` → `start_image_url` (first frame control)
-  - `tail_image_url` → `end_image_url` (last frame control)
+- 🐛 **FalKlingClient field name correction** — Using fal.ai official correct field names
+  - `image_url` → `start_image_url` (first-frame control)
+  - `tail_image_url` → `end_image_url` (last-frame control)
 - 🐛 **YunwuKlingOmniClient parameter correction**
   - `audio` boolean → `sound: "on"/"off"` string
-  - `_file_to_base64()` returns pure base64 not data URI format
+  - `_file_to_base64()` returns pure base64 instead of data URI format
 
 #### Test Verification
 - ✅ Text-to-video (pure prompt)
-- ✅ First-frame-to-video (start_image_url, character retention correct)
+- ✅ First-frame-to-video (start_image_url, character consistency maintained)
 - ✅ Multi-reference-to-video (image_urls + @Image1/@Image2, with audio)
 
 ### v1.4.5 (2026-04-02)
 📝 **Documentation Supplement**
 
-- Supplemented yunwu provider documentation notes missed in v1.4.4
+- Added missing yunwu provider documentation from v1.4.4
 
 ### v1.4.4 (2026-04-02)
 📚 **Yunwu Provider Documentation Enhancement**
 
 #### Documentation Updates
-- 📝 `api-reference.md` — YUNWU_API_KEY scope extended, supports Kling/Kling-Omni
+- 📝 `api-reference.md` — YUNWU_API_KEY scope expanded, supports Kling/Kling-Omni
 - 📝 `backend-guide.md` — Added Provider selection priority explanation
-- 📝 `README.md` — Added Kling can use Yunwu as official API backup
+- 📝 `README.md` — Added that Kling can use Yunwu as backup for official API
 - 📝 `SKILL.md` — Added Provider selection chapter, explaining how to bypass concurrency limits
 
 ### v1.4.3 (2026-04-02)
@@ -349,18 +368,18 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 
 #### New Features
 - ✨ **YunwuKlingClient** — New yunwu kling-v3 client, supports text2video, img2video, multi_shot, first/last frame control, audio
-- ✨ **YunwuKlingOmniClient** — New yunwu kling-v3-omni client, supports omni-video, image_list multi-reference images, multi_shot, audio
-- ✨ **--provider parameter** — New provider selection (official/yunwu/fal), supports switching different providers for the same backend
-- ✨ **Provider auto-selection** — When not specified, auto-select by priority: official > fal > yunwu
+- ✨ **YunwuKlingOmniClient** — New yunwu kling-v3-omni client, supports omni-video, image_list multi-reference, multi_shot, audio
+- ✨ **--provider parameter** — New provider selection (official/yunwu/fal), supports switching different providers for same backend
+- ✨ **Provider auto-selection** — Auto-select by priority when not specified: official > fal > yunwu
 
 #### Architecture Optimization
-- 🔄 **Backend/Provider separation** — backend selects functionality (vidu/kling/kling-omni), provider selects service source (official/yunwu/fal)
-- 📝 **Feature support matrix** — Clarify feature support for each provider (multi_shot, first/last frame, audio, etc.)
+- 🔄 **Backend/Provider separation** — Backend selects functionality (vidu/kling/kling-omni), provider selects service source (official/yunwu/fal)
+- 📝 **Feature support matrix** — Clarified feature support for each provider (multi_shot, first/last frame, audio, etc.)
 
 #### API Difference Handling
 - 🔧 **Yunwu kling-v3 uses `model` parameter** (official API uses `model_name`)
 - 🔧 **Yunwu kling-v3-omni uses `model_name` parameter** (same as official API)
-- 🔧 **Video URL parsing path** — `data.task_result.videos[0].url` (not `task_info`)
+- 🔧 **Video URL resolution path** — `data.task_result.videos[0].url` (not `task_info`)
 
 #### File Changes
 - 📝 `video_gen_tools.py` — Added YunwuKlingClient, YunwuKlingOmniClient, modified cmd_video function
@@ -369,11 +388,11 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 🔊 **Audio Mixing Fix and Normalization**
 
 #### Bug Fixes
-- 🐛 **FFmpeg amix normalize=0** — Disable auto-normalization, preserve original volume ratio, fix narration being suppressed issue
+- 🐛 **FFmpeg amix normalize=0** — Disabled auto-normalization, preserved original volume ratios, fixed narration being suppressed issue
 
 #### New Features
 - ✨ **Mixing rules documentation** — SKILL.md Phase 5 added "Audio Mixing Rules" chapter
-  - Volume recommendations: Video ambient 0.8, narration 1.5-2.0, BGM 0.1-0.15
+  - Recommended volume values: Video ambient 0.8, Narration 1.5-2.0, BGM 0.1-0.15
   - Video type adaptation: MV → 0.5-0.7, Vlog → 0.1-0.15, Cinematic → 0.2-0.3
 
 #### File Changes
@@ -384,30 +403,30 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 🎤 **Narration Segmentation Planning Feature**
 
 #### New Features
-- ✨ **Phase 2 narration requirement judgment** — Recommend whether narration is needed based on video type (documentary/Vlog usually needs, cinematic/fiction usually doesn't)
-- ✨ **Phase 3 simultaneous narration design** — When generating storyboard, simultaneously plan `narration_segments`, segmented by shot timing
-- ✨ **Phase 4 narration generation** — After video/music generation, add TTS narration generation step (Volcano Engine)
-- ✨ **Phase 5 narration insertion** — Insert narration audio at correct position by `overall_time_range` timing
+- ✨ **Phase 2 narration need assessment** — Recommend whether narration is needed based on video type (Documentary/Vlog usually need, Cinematic/Fictional usually don't)
+- ✨ **Phase 3 synchronous narration design** — Generate `narration_segments` while creating storyboard, segmented by shot timing
+- ✨ **Phase 4 narration generation** — Added TTS narration generation step after video/music generation (Volcano Engine)
+- ✨ **Phase 5 narration insertion** — Place narration audio at correct positions based on `overall_time_range` timing
 
 #### Documentation Updates
 - 📝 `storyboard-spec.md` — Added `narration_config` and `narration_segments` field specifications
-- 📝 `prompt-guide.md` — Added TTS narration generation flow and parameter instructions
+- 📝 `prompt-guide.md` — Added TTS narration generation flow and parameter descriptions
 
 ### v1.4.0 (2026-03-30)
 🎬 **Video Generation Best Practices Refactoring**
 
 #### Core Architecture Changes
-- ✨ **Project type-driven decision** — Auto-detect project type based on user intent (fiction/short drama, Vlog/documentary, commercial/promo, MV shorts), no manual selection needed
-- ✨ **Fiction disables text2video** — All fiction content forced to generate storyboard images first, then use reference2video or img2video
-- ✨ **Unified model within project** — No mixing of multiple models within a project, once selected, use throughout the project
+- ✨ **Project type-driven decisions** — Automatically determine project type from user intent (Fictional/Short drama, Vlog/Realistic, Advertisement/Promotional, MV short), no manual selection needed
+- ✨ **Fictional content disables text2video** — All fictional content must first generate storyboard images, then use reference2video or img2video
+- ✨ **Unified model within project** — Do not mix multiple models within a project; once selected, use consistently throughout
 
 #### Model and Generation Paths
-- 📝 **Update model names** — Kling-3.0-Omni, Kling-3.0, Vidu Q3 Pro
-- 📝 **Clarify model capability boundaries** — Kling-3.0-Omni supports reference2video but **does not support img2video (first frame control)**
-- 📝 **Optimize decision matrix** — Fiction prioritizes Omni (character consistency), Vlog/commercial uses Kling/Vidu (first frame control)
+- 📝 **Updated model names** — Kling-3.0-Omni, Kling-3.0, Vidu Q3 Pro
+- 📝 **Clarified model capability boundaries** — Kling-3.0-Omni supports reference2video but **does not support img2video (first-frame control)**
+- 📝 **Decision matrix optimization** — Fictional content prioritizes Omni (character consistency), Vlog/Advertisements use Kling/Vidu (first-frame control)
 
 #### Bug Fixes
-- 🐛 **Omni reference format correction** — `image_1` → `<<<image_1>>>`, conforming to official documentation requirements
+- 🐛 **Omni reference format correction** — `image_1` → `<<<image_1>>>`, compliant with official documentation requirements
 
 #### Documentation Updates
 - 📝 `SKILL.md` — Backend selection overview, Phase 3 decision tree rewritten
@@ -415,7 +434,7 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 - 📝 `prompt-guide.md` — Omni mode reference format correction
 
 ### v1.3.10 (2026-03-23)
-🎵 **Music Generation Parameter Normalization**
+🎵 **Music Generation Parameter Standardization**
 
 #### Fixes
 - 🐛 **music command style parameter must be provided** — Removed Lo-fi Chill default value to avoid style mismatch
@@ -426,65 +445,65 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 🎬 **Audio-Video Sync Fix**
 
 #### Fixes
-- 🐛 **Video concatenation audio-video desync issue** — Silent segments caused subsequent video audio misalignment
+- 🐛 **Video concatenation audio-video desync issue** — Silent segments causing subsequent video audio misalignment
   - Added `has_audio_track()` to detect if video has audio track
-  - `normalize_videos()` auto-adds silent track for silent segments
-  - `concat_videos()` switched to concat filter, ensuring audio-video sync
+  - `normalize_videos()` automatically adds silent audio track to silent segments
+  - `concat_videos()` changed to concat filter, ensuring audio-video sync
 
 #### Improvements
 - 🔄 `music` command `--prompt` changed to non-required, can read from creative.json
-- 📝 SKILL.md: Phase 5 added audio protection instructions
+- 📝 SKILL.md: Phase 5 added audio protection notes
 
 ### v1.3.8 (2026-03-23)
-🔧 **Parameter Passing Normalization**
+🔧 **Parameter Passing Standardization**
 
 #### Fixes
-- 🐛 **Hardcoded default value issue** — CLI parameters should prioritize reading from storyboard.json
+- 🐛 **Hardcoded default values issue** — CLI parameters should prioritize reading from storyboard.json
   - `video_gen_editor.py`: concat/image commands added `--storyboard` parameter
   - `video_gen_tools.py`: video/image added `--storyboard`, music added `--creative` parameter
   - Unified KlingClient/KlingOmniClient default aspect_ratio to `"9:16"`
 
 #### Improvements
-- 🔄 Suno logs show both prompt and style, avoiding misleading users
+- 🔄 Suno logs now show both prompt and style simultaneously, avoiding user confusion
 
 ### v1.3.7 (2026-03-20)
-🔧 **Execution Phase Fix & Image Size Optimization**
+🔧 **Execution Phase Fixes & Image Size Optimization**
 
 #### Fixes
 - 🐛 **Phase 4 aspect_ratio passing** — Execution phase must read aspect ratio from storyboard.json and pass to CLI
-- 🐛 Fixed image size inconsistency causing generation failures
+- 🐛 Fixed generation failure due to inconsistent image sizes
 
 #### New Features
-- ✨ **Image size auto-validation and adjustment** — Added `validate_and_resize_image()` function
-  - Min edge < 720px auto-upscale to 1280px
-  - Max edge > 2048px auto-downscale to 2048px
-  - Auto-process before Kling/KlingOmni calls
+- ✨ **Automatic image size validation and adjustment** — Added `validate_and_resize_image()` function
+  - Minimum side < 720px automatically scaled to 1280px
+  - Maximum side > 2048px automatically scaled down to 2048px
+  - Automatic processing before Kling/KlingOmni calls
 
 ### v1.3.6 (2026-03-20)
-📝 **Documentation Fix**
+📝 **Documentation Fixes**
 
 #### Fixes
-- 🐛 Fixed conflicts and ambiguous descriptions in `storyboard-spec.md`
+- 🐛 Fixed conflicting and ambiguous descriptions in `storyboard-spec.md`
 - 📝 Clarified three-layer structure field definitions and usage scenarios
 
 ### v1.3.5 (2026-03-19)
 🎬 **Character Consistency Flow Enhancement**
 
 #### New Features
-- ✨ **Phase 1 Character Registration Enhancement**
+- ✨ **Phase 1 character registration enhancement**
   - Added `personas.json` structure, supports `reference_image` being null
-  - Only processes user-uploaded reference images, missing ones wait for Phase 2 supplement
+  - Only processes uploaded reference images; unuploaded ones wait for Phase 2 supplement
 
-- ✨ **Phase 2 Character Reference Image Collection**
+- ✨ **Phase 2 character reference image collection**
   - Added question 6: Character reference image source selection
-  - Supports three methods: AI generation / User upload / Pure text generation
-  - Auto-calls `video_gen_tools.py image` to generate standard character reference images
+  - Supports three methods: AI generation / User upload / Text-only generation
+  - Automatically calls `video_gen_tools.py image` to generate standard character reference images
 
-- ✨ **Phase 3 Auto Backend Selection**
-  - Has reference image + multi-shot character → `kling-omni` (best character consistency)
-  - Has reference image + single-shot character → `kling` (precise first frame control)
-  - No reference image + character → `kling` text2video (user warned)
-  - Pure scene no character → `kling` text2video
+- ✨ **Phase 3 automatic backend selection**
+  - Has reference images + multi-shot characters → `kling-omni` (best character consistency)
+  - Has reference images + single-shot characters → `kling` (precise first-frame control)
+  - No reference images + characters → `kling` text2video (user already warned)
+  - Pure scenes without characters → `kling` text2video
 
 #### PersonaManager Enhancement
 - ✨ `list_personas_without_reference()` — List characters without reference images
@@ -495,14 +514,14 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 #### SKILL.md Flow Optimization
 - 📝 Added "Must read before storyboard generation" step
 - 📝 Added "Step 1: Sync character info to Storyboard"
-- 📝 Improved deliverable documentation and JSON structure examples
+- 📝 Enhanced output file descriptions and JSON structure examples
 
 ### v1.3.4 (2026-03-19)
-🎬 **Kling V3-Omni Two-Stage Workflow Normalization**
+🎬 **Kling V3-Omni Two-Stage Workflow Standardization**
 
 #### Documentation Updates
-- ✨ **Added V3-Omni three-layer structure spec** — storyboard + frame_generation + video_generation
-  - `storyboard-spec.md`: Added three-layer schema definitions (storyboard/frame/video)
+- ✨ **Added V3-Omni three-layer structure specification** — storyboard + frame_generation + video_generation
+  - `storyboard-spec.md`: Added three-layer schema definition (storyboard/frame/video)
   - `prompt-guide.md`: Added Image Prompt and Video Prompt writing specifications
   - `backend-guide.md`: Added Path C (V3-Omni recommended path), updated decision tree and path comparison
 
@@ -515,13 +534,13 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
   - Time segment format ("0-2s", "2-5s"), dialogue sync markers, sound design description
 
 #### Architecture Adjustment
-- 🗑️ Removed incorrectly created `vico-templates` Python code (should be documentation specs not code templates)
+- 🗑️ Removed incorrectly created `vico-templates` Python code (should be documentation specs, not code templates)
 
 ### v1.3.3 (2026-03-18)
 📐 **SKILL.md Architecture Refactoring & Default Backend Switch**
 
 #### Architecture Refactoring (Anthropic Skill Spec Optimization)
-- ✨ **Progressive disclosure architecture** — SKILL.md compressed from 1401 lines to ~290 lines (-80%), complying with Anthropic's recommended 500-line limit
+- ✨ **Progressive disclosure architecture** — SKILL.md compressed from 1401 lines to ~290 lines (-80%), meeting Anthropic's recommended 500-line limit
 - ✨ **Split into 4 sub-files** — Storyboard spec, Prompt guide, Backend selection, API reference, loaded on demand
 - ✨ **Optimized description** — Added Kling Omni keywords and trigger condition descriptions
 - ✨ **Added workflow checklist** — Anthropic recommended checklist pattern
@@ -530,7 +549,7 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 
 #### Default Backend Switch
 - 🔄 **Default backend changed from Vidu to Kling** — CLI `--backend` default value `vidu` → `kling`
-- ✨ **Enhanced auto-selection logic** — Force switch backend by feature requirements (`--image-list` → omni, `--tail-image` → kling), no longer limited to default backend trigger
+- ✨ **Enhanced auto-selection logic** — Force backend switch based on feature requirements (`--image-list` → omni, `--tail-image` → kling), not limited to default backend triggers
 
 ### v1.3.2 (2026-03-18)
 🎬 **Kling Omni Backend Integration**
@@ -540,14 +559,14 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
   - Added `--backend kling-omni` backend option
   - `--image-list` multi-reference image mode, use `<<<image_1>>>` reference in prompt
   - Supports multi-reference images + multi_shot combination
-- ✨ **Auto Backend Selection**
-  - Providing `--image-list` auto-uses kling-omni
-  - Providing `--tail-image` auto-uses kling
-- ✨ **Three-backend selection strategy** — Core trade-off between character consistency and scene precision
-- ✨ **Two character reference image paths** — Omni path (recommended) vs Kling+Gemini first frame path
+- ✨ **Automatic backend selection**
+  - Providing `--image-list` automatically uses kling-omni
+  - Providing `--tail-image` automatically uses kling
+- ✨ **Three-backend selection strategy** — Character consistency vs scene precision core tradeoff
+- ✨ **Two character reference image paths** — Omni path (recommended) vs Kling+Gemini first-frame path
 
 #### CLI Updates
-- 🔧 Added `--image-list` parameter (Kling Omni multi-reference images)
+- 🔧 Added `--image-list` parameter (Kling Omni multi-reference)
 - 🔧 Added `--backend kling-omni` option
 
 ### v1.3.1 (2026-03-17)
@@ -559,7 +578,7 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
   - Added scene fields: `scene_id`, `scene_name`, `narrative_goal`, `spatial_setting`, `time_state`, `visual_style`
   - Scene duration auto-calculated (sum of subordinate shot durations)
 
-- ✨ **shot_id Naming Normalization**
+- ✨ **shot_id naming standardization**
   - New format: `scene{scene_number}_shot{shot_number}`
   - Single shot example: `scene1_shot1`, `scene1_shot2`
   - Multi-shot mode: `scene1_shot2to4_multi` (with `_multi` suffix)
@@ -577,14 +596,14 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 - 📝 **T2V/I2V Selection Rules**: Decision tree + rule table
 - 📝 **First/Last Frame Generation Strategy**: Supports `image_tail` parameter
 - 📝 **Dialogue Integration Rules**: video_prompt directly includes dialogue information
-- 📝 **Review Check Mechanism**: Automated check items (structure completeness, shot rules, prompt specs, technical selection)
+- 📝 **Review Check Mechanism**: Automated check items (structure integrity, shot rules, prompt specs, technical selection)
 
 #### Character Reference Image Flow
 - 📝 Enhanced character reference image usage flow:
-  - Core principle: Reference images cannot be directly used as first frame
+  - Core principle: Reference images cannot be used directly as first frames
   - Complete flow: `Character reference image → Gemini generates storyboard image → img2video`
-  - Single/dual character shot processing solutions
-  - Storyboard JSON marks `reference_personas` and `notes`
+  - Single/dual character shot handling solutions
+  - Storyboard JSON annotates `reference_personas` and `notes`
 
 #### CLI Updates
 - 🔧 Added `--multi-shot` parameter to enable multi-shot mode
@@ -601,12 +620,12 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
   - JWT Token authentication method (iss, iat, exp, nbf)
   - Text-to-video (text2video) and image-to-video (image2video)
   - Supports 3-15 second duration range
-  - Supports std/pro generation modes
-  - Supports audio-video synchronized output (sound: on/off)
+  - Supports std/pro two generation modes
+  - Supports synchronized audio-video output (sound: on/off)
 
-- ✨ **Multi-Shot Mode**
-  - Supports generating videos with multiple shots in one generation
-  - intelligence mode (AI auto shot division)
+- ✨ **Multi-shot Mode**
+  - Supports generating videos containing multiple shots at once
+  - intelligence mode (AI auto shot-cutting)
   - customize mode (custom shots)
 
 #### CLI Updates
@@ -618,97 +637,97 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 - 📝 README updated feature list, tool call examples, environment variable configuration
 
 ### v1.2.0 (2026-03-16)
-🎯 **Storyboard Flow Normalization & User Experience Optimization**
+🎯 **Storyboard Flow Standardization & User Experience Optimization**
 
-#### Flow Specifications
-- ✅ **Video Ratio Full-Flow Constraint**
-  - Text-to-image, image-to-video both phases' prompts forced to include ratio information
-  - 9:16/16:9/1:1 different ratios have clear Chinese description specifications
-  - Auto-check ratio consistency before generation
+#### Flow Specification
+- ✅ **Video aspect ratio full-flow constraint**
+  - Both text-to-image and image-to-video stages' prompts must include aspect ratio info
+  - 9:16/16:9/1:1 different ratios correspond to clear Chinese description specifications
+  - Auto-check aspect ratio consistency before generation
 
-- ✅ **Strict Storyboard-Driven Generation Mode**
-  - `generation_mode` must be clearly specified in storyboard, strictly forbidden to change during execution
-  - img2video/text2video/existing three modes have strict execution rules
-  - Stop execution immediately and report error when violation occurs
+- ✅ **Strict execution of storyboard-planned generation mode**
+  - `generation_mode` must be explicitly specified in storyboard, cannot be changed during execution phase
+  - img2video/text2video/existing three modes correspond to strict execution rules
+  - Stop execution immediately and report error on violation
 
-- ✅ **Dialogue Generation Method Clear Distinction**
-  - Sync sound (video model generated) vs post TTS narration usage scenarios clearly divided
-  - Sync sound clearly describes character, dialogue, emotion, speech rate, voice quality in vidu_prompt
-  - TTS only for scene narration, background intro, not for character dialogue
+- ✅ **Clear distinction of dialogue generation methods**
+  - Synchronous sound (video model generated) vs post-production TTS narration usage scenarios clearly defined
+  - Synchronous sound clearly describes character, dialogue, emotion, speed, voice quality in vidu_prompt
+  - TTS only for scene narration, background introduction, not for character dialogue
 
-- ✅ **Prompt Detail Level and Language Specification**
+- ✅ **Prompt detail level and language specification**
   - Video generation prompts must be written in Chinese
-  - Forced to include camera movement, motion pace, visual stability, ratio protection, dialogue information
-  - Image generation prompts must include scene, subject, lighting, style, ratio five elements
+  - Must include camera movement description, motion rhythm, image stability, aspect ratio protection, dialogue info
+  - Image generation prompts must include scene, subject, lighting, style, aspect ratio five elements
 
-- ✅ **Material Consistency Mandatory Guarantee**
-  - Cross-shot characters must include detailed identity markers and appearance descriptions in prompt
+- ✅ **Material consistency mandatory guarantee**
+  - Cross-shot characters must include detailed identity markers and appearance feature descriptions in prompt
   - Key props establish material list, each shot includes complete description to ensure consistency
-  - Provided character/prop description Prompt templates and examples
+  - Provided character/prop description prompt templates and examples
 
-- ✅ **Mandatory User Storyboard Confirmation**
-  - Storyboard plan must receive explicit user confirmation before entering execution phase
+- ✅ **Mandatory user storyboard confirmation**
+  - Storyboard plan must be explicitly confirmed by user before entering execution phase
   - Detailed display of each shot's generation mode, prompt, duration, transition, etc.
   - state.json added `storyboard_confirmed` and `confirmation_details` fields
 
 #### Documentation Optimization
-- 📝 README added "Usage Tips" section, explaining recommended models, guiding techniques, project positioning
+- 📝 README added "Usage Recommendations" chapter, explaining recommended models, guidance tips, project positioning
 
 ### v1.1.0 (2026-03-12)
 🔧 **Stability Enhancement & Character Management**
 
 #### New Features
-- ✨ **Video Parameter Auto-Validation and Normalization**
+- ✨ **Video parameter auto-validation and normalization**
   - Auto-detect all videos' resolution, encoding, frame rate before concatenation
-  - Auto-normalize to unified format when parameters inconsistent (1080x1920 / H.264 / 24fps)
-  - Resolved video freezing caused by inconsistent API-returned video resolutions
+  - Auto-normalize to unified format (1080x1920 / H.264 / 24fps) when parameters are inconsistent
+  - Resolved video freeze issues caused by inconsistent API-returned video resolutions
 
 - ✨ **Character Persona Manager (PersonaManager)**
   - Manage character reference images in project, maintain cross-scene character consistency
-  - Auto-generate Vidu/Gemini compatible prompts
+  - Auto-generate prompts usable by Vidu/Gemini
   - Support different strategies for single/dual character shots
 
 #### Documentation Optimization
 - 📝 SKILL.md added conditional workflows:
-  - Character identification flow (only triggers when material is portrait image)
-  - Character reference image strategy (single/dual character shot processing solutions)
+  - Character recognition flow (only triggered when materials are portrait images)
+  - Character reference image strategy (single/dual character shot handling solutions)
   - Video parameter validation flow (must execute before concatenation)
-- 📝 Added key experience summary: Gemini multi-reference image notes, video generation parameter differences
+- 📝 Added key experience summaries: Gemini multi-reference image considerations, video generation parameter differences
 
 #### Fixes
-- 🐛 Fixed concatenation issue caused by text2video (720x1280) and image2video (716x1284) resolution inconsistency
+- 🐛 Fixed concatenation issues caused by text2video (720x1280) and image2video (716x1284) resolution inconsistency
 
 ### v1.0.0 (2026-03-10)
 🎉 **Complete Initial Release**
 
 #### Core Features
-- ✨ **AI Director Workflow**: Complete video creation process - Material Analysis → Creative Confirmation → Storyboard Design → Generation → Editing Output
+- ✨ **AI Director Workflow**: Complete video creation flow - Material analysis → Creative confirmation → Storyboard design → Generation → Editing output
 - ✨ **Multi-modal AI Generation**:
   - Vidu Q3 Pro image-to-video/text-to-video (720p/1080p, up to 10 seconds)
-  - Suno V3.5/V4.5 music generation (custom style, duration, instrumental)
-  - Volcano Engine TTS voice synthesis (multiple voices, emotions, speech rates)
-  - Gemini image generation (multiple styles, ratios)
+  - Suno V3.5/V4.5 music generation (supports custom style, duration, instrumental)
+  - Volcano Engine TTS voice synthesis (multiple voices, emotions, speeds)
+  - Gemini image generation (multiple styles, aspect ratios)
 - ✨ **Professional Editing Tools**:
   - Video concatenation (auto-adjust resolution to 9:16/16:9/1:1)
-  - Transitions (16 types: fade, dissolve, wipe, slide, etc.)
+  - Transition effects (16 transitions: fade, dissolve, wipe, slide, etc.)
   - Audio mixing (auto-loop BGM to match video duration, volume adjustment)
-  - Color grading presets (warm, cool, vivid, cinematic, vintage, etc.)
+  - Color grading presets (warm, cool, vibrant, cinematic, retro, etc.)
   - Speed change, subtitle support
-- ✨ **Auto Project Management**:
+- ✨ **Automatic Project Management**:
   - Auto-create project directory structure
-  - State tracking and checkpoint resume
+  - State tracking and resume from checkpoint
   - All intermediate artifacts auto-saved
 - ✨ **Interactive Creation**:
   - Auto material recognition and analysis
-  - Question card style creative confirmation
-  - Storyboard preview and adjustment
+  - Question-card style creative confirmation
+  - Storyboard plan preview and adjustment
 
 #### Technical Implementation
 - ✨ Async API calls based on httpx, supports concurrent generation
 - ✨ FFmpeg-based video processing, excellent performance
-- ✨ Auto environment check and dependency management
+- ✨ Automatic environment check and dependency management
 - ✨ Comprehensive error handling and retry mechanism
-- 🐛 Fixed Suno API callbackUrl missing issue, all features working
+- 🐛 Fixed Suno API callbackUrl missing issue, full functionality available
 
 ## 📄 License
 

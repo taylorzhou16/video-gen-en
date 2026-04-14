@@ -84,7 +84,7 @@ def get_aspect_from_storyboard(storyboard_path: str) -> Optional[str]:
 
 
 async def has_audio_track(video_path: str) -> bool:
-    """Check if video has audio track"""
+    """Check if video has an audio track"""
     cmd = [
         "ffprobe", "-v", "error",
         "-select_streams", "a",
@@ -140,10 +140,10 @@ async def get_video_duration(video_path: str) -> float:
 
 
 async def get_video_specs(video_path: str) -> Dict[str, Any]:
-    """Get detailed video parameters"""
+    """Get detailed video specifications"""
     info = await get_video_info(video_path)
     if not info:
-        return {"path": video_path, "error": "Cannot get video info"}
+        return {"path": video_path, "error": "Unable to get video info"}
 
     specs = {"path": video_path}
 
@@ -177,7 +177,7 @@ async def validate_videos(video_paths: List[str]) -> Dict[str, Any]:
         {
             "consistent": bool,
             "issues": List[str],  # Issue descriptions
-            "specs": List[dict],  # Parameters for each video
+            "specs": List[dict],  # Each video's parameters
         }
     """
     specs_list = []
@@ -203,16 +203,16 @@ async def validate_videos(video_paths: List[str]) -> Dict[str, Any]:
     # Check consistency
     if len(resolutions) > 1:
         res_str = ", ".join([f"{w}x{h}" for w, h in resolutions])
-        issues.append(f"Inconsistent resolution: {res_str}")
+        issues.append(f"Inconsistent resolutions: {res_str}")
 
     if len(codecs) > 1:
-        issues.append(f"Inconsistent codec: {', '.join(codecs)}")
+        issues.append(f"Inconsistent codecs: {', '.join(codecs)}")
 
     if len(fps_values) > 1:
         # Allow slight frame rate differences (e.g., 23.976 vs 24)
         fps_range = max(fps_values) - min(fps_values)
         if fps_range > 1:
-            issues.append(f"Large frame rate difference: {', '.join(map(str, fps_values))}")
+            issues.append(f"Large frame rate differences: {', '.join(map(str, fps_values))}")
 
     return {
         "consistent": len(issues) == 0,
@@ -234,7 +234,7 @@ async def normalize_videos(
     - Codec: H.264
     - Frame rate: 24fps
     - Pixel format: yuv420p
-    - Audio: Unified 48kHz stereo, silent track added for videos without audio
+    - Audio: Unified 48kHz stereo, silent track added for clips without audio
 
     Returns:
         List of normalized video paths
@@ -249,11 +249,11 @@ async def normalize_videos(
     for i, video_path in enumerate(video_paths):
         output_file = output_path / f"normalized_{i:03d}.mp4"
 
-        # Check if video has audio track
+        # Check if has audio track
         has_audio = await has_audio_track(video_path)
 
         if has_audio:
-            # With audio: normal normalization
+            # Has audio: normalize normally
             cmd = [
                 "ffmpeg", "-y",
                 "-i", video_path,
@@ -266,7 +266,7 @@ async def normalize_videos(
                 str(output_file)
             ]
         else:
-            # Without audio: add silent track
+            # No audio: add silent track
             logger.info(f"Video has no audio track, adding silent track: {video_path}")
             cmd = [
                 "ffmpeg", "-y",
@@ -285,7 +285,7 @@ async def normalize_videos(
 
         if success:
             normalized_paths.append(str(output_file))
-            logger.info(f"Video normalization completed: {output_file}")
+            logger.info(f"Video normalization complete: {output_file}")
         else:
             logger.warning(f"Video normalization failed, using original file: {video_path}")
             normalized_paths.append(video_path)
@@ -301,10 +301,10 @@ async def concat_videos(
     aspect: str = "9:16"
 ) -> Dict[str, Any]:
     """
-    Concatenate multiple videos (using concat filter, ensuring audio-video sync)
+    Concatenate multiple videos (using concat filter, ensures A/V sync)
 
     Args:
-        inputs: List of input video paths (all clips must have audio track, guaranteed by normalize_videos)
+        inputs: List of input video paths (all clips must have audio tracks, guaranteed by normalize_videos)
         output: Output video path
         aspect: Target aspect ratio
     """
@@ -319,11 +319,11 @@ async def concat_videos(
         shutil.copy(inputs[0], output)
         return {"success": True, "output": output}
 
-    # Use concat filter (all clips must have audio track)
+    # Use concat filter (all clips must have audio tracks)
     n = len(inputs)
     filter_str = f"concat=n={n}:v=1:a=1[outv][outa]"
 
-    # Build input parameters
+    # Build input arguments
     input_args = []
     for inp in inputs:
         input_args.extend(["-i", inp])
@@ -343,7 +343,7 @@ async def concat_videos(
     success, msg = await run_ffmpeg(cmd)
 
     if success:
-        logger.info(f"Video concatenation completed: {output}")
+        logger.info(f"Video concatenation complete: {output}")
         return {"success": True, "output": output}
     else:
         return {"success": False, "error": msg}
@@ -384,9 +384,9 @@ async def add_subtitles(
         position: Position (bottom/top/center)
     """
     if not os.path.exists(video):
-        return {"success": False, "error": f"Video does not exist: {video}"}
+        return {"success": False, "error": f"Video not found: {video}"}
     if not os.path.exists(srt):
-        return {"success": False, "error": f"Subtitle file does not exist: {srt}"}
+        return {"success": False, "error": f"Subtitle file not found: {srt}"}
 
     Path(output).parent.mkdir(parents=True, exist_ok=True)
 
@@ -406,7 +406,7 @@ async def add_subtitles(
     success, msg = await run_ffmpeg(cmd)
 
     if success:
-        logger.info(f"Subtitle addition completed: {output}")
+        logger.info(f"Subtitle addition complete: {output}")
         return {"success": True, "output": output}
     else:
         return {"success": False, "error": msg}
@@ -436,7 +436,7 @@ async def mix_audio(
         tts_volume: TTS volume (0-1)
     """
     if not os.path.exists(video):
-        return {"success": False, "error": f"Video does not exist: {video}"}
+        return {"success": False, "error": f"Video not found: {video}"}
 
     Path(output).parent.mkdir(parents=True, exist_ok=True)
 
@@ -466,7 +466,7 @@ async def mix_audio(
 
     # Mix all audio
     mix_inputs = "".join([f"[a{i}]" for i in range(input_idx)])
-    # normalize=0: Disable FFmpeg auto normalization, preserve original volume ratios
+    # normalize=0: disable FFmpeg auto-normalization, preserve original volume ratio
     filter_parts.append(f"{mix_inputs}amix=inputs={input_idx}:duration=first:dropout_transition=2:normalize=0[aout]")
 
     filter_complex = ";".join(filter_parts)
@@ -486,7 +486,7 @@ async def mix_audio(
     success, msg = await run_ffmpeg(cmd, timeout=600)
 
     if success:
-        logger.info(f"Audio mixing completed: {output}")
+        logger.info(f"Audio mixing complete: {output}")
         return {"success": True, "output": output}
     else:
         return {"success": False, "error": msg}
@@ -513,7 +513,7 @@ async def add_transition(
     Add transition effect
 
     Args:
-        inputs: List of input videos (two)
+        inputs: Input video list (two videos)
         output: Output video
         transition_type: Transition type
         duration: Transition duration (seconds)
@@ -524,9 +524,9 @@ async def add_transition(
     video1, video2 = inputs
 
     if not os.path.exists(video1):
-        return {"success": False, "error": f"Video does not exist: {video1}"}
+        return {"success": False, "error": f"Video not found: {video1}"}
     if not os.path.exists(video2):
-        return {"success": False, "error": f"Video does not exist: {video2}"}
+        return {"success": False, "error": f"Video not found: {video2}"}
 
     Path(output).parent.mkdir(parents=True, exist_ok=True)
 
@@ -534,10 +534,10 @@ async def add_transition(
     if transition_type not in TRANSITION_TYPES:
         transition_type = "fade"
 
-    # Get first video duration
+    # Get duration of first video
     duration1 = await get_video_duration(video1)
     if duration1 <= 0:
-        return {"success": False, "error": "Cannot get video duration"}
+        return {"success": False, "error": "Unable to get video duration"}
 
     # Calculate transition offset
     offset = duration1 - duration
@@ -560,7 +560,7 @@ async def add_transition(
     success, msg = await run_ffmpeg(cmd, timeout=600)
 
     if success:
-        logger.info(f"Transition addition completed: {output}")
+        logger.info(f"Transition addition complete: {output}")
         return {"success": True, "output": output}
     else:
         return {"success": False, "error": msg}
@@ -584,15 +584,15 @@ async def color_grade(
     preset: str = "warm"
 ) -> Dict[str, Any]:
     """
-    Video color grading
+    Apply color grading to video
 
     Args:
         video: Input video
         output: Output video
-        preset: Color preset (warm/cool/vibrant/cinematic/desaturated/vintage)
+        preset: Color grading preset (warm/cool/vibrant/cinematic/desaturated/vintage)
     """
     if not os.path.exists(video):
-        return {"success": False, "error": f"Video does not exist: {video}"}
+        return {"success": False, "error": f"Video not found: {video}"}
 
     Path(output).parent.mkdir(parents=True, exist_ok=True)
 
@@ -610,7 +610,7 @@ async def color_grade(
     success, msg = await run_ffmpeg(cmd)
 
     if success:
-        logger.info(f"Color grading completed ({preset}): {output}")
+        logger.info(f"Color grading complete ({preset}): {output}")
         return {"success": True, "output": output}
     else:
         return {"success": False, "error": msg}
@@ -643,10 +643,10 @@ async def change_speed(
     Args:
         video: Input video
         output: Output video
-        rate: Speed multiplier (0.5=slow, 2.0=fast)
+        rate: Speed multiplier (0.5=slow motion, 2.0=fast forward)
     """
     if not os.path.exists(video):
-        return {"success": False, "error": f"Video does not exist: {video}"}
+        return {"success": False, "error": f"Video not found: {video}"}
     if rate <= 0:
         return {"success": False, "error": f"Rate must be greater than 0: {rate}"}
 
@@ -668,7 +668,7 @@ async def change_speed(
     success, msg = await run_ffmpeg(cmd)
 
     if success:
-        logger.info(f"Speed change completed ({rate}x): {output}")
+        logger.info(f"Speed change complete ({rate}x): {output}")
         return {"success": True, "output": output}
     else:
         return {"success": False, "error": msg}
@@ -692,7 +692,7 @@ async def trim_video(
         duration: Duration (seconds), None means to end
     """
     if not os.path.exists(video):
-        return {"success": False, "error": f"Video does not exist: {video}"}
+        return {"success": False, "error": f"Video not found: {video}"}
 
     Path(output).parent.mkdir(parents=True, exist_ok=True)
 
@@ -714,7 +714,7 @@ async def trim_video(
     success, msg = await run_ffmpeg(cmd)
 
     if success:
-        logger.info(f"Trim completed: {output}")
+        logger.info(f"Trim complete: {output}")
         return {"success": True, "output": output}
     else:
         return {"success": False, "error": msg}
@@ -740,7 +740,7 @@ async def image_to_video(
         zoom: Whether to add slow zoom effect
     """
     if not os.path.exists(image):
-        return {"success": False, "error": f"Image does not exist: {image}"}
+        return {"success": False, "error": f"Image not found: {image}"}
 
     Path(output).parent.mkdir(parents=True, exist_ok=True)
 
@@ -769,13 +769,13 @@ async def image_to_video(
     success, msg = await run_ffmpeg(cmd)
 
     if success:
-        logger.info(f"Image to video completed: {output}")
+        logger.info(f"Image to video complete: {output}")
         return {"success": True, "output": output}
     else:
         return {"success": False, "error": msg}
 
 
-# ============== Narration Composition ==============
+# ============== Narration Synthesis ==============
 
 async def add_narration(
     video: str,
@@ -786,7 +786,7 @@ async def add_narration(
     video_volume: float = 1.0
 ) -> Dict[str, Any]:
     """
-    Synthesize narration audio at time points into video
+    Synthesize narration audio into video at specified time points
 
     Args:
         video: Input video
@@ -797,7 +797,7 @@ async def add_narration(
         video_volume: Original video volume
     """
     if not os.path.exists(video):
-        return {"success": False, "error": f"Video does not exist: {video}"}
+        return {"success": False, "error": f"Video not found: {video}"}
 
     # Read storyboard.json to get narration time points
     narration_segments = []
@@ -815,11 +815,11 @@ async def add_narration(
     Path(output).parent.mkdir(parents=True, exist_ok=True)
 
     # Build filter_complex
-    # Input: [0] video, [1-N] narration audio
+    # Inputs: [0] video, [1-N] narration audio
     inputs = ["-i", video]
     filter_parts = []
 
-    # Build audio mixing
+    # Build audio mix
     audio_mix_parts = [f"[0:a]volume={video_volume}[video]"]
 
     audio_counter = 0  # Actual added audio count
@@ -887,7 +887,7 @@ async def add_narration(
     success, msg = await run_ffmpeg(cmd)
 
     if success:
-        logger.info(f"Narration composition completed: {output}")
+        logger.info(f"Narration synthesis complete: {output}")
         return {"success": True, "output": output, "segments": len(narration_segments)}
     else:
         return {"success": False, "error": msg}
@@ -896,7 +896,7 @@ async def add_narration(
 def get_audio_duration_sync(audio_path: str) -> float:
     """
     Get precise audio duration (seconds) using ffprobe
-    Synchronous version, used in async functions
+    Synchronous version, for use in async functions
     """
     import subprocess
     result = subprocess.run(
@@ -937,7 +937,7 @@ def calculate_narration_times(
     Args:
         segments_info: List containing info for each narration segment
         video_duration: Total video duration
-        gap: Interval between segments (seconds)
+        gap: Gap between segments (seconds)
 
     Returns:
         (time_points, warnings)
@@ -955,8 +955,8 @@ def calculate_narration_times(
 
     if required_duration > video_duration:
         warnings.append(
-            f"Total narration duration ({total_narration:.1f}s) + gap ({total_gap:.1f}s) = {required_duration:.1f}s, "
-            f"exceeds video duration ({video_duration:.1f}s), will compress gap and may skip some segments"
+            f"Total narration duration ({total_narration:.1f}s) + gaps ({total_gap:.1f}s) = {required_duration:.1f}s, "
+            f"exceeds video duration ({video_duration:.1f}s), will compress gaps and may skip some segments"
         )
 
     for i, seg in enumerate(segments_info):
@@ -969,12 +969,12 @@ def calculate_narration_times(
         min_end = min_start + duration
 
         if min_end > video_duration:
-            # Not enough space, skip this segment
+            # Insufficient space, skip this segment
             warnings.append(f"{seg_id}: Insufficient space, skipped (needs {duration:.1f}s, remaining {video_duration - current_time:.1f}s)")
             time_points.append({"start_time": 0, "end_time": 0, "skipped": True})
             continue
 
-        # Calculate remaining available time and remaining segments count
+        # Calculate remaining available time and remaining segment count
         remaining_segments = len([s for s in segments_info[i:] if s.get("duration", 0) > 0])
         remaining_narration = sum(s["duration"] for s in segments_info[i:])
         remaining_gap = gap * (remaining_segments - 1) if remaining_segments > 1 else 0
@@ -984,7 +984,7 @@ def calculate_narration_times(
         # If remaining space is tight, dynamically adjust gap
         effective_gap = gap
         if remaining_required > remaining_available and remaining_segments > 1:
-            # Calculate minimum required gap
+            # Calculate minimum gap needed
             needed_gap = (remaining_available - remaining_narration) / (remaining_segments - 1)
             effective_gap = max(0, needed_gap)  # Can compress to 0
 
@@ -998,7 +998,7 @@ def calculate_narration_times(
             warnings.append(f"{seg_id}: Truncated to video end")
 
         time_points.append({"start_time": start_time, "end_time": end_time, "skipped": False})
-        current_time = end_time  # Update to end time of current segment
+        current_time = end_time  # Update to current segment's end time
 
     return time_points, warnings
 
@@ -1014,10 +1014,10 @@ async def smart_narration_mix(
     gap: float = 0.5
 ) -> Dict[str, Any]:
     """
-    Smart narration composition:
-    1. Read all narration audio and their precise durations (ffprobe)
-    2. Locate shot start time by target_shot
-    3. Calculate non-overlapping time points with reserved gaps
+    Smart narration synthesis:
+    1. Read all narration audio files and their precise durations (ffprobe)
+    2. Locate shot start times based on target_shot
+    3. Calculate non-overlapping time points, reserve gaps
     4. Synthesize final audio
 
     Args:
@@ -1028,16 +1028,16 @@ async def smart_narration_mix(
         bgm_path: Background music path (optional)
         bgm_volume: BGM volume (default 0.15)
         narration_volume: Narration volume (default 1.5)
-        gap: Interval between segments (seconds, default 0.5)
+        gap: Gap between segments (seconds, default 0.5)
 
     Returns:
         {"success": True, "output": output, "segments_info": [...]}
     """
     if not os.path.exists(video_path):
-        return {"success": False, "error": f"Video does not exist: {video_path}"}
+        return {"success": False, "error": f"Video not found: {video_path}"}
 
     if not os.path.exists(storyboard_path):
-        return {"success": False, "error": f"storyboard.json does not exist: {storyboard_path}"}
+        return {"success": False, "error": f"storyboard.json not found: {storyboard_path}"}
 
     # Read storyboard
     with open(storyboard_path, 'r', encoding='utf-8') as f:
@@ -1114,7 +1114,7 @@ async def smart_narration_mix(
         segments_info[i]["skipped"] = tp.get("skipped", False)
 
         if tp.get("skipped"):
-            logger.warning(f"  {segments_info[i]['segment_id']}: Skipped")
+            logger.warning(f"  Skipped: {segments_info[i]['segment_id']}")
         else:
             logger.info(f"  {segments_info[i]['segment_id']}: {tp['start_time']:.1f}s - {tp['end_time']:.1f}s ({segments_info[i]['duration']:.1f}s)")
             active_segments.append(segments_info[i])
@@ -1141,11 +1141,11 @@ async def smart_narration_mix(
     # Add video input
     cmd.extend(["-i", video_path])
 
-    # Add narration input and build filter (only use active_segments)
+    # Add narration inputs and build filter (only active_segments)
     mix_inputs = ["[0:a]"]
 
     for seg in active_segments:
-        cmd.extend(["-i", seg["audio_path"])
+        cmd.extend(["-i", seg["audio_path"]])
         delay_ms = int(seg["start_time"] * 1000)
         filter_parts.append(
             f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume={narration_volume}[n{input_idx}]"
@@ -1159,7 +1159,7 @@ async def smart_narration_mix(
         filter_parts.append(f"[{input_idx}:a]volume={bgm_volume}[bgm]")
         mix_inputs.append("[bgm]")
 
-    # amix mixing - Note: inputs don't need commas, just concatenate directly
+    # amix mixing - note: inputs are concatenated directly without commas
     filter_parts.append(
         f"{''.join(mix_inputs)}amix=inputs={len(mix_inputs)}:duration=first:normalize=0[aout]"
     )
@@ -1177,7 +1177,7 @@ async def smart_narration_mix(
     success, msg = await run_ffmpeg(cmd)
 
     if success:
-        logger.info(f"Smart narration composition completed: {output}")
+        logger.info(f"Smart narration synthesis complete: {output}")
         return {
             "success": True,
             "output": output,
@@ -1193,15 +1193,15 @@ async def smart_narration_mix(
 # ============== CLI Entry Point ==============
 
 async def cmd_concat(args):
-    """Concat command"""
-    # Priority: CLI > storyboard.json > default value
+    """Concatenate command"""
+    # Priority: CLI args > storyboard.json > default value
     aspect = args.aspect
     if aspect is None and hasattr(args, 'storyboard') and args.storyboard:
         aspect = get_aspect_from_storyboard(args.storyboard)
         if aspect:
             logger.info(f"Read aspect ratio from storyboard.json: {aspect}")
     if aspect is None:
-        aspect = "9:16"  # Final default
+        aspect = "9:16"  # Final default value
         logger.info(f"Using default aspect ratio: {aspect}")
 
     inputs = args.inputs
@@ -1212,7 +1212,7 @@ async def cmd_concat(args):
     validation = await validate_videos(inputs)
 
     if not validation["consistent"]:
-        logger.warning(f"Video parameters inconsistent: {validation['issues']}")
+        logger.warning(f"Inconsistent video parameters: {validation['issues']}")
         logger.info("Auto-normalizing videos...")
 
         # Create temp directory for normalized videos
@@ -1229,7 +1229,7 @@ async def cmd_concat(args):
         aspect=aspect
     )
 
-    # Clean up temp normalized files
+    # Cleanup temp normalized files
     if hasattr(args, '_normalized_dir') and args._normalized_dir.exists():
         import shutil
         shutil.rmtree(args._normalized_dir)
@@ -1280,7 +1280,7 @@ async def cmd_transition(args):
 
 
 async def cmd_color(args):
-    """Color command"""
+    """Color grading command"""
     result = await color_grade(
         video=args.video,
         output=args.output,
@@ -1291,7 +1291,7 @@ async def cmd_color(args):
 
 
 async def cmd_speed(args):
-    """Speed command"""
+    """Speed change command"""
     result = await change_speed(
         video=args.video,
         output=args.output,
@@ -1315,14 +1315,14 @@ async def cmd_trim(args):
 
 async def cmd_image(args):
     """Image to video command"""
-    # Priority: CLI > storyboard.json > default value
+    # Priority: CLI args > storyboard.json > default value
     aspect = args.aspect
     if aspect is None and hasattr(args, 'storyboard') and args.storyboard:
         aspect = get_aspect_from_storyboard(args.storyboard)
         if aspect:
             logger.info(f"Read aspect ratio from storyboard.json: {aspect}")
     if aspect is None:
-        aspect = "9:16"  # Final default
+        aspect = "9:16"  # Final default value
         logger.info(f"Using default aspect ratio: {aspect}")
 
     result = await image_to_video(
@@ -1337,7 +1337,7 @@ async def cmd_image(args):
 
 
 async def cmd_narration(args):
-    """Narration composition command"""
+    """Narration synthesis command"""
     result = await add_narration(
         video=args.video,
         output=args.output,
@@ -1351,7 +1351,7 @@ async def cmd_narration(args):
 
 
 async def cmd_smart_narration(args):
-    """Smart narration composition command"""
+    """Smart narration synthesis command"""
     result = await smart_narration_mix(
         video_path=args.video,
         narration_dir=args.narration_dir,
@@ -1375,7 +1375,7 @@ def main():
 
     # concat subcommand
     concat_parser = subparsers.add_parser("concat", help="Concatenate videos")
-    concat_parser.add_argument("--inputs", "-i", nargs="+", required=True, help="List of input videos")
+    concat_parser.add_argument("--inputs", "-i", nargs="+", required=True, help="Input video list")
     concat_parser.add_argument("--output", "-o", required=True, help="Output video path")
     concat_parser.add_argument("--aspect", "-a", default=None, help="Aspect ratio (e.g., 16:9, 9:16)")
     concat_parser.add_argument("--storyboard", "-s", help="storyboard.json path, auto-read aspect_ratio")
@@ -1401,7 +1401,7 @@ def main():
 
     # transition subcommand
     transition_parser = subparsers.add_parser("transition", help="Add transition")
-    transition_parser.add_argument("--inputs", "-i", nargs="+", required=True, help="List of input videos")
+    transition_parser.add_argument("--inputs", "-i", nargs="+", required=True, help="Input video list")
     transition_parser.add_argument("--output", "-o", required=True, help="Output video path")
     transition_parser.add_argument("--type", "-t", default="fade", choices=TRANSITION_TYPES, help="Transition type")
     transition_parser.add_argument("--duration", "-d", type=float, default=0.5, help="Transition duration (seconds)")
@@ -1413,10 +1413,10 @@ def main():
     color_parser.add_argument("--preset", "-p", default="warm", choices=list(COLOR_PRESETS.keys()), help="Color preset")
 
     # speed subcommand
-    speed_parser = subparsers.add_parser("speed", help="Change video speed")
+    speed_parser = subparsers.add_parser("speed", help="Video speed change")
     speed_parser.add_argument("--video", "-v", required=True, help="Input video")
     speed_parser.add_argument("--output", "-o", required=True, help="Output video path")
-    speed_parser.add_argument("--rate", "-r", type=float, default=1.0, help="Speed multiplier")
+    speed_parser.add_argument("--rate", "-r", type=float, default=1.0, help="Speed rate")
 
     # trim subcommand
     trim_parser = subparsers.add_parser("trim", help="Trim video")
@@ -1435,7 +1435,7 @@ def main():
     image_parser.add_argument("--zoom", action="store_true", help="Add Ken Burns zoom effect")
 
     # narration subcommand
-    narration_parser = subparsers.add_parser("narration", help="Narration composition")
+    narration_parser = subparsers.add_parser("narration", help="Narration synthesis")
     narration_parser.add_argument("--video", "-v", required=True, help="Input video")
     narration_parser.add_argument("--output", "-o", required=True, help="Output video path")
     narration_parser.add_argument("--storyboard", "-s", help="storyboard.json path (contains narration_segments)")
@@ -1443,8 +1443,8 @@ def main():
     narration_parser.add_argument("--narration-volume", type=float, default=1.0, help="Narration volume")
     narration_parser.add_argument("--video-volume", type=float, default=1.0, help="Original video volume")
 
-    # smart-narration subcommand (smart narration composition)
-    smart_narration_parser = subparsers.add_parser("smart-narration", help="Smart narration composition (auto-calculate time points, avoid overlap)")
+    # smart-narration subcommand (smart narration synthesis)
+    smart_narration_parser = subparsers.add_parser("smart-narration", help="Smart narration synthesis (auto-calculate time points, avoid overlap)")
     smart_narration_parser.add_argument("--video", "-v", required=True, help="Input video")
     smart_narration_parser.add_argument("--output", "-o", required=True, help="Output video path")
     smart_narration_parser.add_argument("--storyboard", "-s", required=True, help="storyboard.json path")

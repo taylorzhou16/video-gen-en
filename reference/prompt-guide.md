@@ -18,9 +18,9 @@
 ### Character Registration Naming Standards
 
 | Level | Purpose | Naming Convention | Example |
-|------|---------|-----------------|---------|
-| **Element ID** | Technical ID, character identifier in JSON/Prompt | `Element_` + English name | `Element_Luna` |
-| **Display Name** | Display name for user interaction | Character name | `Luna` |
+|------|---------|------------------|---------|
+| **Element ID** | Technical ID, character identifier in JSON/Prompt | `Element_` + English name/Pinyin | `Element_Chuyue` |
+| **Display Name** | Display name for user interaction, Chinese description | Character name | `Chuyue` |
 | **Reference Tag** | Image placeholder in Prompt | `<<<image_N>>>` | `<<<image_1>>>`, `<<<image_2>>>` |
 
 ### Single Data Source
@@ -32,15 +32,15 @@ Character information is stored uniformly in `storyboard.json`:
   "elements": {
     "characters": [
       {
-        "element_id": "Element_Luna",
-        "name": "Luna",
+        "element_id": "Element_Chuyue",
+        "name": "Chuyue",
         "reference_images": ["/path/to/ref.jpg"],
         "visual_description": "25-year-old Asian woman, long black straight hair..."
       }
     ]
   },
   "character_image_mapping": {
-    "Element_Luna": "image_1"
+    "Element_Chuyue": "image_1"
   }
 }
 ```
@@ -51,7 +51,7 @@ Character information is stored uniformly in `storyboard.json`:
 |---------|------|------|
 | Appearance Reference | `<<<image_1>>>` / `<<<image_2>>>` | Ensure consistent character appearance |
 | Storyboard Frame Reference | `Shot_XXX_frame` | Ensure scene layout and character positioning |
-| Character Identifier | `Element_Luna` | Character identifier in motion sequence |
+| Character Identifier | `Element_Chuyue` | Character identifier in motion sequence |
 
 ---
 
@@ -67,10 +67,34 @@ Used for Gemini to generate storyboard frames.
 4. **Style**: cinematic / realistic / anime
 5. **Aspect Ratio**: Portrait 9:16 / Landscape 16:9 / Square 1:1
 
-### Basic Template
+### Force Style Keywords Based on visual_style (Important)
+
+**Must force style keywords at the beginning of image_prompt to avoid Gemini generating wrong style!**
+
+Read the `visual_style` field from `creative.json`:
+
+| visual_style | Forced Opening Syntax | Style Line Syntax |
+|--------------|----------------------|-------------------|
+| `realistic` (Photorealistic) | `**PHOTOREALISTIC real human start frame. NOT ANIME, NOT CARTOON, NOT ILLUSTRATION.**` | `Style: PHOTOREALISTIC, real human actress, actual skin texture, cinematic film grain, shallow depth of field` |
+| `anime` (Animation) | `Anime style 2D animation start frame.` | `Style: Anime style, 2D animation, cel shading, vibrant colors` |
+| `mixed` (Mixed) | Differentiate by scene, use realistic syntax for live-action scenes, anime syntax for animated scenes | Same as above |
+
+**Wrong Example (will cause anime style)**:
+```
+Wrong: Cinematic realistic start frame.
+Wrong: Style: cinematic realistic  <- Gemini may interpret as "cinematic anime"
+```
+
+**Correct Example (Photorealistic)**:
+```
+Correct: PHOTOREALISTIC real human start frame. NOT ANIME, NOT CARTOON.
+Correct: Style: PHOTOREALISTIC, real human actress, actual skin texture, cinematic film grain
+```
+
+### Basic Template (visual_style = realistic)
 
 ```
-Cinematic realistic start frame.
+PHOTOREALISTIC real human start frame. NOT ANIME, NOT CARTOON, NOT ILLUSTRATION.
 
 Scene: {specific scene description}
 Location details: {environment details}
@@ -83,13 +107,32 @@ Lighting: {lighting description}
 Color grade: {color tone}
 Aspect ratio: {aspect ratio}
 
-Style: {cinematic realistic/film grain/etc.}
+Style: PHOTOREALISTIC, real human actress, actual skin texture, cinematic film grain, shallow depth of field
 ```
 
-### Complete Example
+### Basic Template (visual_style = anime)
 
 ```
-Cinematic realistic start frame.
+Anime style 2D animation start frame.
+
+Scene: {specific scene description}
+Location details: {environment details}
+
+{detailed character appearance description}, {pose}, {expression}, {position}
+
+Shot scale: {wide/medium/close-up}
+Camera angle: {eye-level/high/low}
+Lighting: {lighting description}
+Color grade: {color tone}
+Aspect ratio: {aspect ratio}
+
+Style: Anime style, 2D animation, cel shading, vibrant colors
+```
+
+### Complete Example (realistic)
+
+```
+PHOTOREALISTIC real human start frame. NOT ANIME, NOT CARTOON, NOT ILLUSTRATION.
 
 Scene: A wide three-person shot inside the men's restroom at the doorway
 Location details: white tiles, sink and mirror visible, door frame as divider
@@ -102,7 +145,7 @@ Camera angle: Eye-level, frontal
 Lighting: Cold white fluorescent overhead lighting
 Color grade: Cool blue-white
 
-Style: Cinematic realistic, film grain, shallow depth of field, 16:9 aspect ratio
+Style: PHOTOREALISTIC, real human actress, actual skin texture, cinematic film grain, shallow depth of field, 16:9 aspect ratio
 ```
 
 ---
@@ -180,14 +223,14 @@ Stage 2: Storyboard frame + Character reference image → Omni video generation 
 Cinematic realistic start frame.
 
 Referencing the facial features, face shape, skin tone, and clothing details of:
-- image_1: Element_Luna, young Asian woman, long black hair, delicate features, wearing light grey blazer
-- image_2: Element_James, mature man, short hair, deep eyes, wearing black shirt
+- image_1: Element_Chuyue, young Asian woman, long black hair, delicate features, wearing light grey blazer
+- image_2: Element_Jiazhi, mature man, short hair, deep eyes, wearing black shirt
 
 Scene: {scene description}
 Location details: {environment details}
 
-Element_Luna: {pose}, {expression}, {position}
-Element_James: {pose}, {expression}, {position}
+Element_Chuyue: {pose}, {expression}, {position}
+Element_Jiazhi: {pose}, {expression}, {position}
 
 Shot scale: {wide/medium/close-up}
 Camera angle: {eye-level/high/low}
@@ -226,7 +269,7 @@ Style: Cinematic realistic style. No music, no subtitles.
 ### Two-Stage Key Points
 
 | Stage | Key Requirements |
-|------|---------|
+|------|-----------------|
 | **Image** | Must include character references (image_1, image_2), use Element_XXX identifier |
 | **Image** | Must include aspect ratio (16:9 / 9:16) |
 | **Image** | Scene, lighting, camera parameters should be detailed |
@@ -243,7 +286,7 @@ Style: Cinematic realistic style. No music, no subtitles.
 
 **Every shot containing characters must include in prompt**:
 
-1. **Character Identity Identifier** — `Element_Luna`
+1. **Character Identity Identifier** — `Element_Chuyue`
 2. **Appearance Features** — Gender, age, hairstyle, facial features, body type, distinctive features
 3. **Clothing Description** — Style, color, material, accessories
 
@@ -285,7 +328,7 @@ For important props that appear repeatedly across shots:
 ### Sync Sound vs TTS
 
 | Type | Generation Method | Use Case |
-|------|---------|---------|
+|------|------------------|----------|
 | Sync Sound | Video generation model (`audio.enabled: true`) | Character dialogue, character monologue |
 | TTS Narration | TTS post-production dubbing | Opening/closing narration, scene description |
 
@@ -305,25 +348,25 @@ For important props that appear repeatedly across shots:
 ```bash
 # Generate each narration segment separately
 python video_gen_tools.py tts \
-  --text "It was a quiet afternoon, sunlight streaming through the floor-to-ceiling windows into the cafe..." \
+  --text "This is a peaceful afternoon, sunlight streaming through the floor-to-ceiling windows into the cafe..." \
   --voice female_narrator \
   --emotion gentle \
   --output generated/narration/narr_1.mp3
 ```
 
-**voice Parameters (Gemini TTS Voices)**:
+**voice Parameters (Volcano Engine TTS Voices)**:
 
-| Parameter Value | Voice Description |
-|-------|---------|
-| `female_narrator` | Female narration, professional and steady |
-| `female_gentle` | Female gentle, soft and friendly |
-| `male_narrator` | Male narration, professional and steady |
-| `male_warm` | Male warm, magnetic and friendly |
+| Parameter Value | Voice Description | Volcano Engine ID |
+|-------|----------------|-------------------|
+| `female_narrator` | Female narration, professional and steady | BV700_streaming |
+| `female_gentle` | Female gentle, soft and friendly | BV034_streaming |
+| `male_narrator` | Male narration, professional and steady | BV701_streaming |
+| `male_warm` | Male warm, magnetic and friendly | BV033_streaming |
 
 **emotion Parameters (Optional)**:
 
 | Parameter Value | Emotion Style |
-|-------|---------|
+|-------|-------------|
 | `neutral` | Neutral (default) |
 | `happy` | Happy |
 | `sad` | Sad |
@@ -345,7 +388,7 @@ The voice_style specified by user in Phase 2 (e.g., "gentle female voice") is ma
 **Mapping between `audio` field in storyboard.json and API parameters**:
 
 | Storyboard Field | API Parameter | Description |
-|----------------|----------|------|
+|----------------|---------------|-------------|
 | `audio.no_bgm = true` | Add `"No background music. Natural ambient sound only."` at end of prompt | BGM added in post-production |
 | `audio.no_bgm = false` | No additional constraint | Video model decides whether to generate BGM |
 | `audio.enabled = true` | `sound: "on"` | Generate ambient sound/dialogue |
@@ -367,10 +410,10 @@ Voice clear and pleasant, moderate to slow pace.
 
 ## Appendix: Quick Templates
 
-### Image Prompt Template (Omni Storyboard Frame)
+### Image Prompt Template (Omni Storyboard Frame, realistic)
 
 ```
-Cinematic realistic start frame.
+PHOTOREALISTIC real human start frame. NOT ANIME, NOT CARTOON, NOT ILLUSTRATION.
 
 Referencing the facial features, face shape, skin tone, and clothing details of:
 - image_1: Element_{Name}, {detailed appearance description}
@@ -386,7 +429,7 @@ Lighting: {lighting description}
 Color grade: {color tone}
 Aspect ratio: {aspect ratio}
 
-Style: Cinematic realistic, film grain, shallow depth of field
+Style: PHOTOREALISTIC, real human actress, actual skin texture, cinematic film grain, shallow depth of field
 ```
 
 ### Video Prompt Template (Omni Video)

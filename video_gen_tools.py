@@ -288,7 +288,7 @@ MODE_BACKEND_MAP = {
 }
 
 BACKEND_PROVIDER_KEYS = {
-    "seedance": ["SEEDANCE_API_KEY"],
+    "seedance": ["FAL_API_KEY", "SEEDANCE_API_KEY"],  # fal preferred
     "kling": ["KLING_ACCESS_KEY", "FAL_API_KEY"],
     "kling-omni": ["KLING_ACCESS_KEY", "FAL_API_KEY"],
     "veo3": ["COMPASS_API_KEY"],
@@ -2318,6 +2318,232 @@ class SeedanceClient:
         await self.client.aclose()
 
 
+class FalSeedanceClient:
+    """
+    Seedance 2.0 video generation client (via fal.ai)
+
+    Uses reference-to-video endpoint only:
+    - fast: https://queue.fal.run/bytedance/seedance-2.0/fast/reference-to-video
+    - high_quality: https://queue.fal.run/bytedance/seedance-2.0/reference-to-video
+
+    Parameters:
+    - prompt: Video description (supports @Image1/@Video1/@Audio1 references)
+    - image_urls: Reference image list (max 9 images, each ≤30MB)
+    - video_urls: Reference video list (max 3 videos, total duration 2-15s)
+    - audio_urls: Reference audio list (max 3 audios, total duration ≤15s)
+    - resolution: "480p" | "720p"
+    - duration: "auto" | 4-15
+    - aspect_ratio: auto/21:9/16:9/4:3/1:1/3:4/9:16
+    - generate_audio: boolean
+    - seed: integer
+    - end_user_id: string
+    - model: "fast" | "high_quality"
+
+    Mode distinction (via image_urls parameter):
+    - No image_urls → text-to-video (pure text generation)
+    - With image_urls → reference-to-video (reference image generation)
+    """
+
+    BASE_URL = "https://queue.fal.run/bytedance/seedance-2.0"
+    ENDPOINT_FAST = "/fast/reference-to-video"
+    ENDPOINT_HIGH_QUALITY = "/reference-to-video"
+
+    VALID_ASPECT_RATIOS = ["auto", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"]
+    VALID_RESOLUTIONS = ["480p", "720p"]
+
+    def __init__(self):
+        import httpx
+        self.client = httpx.AsyncClient(
+            timeout=httpx.Timeout(120.0, connect=10.0),
+            headers={"Content-Type": "application/json", "Accept": "application/json"}
+        )
+
+    def _select_endpoint(self, model: str = "fast") -> str:
+        if model == "high_quality":
+            return self.BASE_URL + self.ENDPOINT_HIGH_QUALITY
+        return self.BASE_URL + self.ENDPOINT_FAST
+
+    def _prepare_url(self, path: str) -> str:
+        if path.startswith(('http://', 'https://')):
+            return path
+        return self._file_to_data_uri(path)
+
+    def _file_to_data_uri(self, file_path: str) -> str:
+        try:
+            from PIL import Image
+            import io
+            file_size = os.path.getsize(file_path)
+            max_size = 100 * 1024
+            if file_size > max_size:
+                logger.info(f"📦 Image is large ({file_size/1024:.1f}KB), compressing...")
+                img = Image.open(file_path)
+                for quality in [70, 50, 30]:
+                    buffer = io.BytesIO()
+                    img_rgb = img.convert('RGB') if img.mode != 'RGB' else img
+                    img_rgb.save(buffer, format='JPEG', quality=quality)
+                    if buffer.tell() <= max_size:
+                        data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                        return f"data:image/jpeg;base64,{data}"
+                img_resized = img.copy()
+                while min(img_resized.size) > 720:
+                    w, h = img_resized.size
+                    img_resized = img_resized.resize((int(w*0.8), int(h*0.8)), Image.Resampling.LANCZOS)
+                    buffer = io.BytesIO()
+                    img_rgb = img_resized.convert('RGB') if img_resized.mode != 'RGB' else img_resized
+                    img_rgb.save(buffer, format='JPEG', quality=50)
+                    if buffer.tell() <= max_size:
+                        break
+                data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                return f"data:image/jpeg;base64,{data}"
+            ext = os.path.splitext(file_path)[1].lower().lstrip('.')
+            if ext == 'jpg': ext = 'jpeg'
+            with open(file_path, 'rb') as f:
+                data = base64.b64encode(f.read()).decode('utf-8')
+            return f"data:image/{ext};base64,{data}"
+        except Exception as e:
+            logger.warning(f"⚠️ Image processing failed: {e}")
+            ext = os.path.splitext(file_path)[1].lower().lstrip('.')
+            if ext == 'jpg': ext = 'jpeg'
+            with open(file_path, 'rb') as f:
+                data = base64.b64encode(f.read()).decode('utf-8')
+            return f"data:image/{ext};base64,{data}"
+
+    async def submit_task(
+        self,
+        prompt: str,
+        duration: int = 5,
+        aspect_ratio: str = "16:9",
+        image_urls: List[str] = None,
+        video_urls: List[str] = None,
+        audio_urls: List[str] = None,
+        resolution: str = "720p",
+        seed: int = None,
+        end_user_id: str = None,
+        generate_audio: bool = True,
+        model: str = "fast",
+        output: str = None
+    ) -> Dict[str, Any]:
+        endpoint = self._select_endpoint(model)
+        if aspect_ratio not in self.VALID_ASPECT_RATIOS:
+            aspect_ratio = "16:9"
+        if resolution not in self.VALID_RESOLUTIONS:
+            resolution = "720p"
+
+        payload = {
+            "prompt": prompt,
+            "duration": str(duration),
+            "aspect_ratio": aspect_ratio,
+            "resolution": resolution,
+            "generate_audio": generate_audio
+        }
+        if image_urls:
+            payload["image_urls"] = [self._prepare_url(img) for img in image_urls]
+        if video_urls:
+            payload["video_urls"] = [self._prepare_url(v) for v in video_urls]
+        if audio_urls:
+            payload["audio_urls"] = [self._prepare_url(a) for a in audio_urls]
+        if seed is not None:
+            payload["seed"] = seed
+        if end_user_id:
+            payload["end_user_id"] = end_user_id
+
+        logger.info(f"📤 Creating FalSeedance task: {prompt[:60]}...")
+        logger.info(f"   Endpoint: {endpoint}, duration={duration}s, resolution={resolution}")
+
+        try:
+            response = await self.client.post(
+                endpoint,
+                json=payload,
+                headers={"Authorization": f"Key {Config.FAL_API_KEY}"}
+            )
+            response.raise_for_status()
+            result = response.json()
+            request_id = result.get("request_id")
+            if not request_id:
+                return {"success": False, "error": "No request_id returned"}
+
+            video_result = await self._wait_for_completion(request_id)
+            # Check return type: str = success, dict = error
+            if isinstance(video_result, dict) and "error" in video_result:
+                # Return full error info
+                return {
+                    "success": False,
+                    "error": video_result.get("error"),
+                    "message": video_result.get("message"),
+                    "ctx": video_result.get("ctx"),
+                    "request_id": request_id
+                }
+            elif video_result and isinstance(video_result, str) and output:
+                await self._download_file(video_result, output)
+                return {"success": True, "video_url": video_result, "output": output, "request_id": request_id}
+            return {"success": bool(video_result), "video_url": video_result, "request_id": request_id}
+        except Exception as e:
+            logger.error(f"❌ FalSeedance task failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def _wait_for_completion(self, request_id: str, max_wait: int = 600) -> Optional[str]:
+        import time
+        start = time.monotonic()
+        status_url = f"{self.BASE_URL}/requests/{request_id}/status"
+        result_url = f"{self.BASE_URL}/requests/{request_id}"
+        logger.info(f"⏳ Waiting for FalSeedance task: {request_id}")
+
+        while True:
+            elapsed = time.monotonic() - start
+            if elapsed > max_wait:
+                logger.error(f"❌ FalSeedance task timeout")
+                return None
+            try:
+                resp = await self.client.get(status_url, headers={"Authorization": f"Key {Config.FAL_API_KEY}"})
+                data = resp.json()
+                status = data.get("status", "unknown")
+                logger.info(f"   [{int(elapsed)}s] {status}")
+                if status == "COMPLETED":
+                    resp = await self.client.get(result_url, headers={"Authorization": f"Key {Config.FAL_API_KEY}"})
+                    result = resp.json()
+                    # Check for API errors (like content_policy_violation)
+                    if resp.status_code != 200 or "detail" in result:
+                        error_detail = result.get("detail", [])
+                        if error_detail and isinstance(error_detail, list):
+                            # Extract first error's details
+                            err = error_detail[0]
+                            error_type = err.get("type", "unknown")
+                            error_msg = err.get("msg", str(err))
+                            error_ctx = err.get("ctx", {})
+                            logger.error(f"❌ FalSeedance API error: [{error_type}] {error_msg}")
+                            if error_ctx:
+                                logger.error(f"   Details: {error_ctx}")
+                            # Return structure with error info for upper layer to handle
+                            return {"error": error_type, "message": error_msg, "ctx": error_ctx}
+                        logger.error(f"❌ FalSeedance API error: {result}")
+                        return {"error": "api_error", "message": str(result)}
+                    url = result.get("video", {}).get("url")
+                    if url:
+                        logger.info(f"✅ FalSeedance completed (elapsed: {int(elapsed)}s)")
+                        return url
+                    return {"error": "no_video_url", "message": "Result has no video URL"}
+                elif status == "FAILED":
+                    logger.error(f"❌ FalSeedance failed: {data}")
+                    return None
+                await asyncio.sleep(10)
+            except Exception as e:
+                logger.warning(f"⚠️ Query exception: {e}")
+                await asyncio.sleep(10)
+
+    async def _download_file(self, url: str, output_path: str):
+        import httpx
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            with open(output_path, 'wb') as f:
+                f.write(resp.content)
+        logger.info(f"✅ Saved to: {output_path}")
+
+    async def close(self):
+        await self.client.aclose()
+
+
 class Veo3Client:
     """Google Veo3 video generation client (via Compass proxy)"""
 
@@ -3872,91 +4098,119 @@ async def cmd_video(args):
             await client.close()
 
     elif backend == 'seedance':
-        if not Config.SEEDANCE_API_KEY:
-            print(json.dumps({
-                "success": False,
-                "error": "SEEDANCE_API_KEY not configured",
-                "hint": "Please add SEEDANCE_API_KEY in config.json",
-                "get_key": "Seedance uses piapi.ai proxy, visit https://piapi.ai to register and get API key"
-            }, indent=2, ensure_ascii=False))
-            return 1
+        provider = getattr(args, 'provider', None)
 
-        client = SeedanceClient()
+        if provider == 'fal':
+            if not Config.FAL_API_KEY:
+                print(json.dumps({
+                    "success": False,
+                    "error": "FAL_API_KEY not configured",
+                    "hint": "Using --provider fal requires FAL_API_KEY"
+                }, indent=2))
+                return 1
+            use_fal = True
+        elif provider == 'piapi':
+            if not Config.SEEDANCE_API_KEY:
+                print(json.dumps({
+                    "success": False,
+                    "error": "SEEDANCE_API_KEY not configured",
+                    "hint": "Using --provider piapi requires SEEDANCE_API_KEY"
+                }, indent=2))
+                return 1
+            use_fal = False
+        else:
+            # Auto select: fal > piapi
+            if Config.FAL_API_KEY:
+                use_fal = True
+                logger.info("🔵 Seedance auto select provider: fal")
+            elif Config.SEEDANCE_API_KEY:
+                use_fal = False
+                logger.info("🔵 Seedance auto select provider: piapi")
+            else:
+                print(json.dumps({
+                    "success": False,
+                    "error": "Seedance has no available Provider",
+                    "hint": "Please configure FAL_API_KEY (recommended) or SEEDANCE_API_KEY",
+                    "providers": {
+                        "fal": {"key": "FAL_API_KEY", "url": "https://fal.ai", "priority": 1},
+                        "piapi": {"key": "SEEDANCE_API_KEY", "url": "https://piapi.ai", "priority": 2}
+                    }
+                }, indent=2))
+                return 1
+
+        client = FalSeedanceClient() if use_fal else SeedanceClient()
         try:
             scene_id = getattr(args, 'scene', None)
             storyboard_path = getattr(args, 'storyboard', None)
 
-            # --- Auto assembly mode: --storyboard + --scene ---
             if storyboard_path and scene_id:
                 storyboard_data = load_storyboard(storyboard_path)
                 if not storyboard_data:
-                    print(json.dumps({
-                        "success": False,
-                        "error": f"Unable to load storyboard: {storyboard_path}"
-                    }, indent=2, ensure_ascii=False))
+                    print(json.dumps({"success": False, "error": f"Unable to load storyboard: {storyboard_path}"}, indent=2))
                     return 1
 
-                # Find specified scene
                 target_scene = None
                 for sc in storyboard_data.get("scenes", []):
                     if sc.get("scene_id") == scene_id:
                         target_scene = sc
                         break
                 if not target_scene:
-                    print(json.dumps({
-                        "success": False,
-                        "error": f"Scene not found: {scene_id}",
-                        "available": [s.get("scene_id") for s in storyboard_data.get("scenes", [])]
-                    }, indent=2, ensure_ascii=False))
+                    print(json.dumps({"success": False, "error": f"Scene not found: {scene_id}", "available": [s.get("scene_id") for s in storyboard_data.get("scenes", [])]}, indent=2))
                     return 1
 
-                # Auto assemble prompt, image_urls, duration
                 prompt, image_urls, duration = build_seedance_prompt(target_scene, storyboard_data, storyboard_path)
                 aspect_ratio = storyboard_data.get("aspect_ratio", aspect_ratio)
-
                 logger.info(f"🎬 Seedance auto assembly: scene={scene_id}, duration={duration}s, images={len(image_urls)}")
 
-                result = await client.submit_task(
-                    prompt=prompt,
-                    duration=duration,
-                    aspect_ratio=aspect_ratio,
-                    image_urls=image_urls if image_urls else None,
-                    output=args.output
-                )
+                if use_fal:
+                    result = await client.submit_task(
+                        prompt=prompt, duration=duration, aspect_ratio=aspect_ratio,
+                        image_urls=image_urls if image_urls else None,
+                        resolution=getattr(args, 'resolution', '720p'),
+                        seed=getattr(args, 'seed', None),
+                        model=getattr(args, 'model', 'fast'),
+                        output=args.output
+                    )
+                else:
+                    result = await client.submit_task(
+                        prompt=prompt, duration=duration, aspect_ratio=aspect_ratio,
+                        image_urls=image_urls if image_urls else None,
+                        output=args.output
+                    )
             else:
-                # --- Manual mode (backward compatible) ---
-                # Seedance 2 supports 4-15s any integer
                 duration = max(4, min(15, args.duration))
                 if duration != args.duration:
-                    logger.warning(f"⚠️ Seedance 2 duration adjusted to {duration}s (range 4-15s)")
-
+                    logger.warning(f"⚠️ Seedance 2 duration adjusted to {duration}s")
                 image_list = getattr(args, 'image_list', None)
-                mode = getattr(args, 'mode', 'text_to_video')
-                # If mode is Kling's std/pro, auto select based on whether has reference images
-                if mode in ['std', 'pro']:
-                    if image_list:
-                        mode = 'omni_reference'  # use omni_reference when has reference images
-                    else:
-                        mode = 'text_to_video'  # pure text-to-video
                 audio_urls = getattr(args, 'audio_urls', None)
                 video_urls = getattr(args, 'video_urls', None)
 
-                result = await client.submit_task(
-                    prompt=args.prompt,
-                    duration=duration,
-                    aspect_ratio=aspect_ratio,
-                    image_urls=image_list,
-                    mode=mode,
-                    audio_urls=audio_urls,
-                    video_urls=video_urls,
-                    output=args.output
-                )
+                if use_fal:
+                    result = await client.submit_task(
+                        prompt=args.prompt, duration=duration, aspect_ratio=aspect_ratio,
+                        image_urls=image_list, video_urls=video_urls, audio_urls=audio_urls,
+                        resolution=getattr(args, 'resolution', '720p'),
+                        seed=getattr(args, 'seed', None),
+                        model=getattr(args, 'model', 'fast'),
+                        output=args.output
+                    )
+                else:
+                    mode = getattr(args, 'mode', 'text_to_video')
+                    if mode in ['std', 'pro']:
+                        mode = 'omni_reference' if image_list else 'text_to_video'
+                    result = await client.submit_task(
+                        prompt=args.prompt, duration=duration, aspect_ratio=aspect_ratio,
+                        image_urls=image_list, mode=mode, audio_urls=audio_urls, video_urls=video_urls,
+                        output=args.output
+                    )
 
             if result.get("success"):
-                print(json.dumps(result, indent=2, ensure_ascii=False))
+                print(json.dumps(result, indent=2))
                 return 0
             else:
                 print(f"Error: {result.get('error')}")
+                if result.get("message"):
+                    print(f"Message: {result.get('message')}")
                 return 1
         finally:
             await client.close()
