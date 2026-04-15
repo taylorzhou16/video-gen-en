@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Vico Tools - Video Creation API CLI Toolset
+Vico Tools - Video Creation API Command Line Toolset
 
 Usage:
-  python video_gen_tools.py setup                                          # Interactive API provider configuration
+  python video_gen_tools.py setup                                          # Interactive API provider setup
   python video_gen_tools.py video --image <path> --prompt <text> --duration <seconds>
   python video_gen_tools.py music --prompt <text> --style <style>
   python video_gen_tools.py tts --text <text> --voice <voice_type>
@@ -28,7 +28,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ============== Image Size Validation and Processing ==============
+# ============== Image Size Validation & Processing ==============
 
 def validate_and_resize_image(
     image_path: str,
@@ -38,14 +38,14 @@ def validate_and_resize_image(
     target_size: int = 1280
 ) -> Dict[str, Any]:
     """
-    Validate and resize image dimensions
+    Validate and adjust image size
 
     Args:
-        image_path: Image path
-        output_path: Output path (auto-generated when None)
-        min_size: Minimum dimension limit (images smaller than this will be enlarged)
-        max_size: Maximum dimension limit (images larger than this will be reduced)
-        target_size: Target size (used when enlarging)
+        image_path: image path
+        output_path: output path（auto-generated when None）
+        min_size: minimum side length limit (will enlarge if smaller)
+        max_size: maximum side length limit (will shrink if larger)
+        target_size: target size (used when enlarging)
 
     Returns:
         {
@@ -81,11 +81,11 @@ def validate_and_resize_image(
         if min_dim < min_size:
             scale = target_size / min_dim
             need_resize = True
-            logger.info(f"📐 Image size too small {w}x{h}, needs to be enlarged to at least {min_size}px")
+            logger.info(f"📐 image size too small {w}x{h}，needs to be enlarged to at least {min_size}px")
         elif max_dim > max_size:
             scale = max_size / max_dim
             need_resize = True
-            logger.info(f"📐 Image size too large {w}x{h}, needs to be reduced to at most {max_size}px")
+            logger.info(f"📐 image size too large {w}x{h}，needs to be reduced to at most {max_size}px")
 
         if need_resize:
             new_w = int(w * scale)
@@ -97,7 +97,7 @@ def validate_and_resize_image(
                 output_path = f"{base}_resized{ext}"
 
             img_resized.save(output_path, quality=95)
-            logger.info(f"📐 Image size adjusted: {w}x{h} → {new_w}x{new_h}")
+            logger.info(f"📐 image size adjusted: {w}x{h} → {new_w}x{new_h}")
 
             return {
                 "success": True,
@@ -115,7 +115,7 @@ def validate_and_resize_image(
             "output_path": image_path
         }
     except Exception as e:
-        logger.error(f"❌ Image size processing failed: {e}")
+        logger.error(f"❌ image size processing failed: {e}")
         return {
             "success": False,
             "error": str(e),
@@ -142,14 +142,14 @@ def load_config() -> Dict[str, str]:
 
 
 def save_config(config: Dict[str, str]):
-    """Save configuration to file"""
+    """Save config to file"""
     CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=2)
 
 
 class Config:
-    """Load configuration from config file and environment variables (config file has priority)"""
+    """Load config from file and environment variables（config file takes priority）"""
 
     _cached_config = None
 
@@ -161,7 +161,7 @@ class Config:
 
     @classmethod
     def get(cls, key: str, default: str = "") -> str:
-        """Get from config file first, then environment variables"""
+        """priority from config file, then environment variables"""
         config = cls._get_config()
         return config.get(key, os.getenv(key, default))
 
@@ -193,7 +193,7 @@ class Config:
 
     VOLCENGINE_TTS_CLUSTER: str = os.getenv("VOLCENGINE_TTS_CLUSTER", "volcano_tts")
 
-    # Gemini Image (via Yunwu API, shares YUNWU_API_KEY)
+    # Gemini Image（via Yunwu API，sharing YUNWU_API_KEY）
     @property
     def GEMINI_API_KEY(self) -> str:
         return self.get("YUNWU_API_KEY", "")
@@ -231,13 +231,13 @@ class Config:
         return self.get("SEEDANCE_API_KEY", "")
 
     SEEDANCE_BASE_URL: str = "https://api.piapi.ai"
-    SEEDANCE_MODEL: str = "seedance-2-fast"  # or seedance-2 (high quality)
+    SEEDANCE_MODEL: str = "seedance-2-fast"  # or seedance-2（high quality）
 
 
 Config = Config()
 
 
-# ============== Storyboard / Creative Loading Tools ==============
+# ============== Storyboard / Creative Reading Tools ==============
 
 def get_aspect_from_storyboard(storyboard_path: str) -> Optional[str]:
     """Read aspect_ratio from storyboard.json"""
@@ -250,7 +250,7 @@ def get_aspect_from_storyboard(storyboard_path: str) -> Optional[str]:
 
 
 def get_music_config_from_creative(creative_path: str) -> Optional[Dict[str, Any]]:
-    """Read music configuration from creative.json"""
+    """Read music config from creative.json"""
     try:
         with open(creative_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -258,7 +258,7 @@ def get_music_config_from_creative(creative_path: str) -> Optional[Dict[str, Any
             return {
                 "need_bgm": music.get("need_bgm", True),
                 "style": music.get("style"),
-                "prompt": music.get("prompt")  # Optional detailed description
+                "prompt": music.get("prompt")  # optional detailed description
             }
     except Exception:
         return None
@@ -270,7 +270,7 @@ def load_storyboard(storyboard_path: str) -> Optional[Dict[str, Any]]:
         with open(storyboard_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        logger.error(f"❌ Failed to load storyboard: {e}")
+        logger.error(f"❌ cannot load storyboard: {e}")
         return None
 
 
@@ -283,53 +283,52 @@ MODE_BACKEND_MAP = {
     "omni-video": "kling-omni",
     "img2video": "kling",
     "text2video": "kling",
-    "veo3-text2video": "veo3",
-    "veo3-img2video": "veo3",
+    # veo3 deprecated and no longer supported
 }
 
 BACKEND_PROVIDER_KEYS = {
-    "seedance": ["FAL_API_KEY", "SEEDANCE_API_KEY"],  # fal preferred
+    "seedance": ["FAL_API_KEY", "SEEDANCE_API_KEY"],  # fal priority
     "kling": ["KLING_ACCESS_KEY", "FAL_API_KEY"],
     "kling-omni": ["KLING_ACCESS_KEY", "FAL_API_KEY"],
-    "veo3": ["MIGOO_API_KEY"],
+    # veo3 deprecated，MIGOO_API_KEY only for Gemini image/TTS
 }
 
 
 def validate_storyboard(storyboard_path: str) -> Dict[str, Any]:
-    """Validate storyboard.json, returns {valid, errors, warnings}"""
+    """��Validate storyboard.json，return {valid, errors, warnings}"""
     errors = []
     warnings = []
 
     data = load_storyboard(storyboard_path)
     if data is None:
-        return {"valid": False, "errors": [f"Unable to load file: {storyboard_path}"], "warnings": []}
+        return {"valid": False, "errors": [f"cannot load file: {storyboard_path}"], "warnings": []}
 
     # --- Schema basics ---
     if "scenes" not in data or not isinstance(data.get("scenes"), list):
-        errors.append("Missing scenes array")
+        errors.append("missing scenes array")
     if "aspect_ratio" not in data:
-        errors.append("Missing aspect_ratio field")
+        errors.append("missing aspect_ratio field")
     elif data["aspect_ratio"] not in VALID_ASPECT_RATIOS:
-        errors.append(f"aspect_ratio '{data['aspect_ratio']}' is invalid, supported values: {VALID_ASPECT_RATIOS}")
+        errors.append(f"aspect_ratio '{data['aspect_ratio']}' invalid，support: {VALID_ASPECT_RATIOS}")
 
     scenes = data.get("scenes", [])
     if not scenes:
         errors.append("scenes array is empty")
         return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
 
-    # --- Collect element IDs ---
+    # --- collect element IDs ---
     characters = data.get("elements", {}).get("characters", [])
     known_element_ids = {c.get("element_id") for c in characters if c.get("element_id")}
 
-    # --- Validate each Scene ---
+    # --- validate each Scene ---
     for scene in scenes:
         scene_id = scene.get("scene_id", "unknown")
         shots = scene.get("shots", [])
         if not shots:
-            warnings.append(f"[{scene_id}] has no shots")
+            warnings.append(f"[{scene_id}] no shots")
             continue
 
-        # Collect backend info for each shot
+        # collect backend info for each shot
         seedance_shots = []
         for shot in shots:
             shot_id = shot.get("shot_id", "unknown")
@@ -337,7 +336,7 @@ def validate_storyboard(storyboard_path: str) -> Dict[str, Any]:
             backend = shot.get("generation_backend", "")
             mode = shot.get("generation_mode", "")
 
-            # Duration check
+            # durationcheck
             if duration is None:
                 errors.append(f"[{shot_id}] missing duration")
                 continue
@@ -346,46 +345,65 @@ def validate_storyboard(storyboard_path: str) -> Dict[str, Any]:
             expected_backend = MODE_BACKEND_MAP.get(mode)
             if expected_backend and expected_backend != backend:
                 errors.append(
-                    f"[{shot_id}] generation_mode '{mode}' should use backend '{expected_backend}', "
-                    f"but actually uses '{backend}'"
+                    f"[{shot_id}] generation_mode '{mode}' should use backend '{expected_backend}'，"
+                    f"actually is '{backend}'"
                 )
 
-            # Validate duration by backend type
+            # validate duration by backend type
             if backend in ("kling", "kling-omni"):
                 if duration < 3 or duration > 15:
-                    errors.append(f"[{shot_id}] Kling duration must be 3-15s, current: {duration}s")
-            elif backend == "veo3":
-                if duration not in [4, 6, 8]:
-                    errors.append(f"[{shot_id}] Veo3 duration must be 4/6/8s, current: {duration}s")
+                    errors.append(f"[{shot_id}] Kling duration must be 3-15s，current {duration}s")
+            # veo3 deprecated，validation skipped
 
-            # Collect Seedance shots (will be aggregated by scene later)
+            # Seedance shots collection (later aggregated by scene)
             if backend == "seedance":
                 seedance_shots.append(shot)
 
-            # Reference image file existence
+            # reference imagefile exists
             for ref in shot.get("reference_images", []):
                 if ref and not os.path.exists(ref):
-                    warnings.append(f"[{shot_id}] reference image does not exist: {ref}")
+                    warnings.append(f"[{shot_id}] ��reference image does not exist: {ref}")
 
             # video_prompt must exist
             if not shot.get("video_prompt"):
                 warnings.append(f"[{shot_id}] missing video_prompt")
 
-            # Character reference check
+            # character reference check
             for char in shot.get("characters", []):
                 char_id = char if isinstance(char, str) else char.get("element_id", "")
                 if char_id and char_id not in known_element_ids:
                     warnings.append(f"[{shot_id}] referenced unregistered character: {char_id}")
+
+            # --- link consistency check: Kling-Omni shot-level structure ---
+            if backend == "kling-omni" and mode in ("omni-video", "reference2video"):
+                # must have image_prompt（for generatingstoryboard frame）
+                if not shot.get("image_prompt"):
+                    errors.append(f"[{shot_id}] Kling-Omni must have image_prompt（shot-level storyboard structure）")
+
+                # must have frame_path（storyboard frameoutput path）
+                if not shot.get("frame_path"):
+                    errors.append(f"[{shot_id}] Kling-Omni must have frame_path (shot-level storyboard frame)")
+
+                # check if misusing Seedance scene storyboard frame
+                ref_images = shot.get("reference_images", [])
+                if ref_images:
+                    first_ref = ref_images[0]
+                    # if path is scene_x_frame instead of shot_x_frame，indicates Seedance structure
+                    if "_frame" in first_ref and "shot_" not in first_ref and "scene_" in first_ref:
+                        warnings.append(
+                            f"[{shot_id}] possibly using Seedance scene storyboard frame '{first_ref}'，"
+                            f"Kling-Omni requires shot-level storyboard frame（like {shot_id}_frame.png）"
+                        )
 
         # --- Seedance scene total duration validation ---
         if seedance_shots:
             scene_total_duration = sum(s.get("duration", 0) for s in seedance_shots)
             if scene_total_duration < 4 or scene_total_duration > 15:
                 errors.append(
-                    f"[{scene_id}] Seedance scene total duration must be in 4-15s range, current: {scene_total_duration}s"
+                    f"[{scene_id}] Seedance scene total duration must be in 4-15s range，current {scene_total_duration}s"
                 )
 
-    # --- Provider availability ---
+    # --- Provider available ---
     used_backends = set()
     for scene in scenes:
         for shot in scene.get("shots", []):
@@ -396,21 +414,21 @@ def validate_storyboard(storyboard_path: str) -> Dict[str, Any]:
     for backend in used_backends:
         required_keys = BACKEND_PROVIDER_KEYS.get(backend, [])
         if required_keys and not any(getattr(Config, k, "") for k in required_keys):
-            warnings.append(f"Backend '{backend}' has no available API key (required: {' or '.join(required_keys)})")
+            warnings.append(f"backend '{backend}' no available API key（need: {' or '.join(required_keys)}）")
 
     return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
 
 
-# ============== Seedance Prompt Auto-Assembly ==============
+# ============== Seedance Prompt auto assemble ==============
 
 def build_seedance_prompt(scene: Dict[str, Any], storyboard: Dict[str, Any], storyboard_path: str = None) -> tuple:
     """
-    Automatically assemble Seedance time-segmented prompt from storyboard scene.
+    based on storyboard scene auto assemble Seedance time segment prompt。
 
     Args:
         scene: scene object
         storyboard: complete storyboard object
-        storyboard_path: storyboard.json file path (for calculating absolute paths)
+        storyboard_path: storyboard.json file path（used to calculate absolute path）
 
     Returns:
         (prompt: str, image_urls: list[str], duration: int)
@@ -419,13 +437,13 @@ def build_seedance_prompt(scene: Dict[str, Any], storyboard: Dict[str, Any], sto
     shots = scene.get("shots", [])
     aspect_ratio = storyboard.get("aspect_ratio", "16:9")
 
-    # Calculate storyboard directory (for converting relative paths to absolute paths)
+    # calculate storyboard directory（for conversionrelative path to absolute path）
     project_dir = None
     if storyboard_path:
-        project_dir = os.path.dirname(os.path.dirname(storyboard_path))  # parent directory of storyboard/
+        project_dir = os.path.dirname(os.path.dirname(storyboard_path))  # storyboard/ parent directory
 
     def resolve_path(path: str) -> str:
-        """Convert relative path to absolute path"""
+        """convert relative path to absolute path"""
         if not path or path.startswith(('http://', 'https://')):
             return path
         if os.path.isabs(path):
@@ -436,21 +454,21 @@ def build_seedance_prompt(scene: Dict[str, Any], storyboard: Dict[str, Any], sto
                 return abs_path
         return path
 
-    # --- Calculate total duration ---
+    # --- calculate total duration ---
     total_duration = sum(s.get("duration", 0) for s in shots)
-    # Validate duration range (4-15s)
+    # validate duration range（4-15s）
     valid_duration = max(4, min(15, total_duration))
     if valid_duration != total_duration:
         logger.warning(f"⚠️ Scene {scene_id} total duration {total_duration}s → adjusted to {valid_duration}s")
 
-    # --- Collect character reference images ---
+    # --- collectcharacter reference image ---
     char_mapping = storyboard.get("character_image_mapping", {})
     characters = storyboard.get("elements", {}).get("characters", [])
 
     if not char_mapping and characters:
-        logger.warning("⚠️ character_image_mapping is empty, character reference images will not be included in prompt")
+        logger.warning("⚠️ character_image_mapping empty，character reference imagewill not be included in prompt ")
 
-    # Find character reference images for this scene (maintain image_N order)
+    # find this scene involvedcharacter reference image（keep image_N order）
     scene_char_refs = []
     scene_char_tags = []
     for char in characters:
@@ -461,9 +479,9 @@ def build_seedance_prompt(scene: Dict[str, Any], storyboard: Dict[str, Any], sto
             scene_char_refs.append(resolve_path(refs[0]))
             scene_char_tags.append((tag, char.get("name", ""), eid))
 
-    # --- Find storyboard image ---
+    # --- find storyboard frame ---
     frame_image = None
-    # Priority: find storyboard image from first shot's reference_images
+    # priority from first shot reference_images find storyboard frame
     if shots and shots[0].get("reference_images"):
         first_refs = shots[0]["reference_images"]
         for ref in first_refs:
@@ -471,29 +489,29 @@ def build_seedance_prompt(scene: Dict[str, Any], storyboard: Dict[str, Any], sto
                 frame_image = resolve_path(ref)
                 break
         if not frame_image:
-            # If first image is not a character reference, treat it as storyboard image
+            # first onelikeif not character reference image，treat as storyboard frame
             if first_refs[0] not in scene_char_refs:
                 frame_image = resolve_path(first_refs[0])
 
-    # --- Assemble image_urls ---
+    # --- assemble image_urls ---
     image_urls = []
     if frame_image:
         image_urls.append(frame_image)
     image_urls.extend(scene_char_refs)
 
-    # --- Assemble character description lines ---
+    # --- assemble character description lines ---
     char_desc_parts = []
     for tag, name, eid in scene_char_tags:
-        tag_str = f"@image{tag.replace('image_', '')}" if tag.startswith("image_") else f"@{tag}"
+        tag_str = f"@Image{tag.replace('image_', '')}" if tag.startswith("image_") else f"@{tag}"
         char_desc_parts.append(f"{tag_str}（{name}）")
     char_line = "，".join(char_desc_parts) if char_desc_parts else ""
 
-    # --- Assemble visual/style line (extracted from scene or first shot) ---
+    # --- assemble view/style scene orfirst shot extract）---
     visual_style = scene.get("visual_style", "")
     narrative_goal = scene.get("narrative_goal", "")
     style_desc = visual_style or narrative_goal or ""
 
-    # --- Assemble time segments ---
+    # --- assemble time segments ---
     time_offset = 0
     segments = []
     for idx, shot in enumerate(shots):
@@ -504,7 +522,7 @@ def build_seedance_prompt(scene: Dict[str, Any], storyboard: Dict[str, Any], sto
         segments.append(f"{start}-{end}s：{prompt_text}；")
         time_offset = end
 
-    # --- Assemble complete prompt ---
+    # --- assemble complete prompt ---
     lines = []
 
     # Referencing line
@@ -512,30 +530,30 @@ def build_seedance_prompt(scene: Dict[str, Any], storyboard: Dict[str, Any], sto
         lines.append(f"Referencing the {scene_id}_frame composition for scene layout and character positioning.")
         lines.append("")
 
-    # Character reference line
+    # character reference line
     if char_line:
         lines.append(f"{char_line}，{style_desc}；" if style_desc else f"{char_line}；")
         lines.append("")
 
-    # Overall overview
+    # overall overview
     scene_desc = scene.get("scene_name", "") or scene.get("narrative_goal", "")
     if scene_desc:
-        lines.append(f"Overview: {scene_desc}")
+        lines.append(f"overall：{scene_desc}")
         lines.append("")
 
-    # Segmented actions
-    lines.append(f"Segmented actions ({valid_duration}s):")
+    # segment action
+    lines.append(f"segment action（{valid_duration}s）：")
     lines.extend(segments)
     lines.append("")
 
-    # Aspect ratio constraint
-    ratio_name = "landscape" if aspect_ratio == "16:9" else "portrait" if aspect_ratio == "9:16" else ""
-    lines.append(f"Maintain {ratio_name} {aspect_ratio} composition, do not break aspect ratio")
+    # ratio constraint
+    ratio_name = "horizontal" if aspect_ratio == "16:9" else "vertical" if aspect_ratio == "9:16" else ""
+    lines.append(f"keep{ratio_name}{aspect_ratio}composition，without breaking visual ratio")
     lines.append("No background music.")
 
     prompt = "\n".join(lines)
 
-    logger.info(f"📝 Seedance prompt auto-assembly complete ({scene_id}, {valid_duration}s, {len(image_urls)} images)")
+    logger.info(f"📝 Seedance prompt auto assembly completed ({scene_id}, {valid_duration}s, {len(image_urls)} images)")
     logger.debug(f"Prompt:\n{prompt}")
 
     return prompt, image_urls, valid_duration
@@ -546,11 +564,11 @@ def build_seedance_prompt(scene: Dict[str, Any], storyboard: Dict[str, Any], sto
 
 class ViduClient:
     """
-    Vidu video generation client (via Yunwu API)
+    Vidu video generation client（via Yunwu API）
 
     .. deprecated::
-        Vidu backend is deprecated and no longer supported. Please use Kling, Kling-Omni, Seedance or Veo3.
-        This class is retained for backward compatibility and will be removed in a future version.
+        Vidu backenddeprecated and no longer supported。please use Kling、Kling-Omni or Seedance。
+        this typekept only for backward compatibility，will be removed in future version。
     """
 
     IMG2VIDEO_PATH = "/ent/v2/img2video"
@@ -560,7 +578,7 @@ class ViduClient:
     def __init__(self):
         import warnings
         warnings.warn(
-            "ViduClient is deprecated, please use KlingClient, KlingOmniClient, SeedanceClient or Veo3Client",
+            "ViduClient deprecated, please use KlingClient、KlingOmniClient or SeedanceClient",
             DeprecationWarning,
             stacklevel=2
         )
@@ -582,22 +600,22 @@ class ViduClient:
         audio: bool = False,
         output: str = None
     ) -> Dict[str, Any]:
-        """Image-to-video"""
+        """image-to-video"""
         resolution = resolution or Config.VIDU_RESOLUTION
 
-        # Prepare image
+        # prepare images
         if image_path.startswith(('http://', 'https://')):
             image_input = image_path
         else:
             if not os.path.exists(image_path):
-                return {"success": False, "error": f"Image not found: {image_path}"}
+                return {"success": False, "error": f"image does not exist: {image_path}"}
 
             with open(image_path, 'rb') as f:
                 image_data = f.read()
 
             base64_data = base64.b64encode(image_data).decode('utf-8')
             ext = os.path.splitext(image_path)[1].lower()
-            # HEIC/HEIF needs to be converted first
+            # HEIC/HEIF needs conversion first
             if ext in ['.heic', '.heif']:
                 import subprocess
                 import tempfile
@@ -626,7 +644,7 @@ class ViduClient:
             "watermark": False
         }
 
-        logger.info(f"📤 Creating image-to-video task: {prompt[:50]}...")
+        logger.info(f"📤 create image-to-video task: {prompt[:50]}...")
 
         try:
             response = await self.client.post(
@@ -639,11 +657,11 @@ class ViduClient:
 
             task_id = result.get("task_id")
             if not task_id:
-                return {"success": False, "error": "API did not return task_id"}
+                return {"success": False, "error": "APInot returnedtask_id"}
 
-            logger.info(f"✅ Task created: {task_id}")
+            logger.info(f"✅ task created: {task_id}")
 
-            # Wait for completion
+            # wait for completion
             video_url = await self._wait_for_completion(task_id)
 
             if video_url and output:
@@ -653,7 +671,7 @@ class ViduClient:
             return {"success": True, "video_url": video_url, "task_id": task_id}
 
         except Exception as e:
-            logger.error(f"❌ Image-to-video failed: {e}")
+            logger.error(f"❌ image-to-video failed: {e}")
             return {"success": False, "error": str(e)}
 
     async def create_text2video(
@@ -664,7 +682,7 @@ class ViduClient:
         audio: bool = False,
         output: str = None
     ) -> Dict[str, Any]:
-        """Text-to-video"""
+        """text-to-video"""
         payload = {
             "model": Config.VIDU_MODEL,
             "prompt": prompt,
@@ -676,7 +694,7 @@ class ViduClient:
             "watermark": False
         }
 
-        logger.info(f"📤 Creating text-to-video task: {prompt[:50]}...")
+        logger.info(f"📤 create text-to-video task: {prompt[:50]}...")
 
         try:
             response = await self.client.post(
@@ -685,7 +703,7 @@ class ViduClient:
                 headers={"Authorization": f"Bearer {Config.YUNWU_API_KEY}"}
             )
 
-            # If viduq3-pro not supported, fallback to viduq2
+            # Ifviduq3-pronot supported，fallback toviduq2
             if response.status_code in [400, 422]:
                 payload["model"] = "viduq2"
                 response = await self.client.post(
@@ -699,9 +717,9 @@ class ViduClient:
 
             task_id = result.get("task_id")
             if not task_id:
-                return {"success": False, "error": "API did not return task_id"}
+                return {"success": False, "error": "APInot returnedtask_id"}
 
-            logger.info(f"✅ Task created: {task_id}")
+            logger.info(f"✅ task created: {task_id}")
 
             video_url = await self._wait_for_completion(task_id)
 
@@ -712,20 +730,20 @@ class ViduClient:
             return {"success": True, "video_url": video_url, "task_id": task_id}
 
         except Exception as e:
-            logger.error(f"❌ Text-to-video failed: {e}")
+            logger.error(f"❌ text-to-videofailed: {e}")
             return {"success": False, "error": str(e)}
 
     async def _wait_for_completion(self, task_id: str, max_wait: int = 600) -> Optional[str]:
-        """Wait for task completion"""
+        """waittask complete"""
         import time
         start_time = time.monotonic()
 
-        logger.info(f"⏳ Waiting for task completion: {task_id}")
+        logger.info(f"⏳ waittask complete: {task_id}")
 
         while True:
             elapsed = time.monotonic() - start_time
             if elapsed > max_wait:
-                logger.error(f"❌ Task timeout ({max_wait}s)")
+                logger.error(f"❌ task timeout ({max_wait}s)")
                 return None
 
             try:
@@ -742,21 +760,21 @@ class ViduClient:
                     creations = result.get("creations", [])
                     if creations:
                         video_url = creations[0].get("url")
-                        logger.info(f"✅ Task completed (elapsed: {int(elapsed)}s)")
+                        logger.info(f"✅ task complete (takes time: {int(elapsed)}s)")
                         return video_url
 
                 elif state == "failed":
-                    logger.error(f"❌ Task failed: {result.get('fail_reason')}")
+                    logger.error(f"❌ task fail: {result.get('fail_reason')}")
                     return None
 
                 await asyncio.sleep(5)
 
             except Exception as e:
-                logger.warning(f"⚠️ Query failed: {e}")
+                logger.warning(f"⚠️ query failed: {e}")
                 await asyncio.sleep(5)
 
     async def _download_file(self, url: str, output_path: str):
-        """Download file"""
+        """download file"""
         import httpx
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -765,7 +783,7 @@ class ViduClient:
             response.raise_for_status()
             with open(output_path, 'wb') as f:
                 f.write(response.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved to: {output_path}")
 
     async def close(self):
         await self.client.aclose()
@@ -776,17 +794,17 @@ class ViduClient:
 
 class YunwuKlingClient:
     """
-    Kling v3 video generation client (via Yunwu API)
+    Kling v3 video generation client（via Yunwu API）
 
     .. deprecated::
-        Yunwu provider is deprecated and no longer supported. Please use official Kling API or fal provider.
-        This class is retained for backward compatibility and will be removed in a future version.
+        Yunwu provider deprecated and no longer supported。please use Kling official API or fal provider。
+        this typekept only for backward compatibility，will be removed in future version。
 
-    Only supports kling-v3 model, for text2video and img2video.
+    only supports kling-v3 model，for text2video and img2video。
 
-    Key differences from official API:
-    - Uses `model` parameter instead of `model_name`
-    - Bearer Token authentication (reuses YUNWU_API_KEY)
+    with official API key differences：
+    - use `model` parameter not `model_name`
+    - Bearer Token auth（reuse YUNWU_API_KEY）
     - Base URL: https://yunwu.ai
     """
 
@@ -794,12 +812,12 @@ class YunwuKlingClient:
     IMAGE2VIDEO_PATH = "/kling/v1/videos/image2video"
     QUERY_PATH = "/kling/v1/videos/text2video/{task_id}"
 
-    MODEL = "kling-v3"  # Fixed to kling-v3
+    MODEL = "kling-v3"  # fixed use kling-v3
 
     def __init__(self):
         import warnings
         warnings.warn(
-            "YunwuKlingClient is deprecated, please use KlingClient (official API) or fal provider",
+            "YunwuKlingClient deprecated, please use KlingClient(official API)or fal provider",
             DeprecationWarning,
             stacklevel=2
         )
@@ -826,21 +844,21 @@ class YunwuKlingClient:
         output: str = None
     ) -> Dict[str, Any]:
         """
-        Text-to-video
+        text-to-video
 
         Args:
-            prompt: video description
-            duration: duration (3-15 seconds)
+            prompt: videodescription
+            duration: duration(3-15s)
             mode: std or pro
             aspect_ratio: aspect ratio (16:9, 9:16, 1:1)
             audio: whether to generate audio
-            multi_shot: whether to use multi-shot
-            shot_type: intelligence (AI auto-shot) or customize (custom shot)
-            multi_prompt: custom shot list
+            multi_shot: whethermulti-shot
+            shot_type: intelligence（AIauto storyboard）or customize（custom storyboard）
+            multi_prompt: custom storyboard shot list
             output: output file path
         """
         payload = {
-            "model": self.MODEL,  # Note: yunwu kling-v3 uses model instead of model_name
+            "model": self.MODEL,  # note：yunwu kling-v3 uses model rather than model_name
             "prompt": prompt,
             "duration": str(duration),
             "mode": mode,
@@ -855,7 +873,7 @@ class YunwuKlingClient:
             if multi_prompt and shot_type == "customize":
                 payload["multi_prompt"] = multi_prompt
 
-        logger.info(f"📤 Creating Yunwu Kling text-to-video task: {prompt[:50]}...")
+        logger.info(f"📤 create Yunwu Kling text-to-videotask: {prompt[:50]}...")
 
         try:
             response = await self.client.post(
@@ -873,9 +891,9 @@ class YunwuKlingClient:
             data = result.get("data", {})
             task_id = data.get("task_id")
             if not task_id:
-                return {"success": False, "error": "API did not return task_id"}
+                return {"success": False, "error": "APInot returnedtask_id"}
 
-            logger.info(f"✅ Task created: {task_id}")
+            logger.info(f"✅ task created: {task_id}")
 
             video_url = await self._wait_for_completion(task_id, "text2video")
 
@@ -888,8 +906,8 @@ class YunwuKlingClient:
         except Exception as e:
             error_msg = str(e)
             if "429" in error_msg:
-                error_msg = "Concurrent task limit exceeded, please wait for existing tasks to complete before retrying"
-            logger.error(f"❌ Yunwu Kling text-to-video failed: {error_msg}")
+                error_msg = "concurrent task limit exceeded，please wait for existing tasks to complete before retrying"
+            logger.error(f"❌ Yunwu Kling text-to-videofailed: {error_msg}")
             return {"success": False, "error": error_msg}
 
     async def create_image2video(
@@ -903,18 +921,18 @@ class YunwuKlingClient:
         output: str = None
     ) -> Dict[str, Any]:
         """
-        Image-to-video (supports first/last frame control)
+        image-to-video（supports firstlast framecontrol）
 
         Args:
-            image_path: image path or URL
-            prompt: video description
-            duration: duration (3-15 seconds)
+            image_path: image pathorURL
+            prompt: videodescription
+            duration: duration(3-15s)
             mode: std or pro
             audio: whether to generate audio
-            image_tail: last frame image path or URL
+            image_tail: last frameimage pathorURL
             output: output file path
         """
-        # Prepare image
+        # prepare images
         image_url = await self._prepare_image(image_path)
 
         payload = {
@@ -926,12 +944,12 @@ class YunwuKlingClient:
             "audio": audio
         }
 
-        # First/last frame control
+        # first/last framecontrol
         if image_tail:
             tail_url = await self._prepare_image(image_tail)
             payload["image_tail"] = tail_url
 
-        logger.info(f"📤 Creating Yunwu Kling image-to-video task: {prompt[:50]}...")
+        logger.info(f"📤 create Yunwu Kling image-to-videotask: {prompt[:50]}...")
 
         try:
             response = await self.client.post(
@@ -949,9 +967,9 @@ class YunwuKlingClient:
             data = result.get("data", {})
             task_id = data.get("task_id")
             if not task_id:
-                return {"success": False, "error": "API did not return task_id"}
+                return {"success": False, "error": "APInot returnedtask_id"}
 
-            logger.info(f"✅ Task created: {task_id}")
+            logger.info(f"✅ task created: {task_id}")
 
             video_url = await self._wait_for_completion(task_id, "image2video")
 
@@ -967,17 +985,17 @@ class YunwuKlingClient:
             return {"success": False, "error": error_msg}
 
     async def _prepare_image(self, image_path: str) -> str:
-        """Prepare image (URL or base64)"""
+        """prepare images（URL or base64）"""
         if image_path.startswith(('http://', 'https://')):
             return image_path
 
         if not os.path.exists(image_path):
-            raise FileNotFoundError(f"Image does not exist: {image_path}")
+            raise FileNotFoundError(f"image does not exist: {image_path}")
 
         # Validate and adjust image size
         result = validate_and_resize_image(image_path)
         if not result["success"]:
-            raise ValueError(f"Image processing failed: {result.get('error')}")
+            raise ValueError(f"imageprocessing failed: {result.get('error')}")
 
         with open(result["output_path"], 'rb') as f:
             image_data = f.read()
@@ -990,7 +1008,7 @@ class YunwuKlingClient:
         return f"data:{mime_type};base64,{base64_data}"
 
     async def _wait_for_completion(self, task_id: str, task_type: str = "text2video", max_wait: int = 600) -> Optional[str]:
-        """Wait for task completion"""
+        """waittask complete"""
         import time
         start_time = time.monotonic()
 
@@ -998,12 +1016,12 @@ class YunwuKlingClient:
         if task_type == "image2video":
             query_path = self.IMAGE2VIDEO_PATH + f"/{task_id}"
 
-        logger.info(f"⏳ Waiting for Yunwu Kling task completion: {task_id}")
+        logger.info(f"⏳ wait Yunwu Kling task complete: {task_id}")
 
         while True:
             elapsed = time.monotonic() - start_time
             if elapsed > max_wait:
-                logger.error(f"❌ Task timeout ({max_wait}s)")
+                logger.error(f"❌ task timeout ({max_wait}s)")
                 return None
 
             try:
@@ -1016,7 +1034,7 @@ class YunwuKlingClient:
 
                 code = result.get("code")
                 if code != 0:
-                    logger.error(f"❌ Task query failed: {result.get('message')}")
+                    logger.error(f"❌ task query failed: {result.get('message')}")
                     return None
 
                 data = result.get("data", {})
@@ -1027,22 +1045,22 @@ class YunwuKlingClient:
                     videos = task_result.get("videos", [])
                     if videos:
                         video_url = videos[0].get("url")
-                        logger.info(f"✅ Task completed (elapsed: {int(elapsed)}s)")
+                        logger.info(f"✅ task complete (takes time: {int(elapsed)}s)")
                         return video_url
 
                 elif task_status == "failed":
                     task_status_msg = data.get("task_status_msg", "unknown")
-                    logger.error(f"❌ Task failed: {task_status_msg}")
+                    logger.error(f"❌ task fail: {task_status_msg}")
                     return None
 
                 await asyncio.sleep(5)
 
             except Exception as e:
-                logger.warning(f"⚠️ Query failed: {e}")
+                logger.warning(f"⚠️ query failed: {e}")
                 await asyncio.sleep(5)
 
     async def _download_file(self, url: str, output_path: str):
-        """Download file"""
+        """download file"""
         import httpx
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -1051,7 +1069,7 @@ class YunwuKlingClient:
             response.raise_for_status()
             with open(output_path, 'wb') as f:
                 f.write(response.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved to: {output_path}")
 
     async def close(self):
         await self.client.aclose()
@@ -1059,29 +1077,29 @@ class YunwuKlingClient:
 
 class YunwuKlingOmniClient:
     """
-    Kling v3 Omni video generation client (via Yunwu API)
+    Kling v3 Omni video generation client（via Yunwu API）
 
     .. deprecated::
-        Yunwu provider is deprecated and no longer supported. Please use official Kling Omni API or fal provider.
-        This class is retained for backward compatibility and will be removed in a future version.
+        Yunwu provider deprecated and no longer supported。please use Kling Omni official API or fal provider。
+        this typekept only for backward compatibility，will be removed in future version。
 
-    Only supports kling-v3-omni model, for multi-reference video generation.
+    only supports kling-v3-omni model，for multi-reference image video generation。
 
-    Key differences from official API:
-    - Uses `model_name` parameter (same as official API)
-    - Bearer Token authentication (reuses YUNWU_API_KEY)
+    with official API key differences：
+    - use `model_name` parameter（with official API same）
+    - Bearer Token auth（reuse YUNWU_API_KEY）
     - Base URL: https://yunwu.ai
     """
 
     OMNI_VIDEO_PATH = "/kling/v1/videos/omni-video"
     QUERY_PATH = "/kling/v1/videos/omni-video/{task_id}"
 
-    MODEL = "kling-v3-omni"  # Fixed to kling-v3-omni
+    MODEL = "kling-v3-omni"  # fixed use kling-v3-omni
 
     def __init__(self):
         import warnings
         warnings.warn(
-            "YunwuKlingOmniClient is deprecated, please use KlingOmniClient (official API) or fal provider",
+            "YunwuKlingOmniClient deprecated, please use KlingOmniClient(official API)or fal provider",
             DeprecationWarning,
             stacklevel=2
         )
@@ -1109,37 +1127,37 @@ class YunwuKlingOmniClient:
         output: str = None
     ) -> Dict[str, Any]:
         """
-        Omni-Video generation (supports multiple reference images)
+        Omni-Video generate（supportmulti reference image）
 
         Args:
-            prompt: video description, can use <<<image_1>>> to reference images
-            duration: duration (3-15 seconds)
+            prompt: videodescription，can use <<<image_1>>> reference image
+            duration: duration(3-15s)
             mode: std or pro
             aspect_ratio: aspect ratio (16:9, 9:16, 1:1)
             audio: whether to generate audio
-            image_list: image path list, for character consistency
-            multi_shot: whether to use multi-shot
+            image_list: image pathlist，forcharacter consistency
+            multi_shot: whethermulti-shot
             shot_type: intelligence or customize
-            multi_prompt: custom shot list
+            multi_prompt: custom storyboard shot list
             output: output file path
         """
         payload = {
-            "model_name": self.MODEL,  # Note: yunwu kling-v3-omni uses model_name
+            "model_name": self.MODEL,  # note：yunwu kling-v3-omni uses model_name
             "prompt": prompt,
             "duration": str(duration),
             "mode": mode,
-            "sound": "on" if audio else "off",  # API spec requires sound parameter, values: "on"/"off"
+            "sound": "on" if audio else "off",  # APIstandardrequirement sound parameter，value is "on"/"off"
             "aspect_ratio": aspect_ratio
         }
 
-        # Process image_list (format: [{"image_url": url_or_base64}, ...])
+        # handle image_list（format：[{"image_url": url_or_base64}, ...]）
         if image_list:
             processed_images = await self._prepare_image_list(image_list)
             if processed_images:
                 payload["image_list"] = processed_images
-                logger.info(f"📎 Using {len(processed_images)} reference images")
+                logger.info(f"📎 use {len(processed_images)} reference images")
 
-        # Process multi-shot parameters
+        # process multi-shot params
         if multi_shot:
             payload["multi_shot"] = True
             if shot_type:
@@ -1147,7 +1165,7 @@ class YunwuKlingOmniClient:
             if multi_prompt and shot_type == "customize":
                 payload["multi_prompt"] = multi_prompt
 
-        logger.info(f"📤 Creating Yunwu Kling Omni-Video task: {prompt[:50]}...")
+        logger.info(f"📤 create Yunwu Kling Omni-Video task: {prompt[:50]}...")
 
         try:
             response = await self.client.post(
@@ -1165,7 +1183,7 @@ class YunwuKlingOmniClient:
             data = result.get("data", {})
             task_id = data.get("task_id")
             if not task_id:
-                return {"success": False, "error": "API did not return task_id"}
+                return {"success": False, "error": "APInot returnedtask_id"}
 
             logger.info(f"✅ Omni-Video task created: {task_id}")
 
@@ -1180,58 +1198,58 @@ class YunwuKlingOmniClient:
         except Exception as e:
             error_msg = str(e)
             if "429" in error_msg:
-                error_msg = "Concurrent task limit exceeded, please wait for existing tasks to complete before retrying"
+                error_msg = "concurrent task limit exceeded，please wait for existing tasks to complete before retrying"
             logger.error(f"❌ Yunwu Kling Omni-Video failed: {error_msg}")
             return {"success": False, "error": error_msg}
 
     async def _prepare_image_list(self, image_paths: List[str]) -> List[Dict]:
-        """Prepare image_list parameter"""
+        """prepare image_list parameter"""
         result = []
         for img_path in image_paths:
             try:
                 if img_path.startswith(('http://', 'https://')):
                     result.append({"image_url": img_path})
                 else:
-                    # Convert local file to base64
+                    # local file convert base64
                     base64_data = await self._file_to_base64(img_path)
                     if base64_data:
                         result.append({"image_url": base64_data})
             except Exception as e:
-                logger.warning(f"⚠️ Reference image processing failed: {img_path}, {e}")
+                logger.warning(f"⚠️ reference image processing failed: {img_path}, {e}")
         return result
 
     async def _file_to_base64(self, file_path: str) -> Optional[str]:
-        """Convert file to base64 (pure base64 string for yunwu API)"""
+        """file to base64(pure base64string，for Yunwu API use）"""
         if not os.path.exists(file_path):
-            logger.warning(f"⚠️ File does not exist: {file_path}")
+            logger.warning(f"⚠️ file does not exist: {file_path}")
             return None
 
         # Validate and adjust image size
         result = validate_and_resize_image(file_path)
         if not result["success"]:
-            logger.warning(f"⚠️ Image processing failed: {file_path}, {result.get('error')}")
+            logger.warning(f"⚠️ imageprocessing failed: {file_path}, {result.get('error')}")
             return None
 
         with open(result["output_path"], 'rb') as f:
             image_data = f.read()
 
-        # Return pure base64 string (without data URI prefix)
-        # yunwu API expects pure base64, not data:image/xxx;base64,... format
+        # return purebase64string（do notdata URIprefix）
+        # yunwu APIexpect purebase64，rather than data:image/xxx;base64,... format
         return base64.b64encode(image_data).decode('utf-8')
 
     async def _wait_for_completion(self, task_id: str, max_wait: int = 600) -> Optional[str]:
-        """Wait for task completion"""
+        """waittask complete"""
         import time
         start_time = time.monotonic()
 
         query_path = self.QUERY_PATH.replace("{task_id}", task_id)
 
-        logger.info(f"⏳ Waiting for Yunwu Kling Omni task completion: {task_id}")
+        logger.info(f"⏳ wait Yunwu Kling Omni task complete: {task_id}")
 
         while True:
             elapsed = time.monotonic() - start_time
             if elapsed > max_wait:
-                logger.error(f"❌ Task timeout ({max_wait}s)")
+                logger.error(f"❌ task timeout ({max_wait}s)")
                 return None
 
             try:
@@ -1244,7 +1262,7 @@ class YunwuKlingOmniClient:
 
                 code = result.get("code")
                 if code != 0:
-                    logger.error(f"❌ Task query failed: {result.get('message')}")
+                    logger.error(f"❌ task query failed: {result.get('message')}")
                     return None
 
                 data = result.get("data", {})
@@ -1255,22 +1273,22 @@ class YunwuKlingOmniClient:
                     videos = task_result.get("videos", [])
                     if videos:
                         video_url = videos[0].get("url")
-                        logger.info(f"✅ Task completed (elapsed: {int(elapsed)}s)")
+                        logger.info(f"✅ task complete (takes time: {int(elapsed)}s)")
                         return video_url
 
                 elif task_status == "failed":
                     task_status_msg = data.get("task_status_msg", "unknown")
-                    logger.error(f"❌ Task failed: {task_status_msg}")
+                    logger.error(f"❌ task fail: {task_status_msg}")
                     return None
 
                 await asyncio.sleep(5)
 
             except Exception as e:
-                logger.warning(f"⚠️ Query failed: {e}")
+                logger.warning(f"⚠️ query failed: {e}")
                 await asyncio.sleep(5)
 
     async def _download_file(self, url: str, output_path: str):
-        """Download file"""
+        """download file"""
         import httpx
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -1279,20 +1297,20 @@ class YunwuKlingOmniClient:
             response.raise_for_status()
             with open(output_path, 'wb') as f:
                 f.write(response.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved to: {output_path}")
 
     async def close(self):
         await self.client.aclose()
 
 
-# ============== Kling Video Generation ==============
+# ============== Kling video generation ==============
 
 class KlingClient:
     """
     Kling video generation client (kling-v3)
 
-    Uses /v1/videos/text2video and /v1/videos/image2video endpoints.
-    Supports text-to-video, image-to-video (first frame/first+last frame), multi-shot, audio generation.
+    use /v1/videos/text2video and /v1/videos/image2video endpoint。
+    supporttext-to-video、image-to-video（first frame/first/last frame）、multi-shot、audio-visual simultaneous。
     """
 
     TEXT2VIDEO_PATH = "/v1/videos/text2video"
@@ -1312,7 +1330,7 @@ class KlingClient:
         self._token_expire = 0
 
     def _generate_token(self) -> str:
-        """Generate JWT authentication token"""
+        """generate JWT auth token"""
         import jwt
         import time
 
@@ -1326,7 +1344,7 @@ class KlingClient:
         return jwt.encode(payload, Config.KLING_SECRET_KEY, algorithm="HS256")
 
     def _get_token(self) -> str:
-        """Get valid token (with cache)"""
+        """get valid token（with cache）"""
         import time
         if not self._token or time.time() > self._token_expire - 60:
             self._token = self._generate_token()
@@ -1346,17 +1364,17 @@ class KlingClient:
         output: str = None
     ) -> Dict[str, Any]:
         """
-        Text-to-video
+        text-to-video
 
         Args:
-            prompt: video description
-            duration: duration (3-15 seconds)
+            prompt: videodescription
+            duration: duration(3-15s)
             mode: std or pro
             aspect_ratio: aspect ratio (16:9, 9:16, 1:1)
             sound: on or off
-            multi_shot: whether to use multi-shot
-            shot_type: intelligence (AI auto-shot) or customize (custom shot)
-            multi_prompt: custom shot list, format [{"index": 1, "prompt": "...", "duration": "3"}, ...]
+            multi_shot: whethermulti-shot
+            shot_type: intelligence（AIauto storyboard）or customize（custom storyboard）
+            multi_prompt: custom storyboard shot list，format [{"index": 1, "prompt": "...", "duration": "3"}, ...]
             output: output file path
         """
         payload = {
@@ -1376,7 +1394,7 @@ class KlingClient:
             if multi_prompt and shot_type == "customize":
                 payload["multi_prompt"] = multi_prompt
 
-        logger.info(f"📤 Creating Kling text-to-video task: {prompt[:50]}...")
+        logger.info(f"📤 create Kling text-to-videotask: {prompt[:50]}...")
 
         try:
             token = self._get_token()
@@ -1395,9 +1413,9 @@ class KlingClient:
             data = result.get("data", {})
             task_id = data.get("task_id")
             if not task_id:
-                return {"success": False, "error": "API did not return task_id"}
+                return {"success": False, "error": "APInot returnedtask_id"}
 
-            logger.info(f"✅ Task created: {task_id}")
+            logger.info(f"✅ task created: {task_id}")
 
             video_url = await self._wait_for_completion(task_id)
 
@@ -1410,10 +1428,10 @@ class KlingClient:
         except Exception as e:
             error_msg = str(e)
             if "429" in error_msg:
-                error_msg = "Concurrent task limit exceeded, please wait for existing tasks to complete before retrying"
+                error_msg = "concurrent task limit exceeded，please wait for existing tasks to complete before retrying"
             elif "1201" in error_msg:
-                error_msg = "Model not supported or parameter error, please check model_name and mode parameters"
-            logger.error(f"❌ Kling text-to-video failed: {error_msg}")
+                error_msg = "model not supported or parameter error，please check model_name and mode parameter"
+            logger.error(f"❌ Kling text-to-videofailed: {error_msg}")
             return {"success": False, "error": error_msg}
 
     async def create_image2video(
@@ -1430,31 +1448,31 @@ class KlingClient:
         multi_prompt: List[Dict] = None
     ) -> Dict[str, Any]:
         """
-        Image-to-video
+        image-to-video
 
         Args:
-            image_path: image path or URL
-            prompt: video description
-            duration: duration (3-15 seconds)
+            image_path: image pathorURL
+            prompt: videodescription
+            duration: duration(3-15s)
             mode: std or pro
             sound: on or off
-            tail_image_path: last frame image path (for first+last frame control)
+            tail_image_path: last frameimage path（forfirst/last framecontrol）
             output: output file path
-            multi_shot: whether to use multi-shot
-            shot_type: multi-shot type (intelligence/customize)
-            multi_prompt: multi-shot configuration list
+            multi_shot: whethermulti-shot
+            shot_type: multi-shottype (intelligence/customize)
+            multi_prompt: multi-shotconfig list
         """
-        # Prepare image
+        # prepare images
         if image_path.startswith(('http://', 'https://')):
             image_url = image_path
         else:
             if not os.path.exists(image_path):
-                return {"success": False, "error": f"Image not found: {image_path}"}
+                return {"success": False, "error": f"image does not exist: {image_path}"}
 
             # Validate and adjust image size
             result = validate_and_resize_image(image_path)
             if not result["success"]:
-                return {"success": False, "error": f"Image processing failed: {result.get('error')}"}
+                return {"success": False, "error": f"imageprocessing failed: {result.get('error')}"}
 
             processed_path = result["output_path"]
 
@@ -1485,7 +1503,7 @@ class KlingClient:
             "sound": sound
         }
 
-        # Process multi-shot parameters
+        # process multi-shot params
         if multi_shot:
             payload["multi_shot"] = True
             if shot_type:
@@ -1493,18 +1511,18 @@ class KlingClient:
             if multi_prompt:
                 payload["multi_prompt"] = multi_prompt
 
-        # Process last frame image (first+last frame control)
+        # handlelast frameimage（first/last framecontrol）
         if tail_image_path:
             if tail_image_path.startswith(('http://', 'https://')):
                 tail_image_url = tail_image_path
             else:
                 if not os.path.exists(tail_image_path):
-                    return {"success": False, "error": f"Last frame image does not exist: {tail_image_path}"}
+                    return {"success": False, "error": f"last frame image does not exist: {tail_image_path}"}
 
-                # Validate and adjust last frame image size
+                # validate and adjust last frame image size
                 tail_result = validate_and_resize_image(tail_image_path)
                 if not tail_result["success"]:
-                    return {"success": False, "error": f"Last frame image processing failed: {tail_result.get('error')}"}
+                    return {"success": False, "error": f"last frame image processing failed: {tail_result.get('error')}"}
 
                 with open(tail_result["output_path"], 'rb') as f:
                     tail_image_data = f.read()
@@ -1512,9 +1530,9 @@ class KlingClient:
                 tail_image_url = base64.b64encode(tail_image_data).decode('utf-8')
 
             payload["image_tail"] = tail_image_url
-            logger.info(f"📤 Creating Kling image-to-video task (with last frame): {prompt[:50]}...")
+            logger.info(f"📤 create Kling image-to-videotask(with last frame）: {prompt[:50]}...")
         else:
-            logger.info(f"📤 Creating Kling image-to-video task: {prompt[:50]}...")
+            logger.info(f"📤 create Kling image-to-videotask: {prompt[:50]}...")
 
         try:
             token = self._get_token()
@@ -1533,9 +1551,9 @@ class KlingClient:
             data = result.get("data", {})
             task_id = data.get("task_id")
             if not task_id:
-                return {"success": False, "error": "API did not return task_id"}
+                return {"success": False, "error": "APInot returnedtask_id"}
 
-            logger.info(f"✅ Task created: {task_id}")
+            logger.info(f"✅ task created: {task_id}")
 
             video_url = await self._wait_for_completion(task_id, query_path=self.IMAGE2VIDEO_QUERY_PATH)
 
@@ -1548,25 +1566,25 @@ class KlingClient:
         except Exception as e:
             error_msg = str(e)
             if "429" in error_msg:
-                error_msg = "Concurrent task limit exceeded, please wait for existing tasks to complete before retrying"
+                error_msg = "concurrent task limit exceeded，please wait for existing tasks to complete before retrying"
             elif "1201" in error_msg:
-                error_msg = "Model not supported or parameter error, please check model_name and mode parameters"
+                error_msg = "model not supported or parameter error，please check model_name and mode parameter"
             logger.error(f"❌ Kling image-to-video failed: {error_msg}")
             return {"success": False, "error": error_msg}
 
     async def _wait_for_completion(self, task_id: str, query_path: str = None, max_wait: int = 600) -> Optional[str]:
-        """Wait for task completion"""
+        """waittask complete"""
         import time
         if query_path is None:
             query_path = self.TEXT2VIDEO_QUERY_PATH
         start_time = time.monotonic()
 
-        logger.info(f"⏳ Waiting for Kling task completion: {task_id}")
+        logger.info(f"⏳ wait Kling task complete: {task_id}")
 
         while True:
             elapsed = time.monotonic() - start_time
             if elapsed > max_wait:
-                logger.error(f"❌ Task timeout ({max_wait}s)")
+                logger.error(f"❌ task timeout ({max_wait}s)")
                 return None
 
             try:
@@ -1580,7 +1598,7 @@ class KlingClient:
 
                 code = result.get("code")
                 if code != 0:
-                    logger.warning(f"⚠️ Query failed: {result.get('message')}")
+                    logger.warning(f"⚠️ query failed: {result.get('message')}")
                     await asyncio.sleep(5)
                     continue
 
@@ -1593,22 +1611,22 @@ class KlingClient:
                     videos = task_result.get("videos", [])
                     if videos:
                         video_url = videos[0].get("url")
-                        logger.info(f"✅ Kling task completed (time elapsed: {int(elapsed)}s)")
+                        logger.info(f"✅ Kling task complete (takes time: {int(elapsed)}s)")
                         return video_url
 
                 elif task_status == "failed":
                     task_status_msg = data.get("task_status_msg", "Unknown error")
-                    logger.error(f"❌ Kling task failed: {task_status_msg}")
+                    logger.error(f"❌ Kling task fail: {task_status_msg}")
                     return None
 
                 await asyncio.sleep(5)
 
             except Exception as e:
-                logger.warning(f"⚠️ Query failed: {e}")
+                logger.warning(f"⚠️ query failed: {e}")
                 await asyncio.sleep(5)
 
     async def _download_file(self, url: str, output_path: str):
-        """Download file"""
+        """download file"""
         import httpx
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -1617,7 +1635,7 @@ class KlingClient:
             response.raise_for_status()
             with open(output_path, 'wb') as f:
                 f.write(response.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved to: {output_path}")
 
     async def close(self):
         await self.client.aclose()
@@ -1625,14 +1643,14 @@ class KlingClient:
 
 class KlingOmniClient:
     """
-    Kling Omni-Video generation client (kling-v3-omni)
-    Uses /v1/videos/omni-video endpoint, supports image_list and multi_shot
+    Kling Omni-Video video generation client (kling-v3-omni)
+    use /v1/videos/omni-video endpoint，support image_list and multi_shot
 
-    Key features:
-    - Text-to-video (3-15 seconds)
-    - Image-to-video (supports image_list multi-reference)
-    - Multi-shot video (multi_shot)
-    - Audio generation (sound: on/off)
+    features：
+    - text-to-video(3-15s)
+    - image-to-video（support image_list multi reference image）
+    - multi-shotvideo（multi_shot）
+    - audio-visual simultaneous（sound: on/off）
     """
 
     OMNI_VIDEO_PATH = "/v1/videos/omni-video"
@@ -1652,7 +1670,7 @@ class KlingOmniClient:
         self._token_expire = 0
 
     def _generate_token(self) -> str:
-        """Generate JWT authentication token"""
+        """generate JWT auth token"""
         import jwt
         import time
 
@@ -1666,7 +1684,7 @@ class KlingOmniClient:
         return jwt.encode(payload, Config.KLING_SECRET_KEY, algorithm="HS256")
 
     def _get_token(self) -> str:
-        """Get valid token (with cache)"""
+        """get valid token（with cache）"""
         import time
         if not self._token or time.time() > self._token_expire - 60:
             self._token = self._generate_token()
@@ -1674,7 +1692,7 @@ class KlingOmniClient:
         return self._token
 
     def _file_to_base64(self, file_path: str) -> str:
-        """Convert file to pure base64 string (without data URI prefix)"""
+        """convert file to pure base64 string（without data URI prefix）"""
         with open(file_path, 'rb') as f:
             data = f.read()
         return base64.b64encode(data).decode('utf-8')
@@ -1693,18 +1711,18 @@ class KlingOmniClient:
         output: str = None
     ) -> Dict[str, Any]:
         """
-        Omni-Video generation (supports image_list + multi_shot)
+        Omni-Video generate（support image_list + multi_shot）
 
         Args:
-            prompt: video description, can use <<<image_1>>> to reference images
-            duration: duration (3-15 seconds)
+            prompt: videodescription，can use <<<image_1>>> reference image
+            duration: duration(3-15s)
             mode: std or pro
             aspect_ratio: aspect ratio (16:9, 9:16, 1:1)
             sound: on or off
-            image_list: image path list, for character consistency
-            multi_shot: whether to use multi-shot
-            shot_type: intelligence (AI auto-shot) or customize (custom shot)
-            multi_prompt: custom shot list, format [{"index": 1, "prompt": "...", "duration": "3"}, ...]
+            image_list: image pathlist，forcharacter consistency
+            multi_shot: whethermulti-shot
+            shot_type: intelligence（AIauto storyboard）or customize（custom storyboard）
+            multi_prompt: custom storyboard shot list，format [{"index": 1, "prompt": "...", "duration": "3"}, ...]
             output: output file path
         """
         payload = {
@@ -1717,18 +1735,18 @@ class KlingOmniClient:
             "aspect_ratio": aspect_ratio
         }
 
-        # Process image_list (pure base64, without data URI prefix)
+        # handle image_list(pure base64, without data URI prefix)
         if image_list:
             processed_images = []
             for img_path in image_list:
                 if not os.path.exists(img_path):
-                    logger.warning(f"⚠️ Reference image does not exist: {img_path}")
+                    logger.warning(f"⚠️ reference image does not exist: {img_path}")
                     continue
 
                 # Validate and adjust image size
                 result = validate_and_resize_image(img_path)
                 if not result["success"]:
-                    logger.warning(f"⚠️ Image processing failed: {img_path}, {result.get('error')}")
+                    logger.warning(f"⚠️ imageprocessing failed: {img_path}, {result.get('error')}")
                     continue
 
                 processed_images.append({
@@ -1736,9 +1754,9 @@ class KlingOmniClient:
                 })
 
             payload["image_list"] = processed_images
-            logger.info(f"📎 Using {len(processed_images)} reference images")
+            logger.info(f"📎 use {len(processed_images)} reference images")
 
-        # Process multi-shot parameters
+        # process multi-shot params
         if multi_shot:
             payload["multi_shot"] = True
             if shot_type:
@@ -1746,7 +1764,7 @@ class KlingOmniClient:
             if multi_prompt and shot_type == "customize":
                 payload["multi_prompt"] = multi_prompt
 
-        logger.info(f"📤 Creating Kling Omni-Video task: {prompt[:50]}...")
+        logger.info(f"📤 create Kling Omni-Video task: {prompt[:50]}...")
 
         try:
             token = self._get_token()
@@ -1765,7 +1783,7 @@ class KlingOmniClient:
             data = result.get("data", {})
             task_id = data.get("task_id")
             if not task_id:
-                return {"success": False, "error": "API did not return task_id"}
+                return {"success": False, "error": "APInot returnedtask_id"}
 
             logger.info(f"✅ Omni-Video task created: {task_id}")
 
@@ -1780,23 +1798,23 @@ class KlingOmniClient:
         except Exception as e:
             error_msg = str(e)
             if "429" in error_msg:
-                error_msg = "Concurrent task limit exceeded, please wait for existing tasks to complete before retrying"
+                error_msg = "concurrent task limit exceeded，please wait for existing tasks to complete before retrying"
             elif "1201" in error_msg:
-                error_msg = "Model not supported or parameter error"
+                error_msg = "model not supported or parameter error"
             logger.error(f"❌ Kling Omni-Video failed: {error_msg}")
             return {"success": False, "error": error_msg}
 
     async def _wait_for_completion(self, task_id: str, max_wait: int = 600) -> Optional[str]:
-        """Wait for task completion"""
+        """waittask complete"""
         import time
         start_time = time.monotonic()
 
-        logger.info(f"⏳ Waiting for Kling Omni-Video task completion: {task_id}")
+        logger.info(f"⏳ wait Kling Omni-Video task complete: {task_id}")
 
         while True:
             elapsed = time.monotonic() - start_time
             if elapsed > max_wait:
-                logger.error(f"❌ Task timeout ({max_wait}s)")
+                logger.error(f"❌ task timeout ({max_wait}s)")
                 return None
 
             try:
@@ -1810,7 +1828,7 @@ class KlingOmniClient:
 
                 code = result.get("code")
                 if code != 0:
-                    logger.warning(f"⚠️ Query failed: {result.get('message')}")
+                    logger.warning(f"⚠️ query failed: {result.get('message')}")
                     await asyncio.sleep(5)
                     continue
 
@@ -1822,22 +1840,22 @@ class KlingOmniClient:
                     videos = task_result.get("videos", [])
                     if videos:
                         video_url = videos[0].get("url")
-                        logger.info(f"✅ Omni-Video task completed (time elapsed: {int(elapsed)}s)")
+                        logger.info(f"✅ Omni-Video task complete (takes time: {int(elapsed)}s)")
                         return video_url
 
                 elif task_status == "failed":
                     task_status_msg = data.get("task_status_msg", "Unknown error")
-                    logger.error(f"❌ Omni-Video task failed: {task_status_msg}")
+                    logger.error(f"❌ Omni-Video task fail: {task_status_msg}")
                     return None
 
                 await asyncio.sleep(5)
 
             except Exception as e:
-                logger.warning(f"⚠️ Query failed: {e}")
+                logger.warning(f"⚠️ query failed: {e}")
                 await asyncio.sleep(5)
 
     async def _download_file(self, url: str, output_path: str):
-        """Download file"""
+        """download file"""
         import httpx
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -1846,7 +1864,7 @@ class KlingOmniClient:
             response.raise_for_status()
             with open(output_path, 'wb') as f:
                 f.write(response.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved to: {output_path}")
 
     async def close(self):
         await self.client.aclose()
@@ -1856,18 +1874,18 @@ class FalKlingClient:
     """
     Kling video generation client (via fal.ai proxy)
 
-    Fully consistent with official Kling API:
-    - Same prompt writing style
-    - Same parameter fields (duration, aspect_ratio, generate_audio, etc.)
-    - Same image input method
+    with official Kling API exactly same：
+    - prompt consistent notation
+    - param field consistent（duration, aspect_ratio, generate_audio, etc）
+    - imageinput method consistent
 
-    Only difference: use --provider fal instead of --provider kling
+    only difference：use --provider fal rather than --provider kling
 
-    Supported features:
-    - Text-to-video: only pass prompt
-    - Single image generation: pass image_url
-    - Multi-reference: pass image_urls list
-    - First+last frame: pass image_url + tail_image_url
+    supported features：
+    - text-to-video：only pass prompt
+    - single image-to-video：pass image_url
+    - multi reference image：pass image_urls list
+    - first/last frame：pass image_url + tail_image_url
     """
 
     MODEL_ID = "fal-ai/kling-video/o3/pro/reference-to-video"
@@ -1885,21 +1903,21 @@ class FalKlingClient:
         aspect_ratio: str = "9:16",
         generate_audio: bool = True,
         image_url: str = None,        # first frame/single image
-        image_urls: List[str] = None,  # multiple reference images
+        image_urls: List[str] = None,  # multi reference image
         tail_image_url: str = None,    # last frame
         output: str = None
     ) -> Dict[str, Any]:
         """
-        Unified video generation method
+        unified video generation method
 
         Args:
-            prompt: video description
-            duration: duration (3-15 seconds)
+            prompt: videodescription
+            duration: duration(3-15s)
             aspect_ratio: aspect ratio (16:9, 9:16, 1:1)
             generate_audio: whether to generate audio
-            image_url: first frame image (path or URL)
-            image_urls: reference image list (path or URL)
-            tail_image_url: last frame image (path or URL)
+            image_url: first frameimage（pathor URL）
+            image_urls: reference image list（pathor URL）
+            tail_image_url: last frameimage（pathor URL）
             output: output file path
         """
         payload = {
@@ -1909,28 +1927,28 @@ class FalKlingClient:
             "generate_audio": generate_audio
         }
 
-        # first frame/single image (fal.ai uses start_image_url)
+        # first frame/single image (fal.ai use start_image_url)
         if image_url:
             payload["start_image_url"] = self._prepare_image_url(image_url)
 
-        # multi-reference (fal.ai uses image_urls, reference with @Image1 in prompt)
+        # multi reference image (fal.ai use image_urls，prompt used in @Image1 reference)
         if image_urls:
             payload["image_urls"] = [self._prepare_image_url(img) for img in image_urls]
 
-        # last frame (fal.ai uses end_image_url)
+        # last frame (fal.ai use end_image_url)
         if tail_image_url:
             payload["end_image_url"] = self._prepare_image_url(tail_image_url)
 
         return await self._submit_and_wait(payload, output)
 
     def _prepare_image_url(self, image_path: str) -> str:
-        """Prepare image URL (local file to data URI)"""
+        """prepare images URL（local file convert data URI）"""
         if image_path.startswith(('http://', 'https://')):
             return image_path
         return self._file_to_data_uri(image_path)
 
     def _file_to_data_uri(self, file_path: str) -> str:
-        """Convert local file to data URI format base64"""
+        """convert local file to data URI format base64"""
         ext = os.path.splitext(file_path)[1].lower().lstrip('.')
         if ext == 'jpg':
             ext = 'jpeg'
@@ -1939,21 +1957,21 @@ class FalKlingClient:
         return f"data:image/{ext};base64,{data}"
 
     async def _submit_and_wait(self, payload: dict, output: str = None) -> Dict[str, Any]:
-        """Submit task and wait for completion"""
+        """submit task and wait for completion"""
         import time
 
-        logger.info(f"Creating fal Kling task: {payload.get('prompt', '')[:50]}...")
+        logger.info(f"📤 create fal Kling task: {payload.get('prompt', '')[:50]}...")
 
         try:
-            # Use fal_client to submit task, returns AsyncRequestHandle
+            # use fal_client submit task，return AsyncRequestHandle
             handle = await self.fal_client.submit(self.MODEL_ID, arguments=payload)
             request_id = handle.request_id
             logger.info(f"✅ fal task submitted: {request_id}")
         except Exception as e:
-            logger.error(f"❌ fal task submission failed: {e}")
+            logger.error(f"❌ fal task submitfailed: {e}")
             return {"success": False, "error": str(e)}
 
-        # Wait for completion
+        # wait for completion
         video_url = await self._wait_for_completion(handle)
 
         if video_url and output:
@@ -1963,10 +1981,10 @@ class FalKlingClient:
         return {"success": bool(video_url), "video_url": video_url, "request_id": request_id}
 
     async def _wait_for_completion(self, handle, max_wait: int = 600) -> Optional[str]:
-        """Wait for task completion"""
+        """waittask complete"""
         import time
 
-        logger.info(f"⏳ Waiting for fal task completion: {handle.request_id}")
+        logger.info(f"⏳ wait fal task complete: {handle.request_id}")
         start_time = time.monotonic()
 
         while True:
@@ -1976,38 +1994,38 @@ class FalKlingClient:
                 return None
 
             try:
-                # Use handle.status() to check status
+                # use handle.status() check status
                 status = await handle.status()
-                # status is an object, like InProgress or Completed
+                # status is an object，like InProgress or Completed
                 status_class = status.__class__.__name__
-                logger.info(f"   [{int(elapsed)}s] Status: {status_class}")
+                logger.info(f"   [{int(elapsed)}s] status: {status_class}")
 
                 if status_class == "Completed":
-                    # Use handle.get() to get result
+                    # use handle.get() get result
                     result = await handle.get()
                     video_url = result.get("video", {}).get("url")
                     if video_url:
-                        logger.info(f"✅ fal task completed (time elapsed: {int(elapsed)}s)")
+                        logger.info(f"✅ fal task complete (takes time: {int(elapsed)}s)")
                         return video_url
                     else:
-                        logger.error(f"❌ No video URL in fal task result: {result}")
+                        logger.error(f"❌ fal task resultno videoURL: {result}")
                         return None
                 elif status_class == "Failed":
                     error = getattr(status, 'error', None) or "Unknown error"
-                    logger.error(f"❌ fal task failed: {error}")
+                    logger.error(f"❌ fal task fail: {error}")
                     return None
             except Exception as e:
-                logger.warning(f"   Status query exception: {e}")
+                logger.warning(f"   query statusexception: {e}")
 
             await asyncio.sleep(5)
 
     async def _download_file(self, url: str, output_path: str):
-        """Download file"""
+        """download file"""
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         response = await self.http_client.get(url)
         with open(output_path, 'wb') as f:
             f.write(response.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved to: {output_path}")
 
     async def close(self):
         await self.http_client.aclose()
@@ -2015,27 +2033,27 @@ class FalKlingClient:
 
 class SeedanceClient:
     """
-    Seedance 2 video generation client (via piapi.ai proxy)
+    Seedance 2 video generation client（via piapi.ai proxy）
 
-    Core capabilities:
-    - Text-to-Video: pass prompt directly (mode: text_to_video)
-    - First/Last Frames: 1-2 images as first/last frames (mode: first_last_frames)
-    - Omni Reference: multi-modal reference - image/video/audio (mode: omni_reference)
+    core capability：
+    - Text-to-Video: directly pass prompt（mode: text_to_video）
+    - First/Last Frames: 1-2 images as first/last frames（mode: first_last_frames）
+    - Omni Reference: multimodal reference - image/video/audio（mode: omni_reference）
 
-    Key parameters:
-    - model: "seedance" (fixed)
-    - task_type: "seedance-2-fast" (fast) or "seedance-2" (high quality)
-    - mode: "text_to_video" | "first_last_frames" | "omni_reference" (required)
-    - duration: 4-15 seconds (any integer)
+    key parameter：
+    - model: "seedance"（fixed）
+    - task_type: "seedance-2-fast"（fast）or "seedance-2"（high quality）
+    - mode: "text_to_video" | "first_last_frames" | "omni_reference"（required）
+    - duration: 4-15s（any integer）
     - aspect_ratio: 21:9 | 16:9 | 4:3 | 1:1 | 3:4 | 9:16 | auto
-    - image_urls: up to 12 reference images
-    - video_urls: up to 1 reference video (omni_reference mode)
-    - audio_urls: audio reference (omni_reference mode, mp3/wav, ≤15s)
+    - image_urls: max 12 reference images
+    - video_urls: max 1 reference videos（omni_reference mode）
+    - audio_urls: audioreference（omni_reference mode，mp3/wav，≤15s）
 
-    Prompt syntax:
-    - Image reference: "@image1" references first image
-    - Video reference: "@video1" references video
-    - Audio reference: "@audio1" references audio
+    Prompt syntax：
+    - imagereference: "@image1" reference first image
+    - video reference: "@video1" reference video
+    - audioreference: "@audio1" reference audio
     """
 
     TASK_PATH = "/api/v1/task"
@@ -2066,20 +2084,20 @@ class SeedanceClient:
         output: str = None
     ) -> Dict[str, Any]:
         """
-        Submit video generation task
+        submit video generation task
 
         Args:
-            prompt: video description (supports @imageN / @videoN / @audioN references)
-            duration: duration (4-15 seconds, any integer)
-            aspect_ratio: aspect ratio (21:9 | 16:9 | 4:3 | 1:1 | 3:4 | 9:16 | auto)
-            image_urls: reference image list (up to 12)
-            video_urls: reference video list (omni_reference mode)
-            audio_urls: reference audio list (omni_reference mode, mp3/wav, ≤15s)
-            mode: generation mode (text_to_video | first_last_frames | omni_reference)
+            prompt: videodescription（support @imageN / @videoN / @audioN reference）
+            duration: duration（4-15s，any integer）
+            aspect_ratio: aspect ratio（21:9 | 16:9 | 4:3 | 1:1 | 3:4 | 9:16 | auto）
+            image_urls: reference image list（max 12）
+            video_urls: referencevideo list（omni_reference mode）
+            audio_urls: referenceaudio list（omni_reference mode，mp3/wav，≤15s）
+            mode: generation mode（text_to_video | first_last_frames | omni_reference）
             model: "seedance-2-fast" or "seedance-2"
             output: output file path
         """
-        # Auto infer mode
+        # autoinfer mode
         if mode is None:
             if video_urls or audio_urls:
                 mode = "omni_reference"
@@ -2088,12 +2106,12 @@ class SeedanceClient:
             else:
                 mode = "text_to_video"
 
-        # duration validation (4-15)
+        # duration validation（4-15）
         duration = max(4, min(15, duration))
 
         # aspect_ratio validation
         if aspect_ratio not in self.VALID_ASPECT_RATIOS:
-            logger.warning(f"⚠️ aspect_ratio {aspect_ratio} not in supported list, using 16:9")
+            logger.warning(f"⚠️ aspect_ratio {aspect_ratio} not in support list，use 16:9")
             aspect_ratio = "16:9"
 
         model = model or Config.SEEDANCE_MODEL
@@ -2109,7 +2127,7 @@ class SeedanceClient:
             }
         }
 
-        # Prepare reference resources
+        # prepare reference resources
         if image_urls:
             payload["input"]["image_urls"] = [self._prepare_url(img) for img in image_urls]
 
@@ -2119,8 +2137,8 @@ class SeedanceClient:
         if audio_urls:
             payload["input"]["audio_urls"] = [self._prepare_url(a) for a in audio_urls]
 
-        logger.info(f"📤 Creating Seedance task: {prompt[:80]}...")
-        logger.info(f"   Parameters: mode={mode}, duration={duration}s, aspect_ratio={aspect_ratio}, model={model}")
+        logger.info(f"📤 create Seedance task: {prompt[:80]}...")
+        logger.info(f"   parameter: mode={mode}, duration={duration}s, aspect_ratio={aspect_ratio}, model={model}")
 
         try:
             response = await self.client.post(
@@ -2134,12 +2152,12 @@ class SeedanceClient:
             task_id = result.get("data", {}).get("task_id")
             if not task_id:
                 error = result.get("data", {}).get("error", {})
-                logger.error(f"❌ API did not return task_id: {error}")
+                logger.error(f"❌ API not returned task_id: {error}")
                 return {"success": False, "error": error.get("message", "Unknown error")}
 
             logger.info(f"✅ Seedance task created: {task_id}")
 
-            # Wait for completion
+            # wait for completion
             video_url = await self._wait_for_completion(task_id)
 
             if video_url and output:
@@ -2149,7 +2167,7 @@ class SeedanceClient:
             return {"success": bool(video_url), "video_url": video_url, "task_id": task_id}
 
         except Exception as e:
-            logger.error(f"❌ Seedance task failed: {e}")
+            logger.error(f"❌ Seedance task fail: {e}")
             return {"success": False, "error": str(e)}
 
     async def generate_video(
@@ -2161,7 +2179,7 @@ class SeedanceClient:
         output: str = None
     ) -> Dict[str, Any]:
         """
-        Complete video generation workflow (shortcut method)
+        completevideogeneration flow（shortcut method）
         """
         return await self.submit_task(
             prompt=prompt,
@@ -2172,7 +2190,7 @@ class SeedanceClient:
         )
 
     async def check_task(self, task_id: str) -> Dict[str, Any]:
-        """Query task status"""
+        """querytask status"""
         try:
             response = await self.client.get(
                 f"{Config.SEEDANCE_BASE_URL}{self.STATUS_PATH.format(task_id=task_id)}",
@@ -2181,36 +2199,36 @@ class SeedanceClient:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            logger.warning(f"⚠️ Task status query failed: {e}")
+            logger.warning(f"⚠️ query taskstatus failure: {e}")
             return {"error": str(e)}
 
     def _prepare_url(self, path: str) -> str:
-        """Prepare URL (local file to data URI)"""
+        """prepare URL（local file convert data URI）"""
         if path.startswith(('http://', 'https://')):
             return path
         return self._file_to_data_uri(path)
 
     def _file_to_data_uri(self, file_path: str) -> str:
-        """Convert local file to data URI format base64
+        """convert local file to data URI format base64
 
-        Note: piapi.ai has request body size limit, large images need compression
-        But image resolution cannot be too small, otherwise "material is too small" error
+        note：piapi.ai for requestbody size has limit，large imageneeds compression
+        but image resolution cannot be too small，otherwise error "material is too small" error
         """
-        # Check file size
+        # check file size
         file_size = os.path.getsize(file_path)
         max_size = 100 * 1024  # 100KB threshold
 
         if file_size > max_size:
-            # Compress image
-            logger.info(f"📦 Large image ({file_size/1024:.1f}KB), compressing...")
+            # compress image
+            logger.info(f"📦 image is large ({file_size/1024:.1f}KB)，compressing...")
             try:
                 from PIL import Image
                 import io
 
                 img = Image.open(file_path)
 
-                # First try without changing resolution, only adjust JPEG quality
-                # If quality=50 still exceeds 100KB, consider reducing resolution
+                # first try without changing resolution，only adjust JPEG quality
+                # If quality=50 still exceeds 100KB，then consider reducing resolution
                 for quality in [70, 50, 30]:
                     buffer = io.BytesIO()
                     img_rgb = img.convert('RGB') if img.mode != 'RGB' else img
@@ -2219,18 +2237,18 @@ class SeedanceClient:
 
                     if compressed_size <= max_size:
                         data = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                        logger.info(f"✅ Compression complete ({len(data)/1024:.1f}KB, quality={quality})")
+                        logger.info(f"✅ compressingcompletion ({len(data)/1024:.1f}KB, quality={quality})")
                         return f"data:image/jpeg;base64,{data}"
 
-                # If quality=30 still too large, reduce resolution (but keep min side >= 720px)
+                # If quality=30 stilltoo large，then reduce resolution（but keep minimum side >= 720px）
                 img_resized = img.copy()
                 while True:
                     w, h = img_resized.size
                     min_dim = min(w, h)
                     if min_dim <= 720:
-                        # Already down to 720px, cannot reduce further
+                        # already small enough 720px，cannot be smaller
                         break
-                    # Reduce 20%
+                    # shrink 20%
                     new_w, new_h = int(w * 0.8), int(h * 0.8)
                     img_resized = img_resized.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
@@ -2241,12 +2259,12 @@ class SeedanceClient:
                         break
 
                 data = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                logger.info(f"✅ Compression complete ({len(data)/1024:.1f}KB, resized to {img_resized.size})")
+                logger.info(f"✅ compressingcompletion ({len(data)/1024:.1f}KB, resized to {img_resized.size})")
                 return f"data:image/jpeg;base64,{data}"
             except Exception as e:
-                logger.warning(f"⚠️ Image compression failed, using original image: {e}")
+                logger.warning(f"⚠️ image compression failed，use original image: {e}")
 
-        # Small image: read directly
+        # directly read small image
         ext = os.path.splitext(file_path)[1].lower().lstrip('.')
         if ext == 'jpg':
             ext = 'jpeg'
@@ -2255,11 +2273,11 @@ class SeedanceClient:
         return f"data:image/{ext};base64,{data}"
 
     async def _wait_for_completion(self, task_id: str, max_wait: int = 600) -> Optional[str]:
-        """Wait for task completion"""
+        """waittask complete"""
         import time
         start_time = time.monotonic()
 
-        logger.info(f"⏳ Waiting for Seedance task completion: {task_id}")
+        logger.info(f"⏳ wait Seedance task complete: {task_id}")
 
         while True:
             elapsed = time.monotonic() - start_time
@@ -2272,39 +2290,39 @@ class SeedanceClient:
                 data = result.get("data", {})
                 status = data.get("status", "unknown")
 
-                logger.info(f"   [{int(elapsed)}s] Status: {status}")
+                logger.info(f"   [{int(elapsed)}s] status: {status}")
 
                 if status == "completed":
                     video_url = data.get("output", {}).get("video")
                     if video_url:
-                        logger.info(f"✅ Seedance task completed (time elapsed: {int(elapsed)}s)")
+                        logger.info(f"✅ Seedance task complete (takes time: {int(elapsed)}s)")
                         return video_url
                     else:
-                        logger.error(f"❌ No video URL in result: {data}")
+                        logger.error(f"❌ no video in result URL: {data}")
                         return None
 
                 elif status == "failed":
                     error = data.get("error", {})
                     logs = data.get("logs", [])
-                    # logs usually contain more detailed error reason
+                    # logs usually contains more detailederror reason
                     error_detail = error.get("message", "Unknown")
                     if logs:
-                        # Find first non-empty meaningful log
+                        # find the first non-empty meaningfullog
                         for log in logs:
                             if log and "restored" not in log.lower():
                                 error_detail = log
                                 break
-                    logger.error(f"❌ Seedance task failed: {error_detail}")
+                    logger.error(f"❌ Seedance task fail: {error_detail}")
                     return None
 
                 await asyncio.sleep(10)
 
             except Exception as e:
-                logger.warning(f"⚠️ Query exception: {e}")
+                logger.warning(f"⚠️ query exception: {e}")
                 await asyncio.sleep(10)
 
     async def _download_file(self, url: str, output_path: str):
-        """Download file"""
+        """download file"""
         import httpx
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         async with httpx.AsyncClient(timeout=300.0) as client:
@@ -2312,7 +2330,7 @@ class SeedanceClient:
             response.raise_for_status()
             with open(output_path, 'wb') as f:
                 f.write(response.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved to: {output_path}")
 
     async def close(self):
         await self.client.aclose()
@@ -2320,17 +2338,17 @@ class SeedanceClient:
 
 class FalSeedanceClient:
     """
-    Seedance 2.0 video generation client (via fal.ai)
+    Seedance 2.0 video generation client（passed fal.ai）
 
-    Uses reference-to-video endpoint only:
+    only use reference-to-video endpoint：
     - fast: https://queue.fal.run/bytedance/seedance-2.0/fast/reference-to-video
     - high_quality: https://queue.fal.run/bytedance/seedance-2.0/reference-to-video
 
-    Parameters:
-    - prompt: Video description (supports @Image1/@Video1/@Audio1 references)
-    - image_urls: Reference image list (max 9 images, each ≤30MB)
-    - video_urls: Reference video list (max 3 videos, total duration 2-15s)
-    - audio_urls: Reference audio list (max 3 audios, total duration ≤15s)
+    parameter:
+    - prompt: videodescription（support @Image1/@Video1/@Audio1 reference）
+    - image_urls: reference image list（max 9，each≤30MB）
+    - video_urls: referencevideo list（max 3，total duration2-15s）
+    - audio_urls: referenceaudio list（max 3，total duration≤15s）
     - resolution: "480p" | "720p"
     - duration: "auto" | 4-15
     - aspect_ratio: auto/21:9/16:9/4:3/1:1/3:4/9:16
@@ -2339,9 +2357,9 @@ class FalSeedanceClient:
     - end_user_id: string
     - model: "fast" | "high_quality"
 
-    Mode distinction (via image_urls parameter):
-    - No image_urls → text-to-video (pure text generation)
-    - With image_urls → reference-to-video (reference image generation)
+    mode distinction（passed image_urls parameter）：
+    - not pass image_urls → text-to-video（pure text-to）
+    - pass image_urls → reference-to-video（reference image generate）
     """
 
     BASE_URL = "https://queue.fal.run/bytedance/seedance-2.0"
@@ -2375,7 +2393,7 @@ class FalSeedanceClient:
             file_size = os.path.getsize(file_path)
             max_size = 100 * 1024
             if file_size > max_size:
-                logger.info(f"📦 Image is large ({file_size/1024:.1f}KB), compressing...")
+                logger.info(f"📦 image is large ({file_size/1024:.1f}KB)，compressing...")
                 img = Image.open(file_path)
                 for quality in [70, 50, 30]:
                     buffer = io.BytesIO()
@@ -2401,7 +2419,7 @@ class FalSeedanceClient:
                 data = base64.b64encode(f.read()).decode('utf-8')
             return f"data:image/{ext};base64,{data}"
         except Exception as e:
-            logger.warning(f"⚠️ Image processing failed: {e}")
+            logger.warning(f"⚠️ imageprocessing failed: {e}")
             ext = os.path.splitext(file_path)[1].lower().lstrip('.')
             if ext == 'jpg': ext = 'jpeg'
             with open(file_path, 'rb') as f:
@@ -2447,7 +2465,7 @@ class FalSeedanceClient:
         if end_user_id:
             payload["end_user_id"] = end_user_id
 
-        logger.info(f"📤 Creating FalSeedance task: {prompt[:60]}...")
+        logger.info(f"📤 create FalSeedance task: {prompt[:60]}...")
         logger.info(f"   Endpoint: {endpoint}, duration={duration}s, resolution={resolution}")
 
         try:
@@ -2463,9 +2481,9 @@ class FalSeedanceClient:
                 return {"success": False, "error": "No request_id returned"}
 
             video_result = await self._wait_for_completion(request_id)
-            # Check return type: str = success, dict = error
+            # check return type：str = success，dict = error
             if isinstance(video_result, dict) and "error" in video_result:
-                # Return full error info
+                # return completeerror message
                 return {
                     "success": False,
                     "error": video_result.get("error"),
@@ -2478,7 +2496,7 @@ class FalSeedanceClient:
                 return {"success": True, "video_url": video_result, "output": output, "request_id": request_id}
             return {"success": bool(video_result), "video_url": video_result, "request_id": request_id}
         except Exception as e:
-            logger.error(f"❌ FalSeedance task failed: {e}")
+            logger.error(f"❌ FalSeedance task fail: {e}")
             return {"success": False, "error": str(e)}
 
     async def _wait_for_completion(self, request_id: str, max_wait: int = 600) -> Optional[str]:
@@ -2486,7 +2504,7 @@ class FalSeedanceClient:
         start = time.monotonic()
         status_url = f"{self.BASE_URL}/requests/{request_id}/status"
         result_url = f"{self.BASE_URL}/requests/{request_id}"
-        logger.info(f"⏳ Waiting for FalSeedance task: {request_id}")
+        logger.info(f"⏳ wait FalSeedance task: {request_id}")
 
         while True:
             elapsed = time.monotonic() - start
@@ -2501,25 +2519,25 @@ class FalSeedanceClient:
                 if status == "COMPLETED":
                     resp = await self.client.get(result_url, headers={"Authorization": f"Key {Config.FAL_API_KEY}"})
                     result = resp.json()
-                    # Check for API errors (like content_policy_violation)
+                    # check if there is API error（like content_policy_violation）
                     if resp.status_code != 200 or "detail" in result:
                         error_detail = result.get("detail", [])
                         if error_detail and isinstance(error_detail, list):
-                            # Extract first error's details
+                            # extract details of the first error
                             err = error_detail[0]
                             error_type = err.get("type", "unknown")
                             error_msg = err.get("msg", str(err))
                             error_ctx = err.get("ctx", {})
                             logger.error(f"❌ FalSeedance API error: [{error_type}] {error_msg}")
                             if error_ctx:
-                                logger.error(f"   Details: {error_ctx}")
-                            # Return structure with error info for upper layer to handle
+                                logger.error(f"   details: {error_ctx}")
+                            # return containingerror messagestructure，let upper layer handle
                             return {"error": error_type, "message": error_msg, "ctx": error_ctx}
                         logger.error(f"❌ FalSeedance API error: {result}")
                         return {"error": "api_error", "message": str(result)}
                     url = result.get("video", {}).get("url")
                     if url:
-                        logger.info(f"✅ FalSeedance completed (elapsed: {int(elapsed)}s)")
+                        logger.info(f"✅ FalSeedance completion (takes time: {int(elapsed)}s)")
                         return url
                     return {"error": "no_video_url", "message": "Result has no video URL"}
                 elif status == "FAILED":
@@ -2527,7 +2545,7 @@ class FalSeedanceClient:
                     return None
                 await asyncio.sleep(10)
             except Exception as e:
-                logger.warning(f"⚠️ Query exception: {e}")
+                logger.warning(f"⚠️ query exception: {e}")
                 await asyncio.sleep(10)
 
     async def _download_file(self, url: str, output_path: str):
@@ -2538,16 +2556,31 @@ class FalSeedanceClient:
             resp.raise_for_status()
             with open(output_path, 'wb') as f:
                 f.write(resp.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved: {output_path}")
 
     async def close(self):
         await self.client.aclose()
 
 
+# ============== Veo3 Video Generation (Deprecated) ==============
+
+
 class Veo3Client:
-    """Google Veo3 video generation client (via Migoo LLM proxy)"""
+    """
+    Google Veo3 video generation client（via Migoo LLM PROXY）
+
+    .. deprecated::
+        Veo3 backenddeprecated and no longer supported。please use Kling、Kling-Omni or Seedance。
+        this typekept only for backward compatibility，will be removed in future version。
+    """
 
     def __init__(self):
+        import warnings
+        warnings.warn(
+            "Veo3Client deprecated, please use KlingClient、KlingOmniClient or SeedanceClient",
+            DeprecationWarning,
+            stacklevel=2
+        )
         import httpx
         self.client = httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0))
         self.api_key = Config.MIGOO_API_KEY
@@ -2563,7 +2596,7 @@ class Veo3Client:
         aspect_ratio: str = "16:9",
         output: str = "output.mp4"
     ) -> Dict[str, Any]:
-        """Text-to-video"""
+        """text-to-video"""
         return await self._generate(
             prompt=prompt,
             duration=duration,
@@ -2579,7 +2612,7 @@ class Veo3Client:
         aspect_ratio: str = "16:9",
         output: str = "output.mp4"
     ) -> Dict[str, Any]:
-        """Image-to-video (first frame)"""
+        """image-to-video（first frame image）"""
         image_data = self._encode_image(image_path)
         instance = {
             "prompt": prompt,
@@ -2606,12 +2639,12 @@ class Veo3Client:
         output: str = "output.mp4",
         instance_override: Dict = None
     ) -> Dict[str, Any]:
-        """Core generation workflow: submit → poll → download"""
-        # Validate duration
+        """coregeneration flow：submit → poll → download"""
+        # validationduration
         valid_durations = [4, 6, 8]
         if duration not in valid_durations:
             closest = min(valid_durations, key=lambda x: abs(x - duration))
-            logger.warning(f"⚠️ Veo3 duration {duration}s not supported, adjusted to {closest}s")
+            logger.warning(f"⚠️ Veo3 duration {duration}s not supported，adjusted to {closest}s")
             duration = closest
 
         instance = instance_override or {"prompt": prompt}
@@ -2641,20 +2674,20 @@ class Veo3Client:
             response.raise_for_status()
             result = response.json()
         except Exception as e:
-            return {"success": False, "error": f"Veo3 submission failed: {e}"}
+            return {"success": False, "error": f"Veo3 submit failed: {e}"}
 
         operation_name = result.get("name")
         if not operation_name:
-            return {"success": False, "error": f"No operation name: {result}"}
+            return {"success": False, "error": f"no operation name: {result}"}
 
-        logger.info(f"⏳ Task submitted, waiting for generation...")
+        logger.info(f"⏳ task submitted，waitgenerate...")
 
-        # Poll
+        # poll
         video_url = await self._wait_for_completion(operation_name)
         if not video_url:
-            return {"success": False, "error": "Veo3 generation failed or timeout"}
+            return {"success": False, "error": "Veo3 generation failedortimeout"}
 
-        # Download
+        # download
         await self._download_file(video_url, output)
         return {
             "success": True,
@@ -2664,7 +2697,7 @@ class Veo3Client:
         }
 
     async def _wait_for_completion(self, operation_name: str, max_wait: int = 600) -> Optional[str]:
-        """Poll task status"""
+        """polltask status"""
         import time
         start_time = time.monotonic()
 
@@ -2687,32 +2720,32 @@ class Veo3Client:
                 result = response.json()
 
                 if result.get("done"):
-                    # Check for errors
+                    # check if there are errors
                     if "error" in result:
                         error_msg = result["error"].get("message", "Unknown error")
-                        logger.error(f"❌ Veo3 task failed: {error_msg}")
+                        logger.error(f"❌ Veo3 task fail: {error_msg}")
                         return None
 
-                    # Extract video URL
+                    # extractvideo URL
                     videos = result.get("response", {}).get("videos", [])
                     if videos:
                         video_url = videos[0].get("uri") or videos[0].get("gcsUri")
                         cost = result.get("priceCostUsd", 0)
-                        logger.info(f"✅ Veo3 generation complete (time elapsed: {int(elapsed)}s, cost: ${cost})")
+                        logger.info(f"✅ Veo3 generatecompletion (takes time: {int(elapsed)}s, cost: ${cost})")
                         return video_url
                     else:
-                        logger.error(f"❌ No video in response: {result}")
+                        logger.error(f"❌ no video in response: {result}")
                         return None
 
-                logger.info(f"   [{int(elapsed)}s] Generating...")
+                logger.info(f"   [{int(elapsed)}s] generating...")
                 await asyncio.sleep(10)
 
             except Exception as e:
-                logger.warning(f"⚠️ Polling exception: {e}")
+                logger.warning(f"⚠️ pollexception: {e}")
                 await asyncio.sleep(10)
 
     async def _download_file(self, url: str, output_path: str):
-        """Download video file"""
+        """downloadvideo file"""
         import httpx
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         async with httpx.AsyncClient(timeout=300.0) as dl_client:
@@ -2720,15 +2753,15 @@ class Veo3Client:
             response.raise_for_status()
             with open(output_path, 'wb') as f:
                 f.write(response.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved to: {output_path}")
 
     def _encode_image(self, image_path: str) -> str:
-        """Encode image to base64"""
+        """encode image as base64"""
         with open(image_path, 'rb') as f:
             return base64.b64encode(f.read()).decode('utf-8')
 
     def _get_mime_type(self, image_path: str) -> str:
-        """Get image MIME type"""
+        """get image MIME type"""
         ext = os.path.splitext(image_path)[1].lower()
         mime_map = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp'}
         return mime_map.get(ext, 'image/png')
@@ -2748,7 +2781,7 @@ class SunoClient:
         instrumental: bool = True,
         output: str = None
     ) -> Dict[str, Any]:
-        """Generate music"""
+        """generatemusic"""
         payload = {
             "prompt": prompt,
             "instrumental": instrumental,
@@ -2758,9 +2791,9 @@ class SunoClient:
             "callbackUrl": "https://example.com/callback"
         }
 
-        # Truncate long prompt (avoid long logs), does not affect API parameters
+        # truncate too long prompt（avoid log too long），does not affect passing to API parameter
         display_prompt = prompt[:50] + "..." if len(prompt) > 50 else prompt
-        logger.info(f"📤 Creating music generation task - description: {display_prompt}, style: {style}")
+        logger.info(f"📤 createmusic generation task - description: {display_prompt}, style: {style}")
 
         try:
             response = await self.client.post(
@@ -2775,7 +2808,7 @@ class SunoClient:
                 return {"success": False, "error": result.get("msg", "Unknown error")}
 
             task_id = result["data"]["taskId"]
-            logger.info(f"✅ Task created: {task_id}")
+            logger.info(f"✅ task created: {task_id}")
 
             audio_url = await self._wait_for_completion(task_id)
 
@@ -2786,20 +2819,20 @@ class SunoClient:
             return {"success": True, "audio_url": audio_url, "task_id": task_id}
 
         except Exception as e:
-            logger.error(f"❌ Music generation failed: {e}")
+            logger.error(f"❌ music generationfailed: {e}")
             return {"success": False, "error": str(e)}
 
     async def _wait_for_completion(self, task_id: str, max_wait: int = 300) -> Optional[str]:
-        """Wait for task completion"""
+        """waittask complete"""
         import time
         start_time = time.monotonic()
 
-        logger.info(f"⏳ Waiting for music generation...")
+        logger.info(f"⏳ waitmusic generation...")
 
         while True:
             elapsed = time.monotonic() - start_time
             if elapsed > max_wait:
-                logger.error(f"❌ Task timeout ({max_wait}s)")
+                logger.error(f"❌ task timeout ({max_wait}s)")
                 return None
 
             try:
@@ -2811,7 +2844,7 @@ class SunoClient:
                 result = response.json()
 
                 if result.get("code") != 200:
-                    logger.warning(f"⚠️ Query failed: {result.get('msg')}")
+                    logger.warning(f"⚠️ query failed: {result.get('msg')}")
                     await asyncio.sleep(5)
                     continue
 
@@ -2822,21 +2855,21 @@ class SunoClient:
                     tracks = data.get("response", {}).get("sunoData", [])
                     if tracks:
                         audio_url = tracks[0].get("audioUrl")
-                        logger.info(f"✅ Music generation complete (time elapsed: {int(elapsed)}s)")
+                        logger.info(f"✅ music generationcompletion (takes time: {int(elapsed)}s)")
                         return audio_url
 
                 elif status == "FAILED":
-                    logger.error("❌ Music generation failed")
+                    logger.error("❌ music generationfailed")
                     return None
 
                 await asyncio.sleep(5)
 
             except Exception as e:
-                logger.warning(f"⚠️ Query failed: {e}")
+                logger.warning(f"⚠️ query failed: {e}")
                 await asyncio.sleep(5)
 
     async def _download_file(self, url: str, output_path: str):
-        """Download file"""
+        """download file"""
         import httpx
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -2845,13 +2878,13 @@ class SunoClient:
             response.raise_for_status()
             with open(output_path, 'wb') as f:
                 f.write(response.content)
-        logger.info(f"✅ Saved to: {output_path}")
+        logger.info(f"✅ saved to: {output_path}")
 
     async def close(self):
         await self.client.aclose()
 
 
-# ============== Volcengine TTS (Deprecated) ==============
+# ============== Volcano Engine TTS (Deprecated) ==============
 
 
 class TTSClient:
@@ -2859,8 +2892,8 @@ class TTSClient:
     Volcano Engine TTS client
 
     .. deprecated::
-        Volcano Engine TTS is deprecated and no longer supported. Please use Gemini TTS (requires MIGOO_API_KEY).
-        This class is retained for backward compatibility and will be removed in a future version.
+        Volcano Engine TTS deprecated and no longer supported。please use Gemini TTS（need MIGOO_API_KEY）。
+        this typekept only for backward compatibility，will be removed in future version。
     """
 
     API_URL = "https://openspeech.bytedance.com/api/v1/tts"
@@ -2883,7 +2916,7 @@ class TTSClient:
     def __init__(self):
         import warnings
         warnings.warn(
-            "TTSClient (Volcano Engine) is deprecated, please use GeminiTTSClient",
+            "TTSClient（Volcano Engine）deprecated, please use GeminiTTSClient",
             DeprecationWarning,
             stacklevel=2
         )
@@ -2896,7 +2929,7 @@ class TTSClient:
         emotion: str = None,
         speed: float = 1.0
     ) -> Dict[str, Any]:
-        """Synthesize speech"""
+        """synthesize voice"""
         import httpx
 
         voice_type = self.VOICE_TYPES.get(voice, voice)
@@ -2959,27 +2992,27 @@ class TTSClient:
             return {"success": True, "output": output, "duration_ms": duration_ms}
 
         except Exception as e:
-            logger.error(f"❌ TTS failed: {e}")
+            logger.error(f"❌ TTSfailed: {e}")
             return {"success": False, "error": str(e)}
 
 
-# ============== Gemini TTS (via Migoo LLM API) ==============
+# ============== Gemini TTS（via Migoo LLM API）==============
 
 class GeminiTTSClient:
-    """Gemini TTS client (via Migoo LLM API)"""
+    """Gemini TTS client（via Migoo LLM API）"""
 
-    # Gemini TTS voices
+    # Gemini TTS voice
     VOICE_TYPES = {
-        # Female voices
-        "female_narrator": ("Kore", "cmn-CN"),      # Standard female voice
-        "female_gentle": ("Aoede", "cmn-CN"),        # Clear female voice
-        "female_soft": ("Zephyr", "cmn-CN"),         # Soft female voice
-        "female_bright": ("Leda", "cmn-CN"),         # Bright female voice
-        # Male voices
-        "male_narrator": ("Charon", "cmn-CN"),       # Standard male voice
-        "male_warm": ("Orus", "cmn-CN"),             # Warm male voice
-        "male_deep": ("Fenrir", "cmn-CN"),           # Deep male voice
-        "male_bright": ("Puck", "cmn-CN"),           # Bright male voice
+        # female voice
+        "female_narrator": ("Kore", "cmn-CN"),      # standardfemale voice
+        "female_gentle": ("Aoede", "cmn-CN"),        # clearfemale voice
+        "female_soft": ("Zephyr", "cmn-CN"),         # soft female voice
+        "female_bright": ("Leda", "cmn-CN"),         # brightfemale voice
+        # male voice
+        "male_narrator": ("Charon", "cmn-CN"),       # standardmale voice
+        "male_warm": ("Orus", "cmn-CN"),             # steadymale voice
+        "male_deep": ("Fenrir", "cmn-CN"),           # deep male voice
+        "male_bright": ("Puck", "cmn-CN"),           # bright male voice
     }
 
     async def synthesize(
@@ -2992,16 +3025,16 @@ class GeminiTTSClient:
         prompt: str = None,
         language_code: str = "cmn-CN",
     ) -> Dict[str, Any]:
-        """Synthesize speech
+        """synthesize voice
 
         Args:
-            text: text to read, supports inline emotion tags like [brightly], [sigh], [pause]
+            text: text to read，support inline emotion taglike [brightly], [sigh], [pause]
             output: output file path
-            voice: voice name or preset (female_narrator, male_narrator, etc.)
-            emotion: deprecated, please use prompt or inline tags
-            speed: speech rate (Gemini TTS does not support yet)
-            prompt: style instruction, controls accent/emotion/tone/speed/personality
-            language_code: language code (cmn-CN, en-US, ja-JP, etc.)
+            voice: voice name or preset（female_narrator, male_narrator, etc）
+            emotion: deprecated, please use prompt or inline mark
+            speed: speech rate（Gemini TTS currently not supported）
+            prompt: style instruction，control accent/emotion/tone/speech rate/character design
+            language_code: language code（cmn-CN, en-US, ja-JP, etc）
         """
         from google.cloud import texttospeech
         from google.api_core import client_options
@@ -3010,24 +3043,24 @@ class GeminiTTSClient:
             return {
                 "success": False,
                 "error": "MIGOO_API_KEY not configured",
-                "hint": "Please add MIGOO_API_KEY in config.json"
+                "hint": "please in config.json add MIGOO_API_KEY"
             }
 
-        # Auto add speed instruction for Chinese narration
+        # Auto-add speed instruction for Chinese narration
         if language_code == "cmn-CN" and not prompt:
-            prompt = "Faster speech rate, crisp and natural"
-            logger.info(f"📝 Auto added prompt for Chinese narration: {prompt}")
+            prompt = "speech rate is fast，crisp and clear，natural fluent"
+            logger.info(f"📝 Auto-add prompt for Chinese narration: {prompt}")
 
-        # Get voice configuration
+        # get voice config
         voice_name = voice
         lang_code = language_code
         if voice in self.VOICE_TYPES:
             voice_name, lang_code = self.VOICE_TYPES[voice]
 
-        logger.info(f"Gemini TTS synthesis: {text[:30]}... (voice: {voice_name}")
+        logger.info(f"📤 Gemini TTS synthesis: {text[:30]}... (voice: {voice_name})")
 
         try:
-            # Create client
+            # create client
             client = texttospeech.TextToSpeechClient(
                 client_options=client_options.ClientOptions(
                     api_endpoint="https://inner-api.us.migoo.shopee.io/inbeeai/compass-api/v1",
@@ -3036,36 +3069,36 @@ class GeminiTTSClient:
                 transport="rest",
             )
 
-            # Build input
+            # build input
             synthesis_input = texttospeech.SynthesisInput(text=text)
             if prompt:
                 synthesis_input = texttospeech.SynthesisInput(text=text, prompt=prompt)
 
-            # Voice configuration
+            # voice config
             voice_params = texttospeech.VoiceSelectionParams(
                 language_code=lang_code,
                 name=voice_name,
                 model_name="gemini-2.5-flash-tts",
             )
 
-            # Audio configuration
+            # audioconfig
             audio_config = texttospeech.AudioConfig(
                 audio_encoding=texttospeech.AudioEncoding.MP3,
             )
 
-            # Synthesize speech
+            # synthesize voice
             response = client.synthesize_speech(
                 input=synthesis_input,
                 voice=voice_params,
                 audio_config=audio_config,
             )
 
-            # Save file
+            # savefile
             Path(output).parent.mkdir(parents=True, exist_ok=True)
             with open(output, "wb") as f:
                 f.write(response.audio_content)
 
-            # Use ffprobe to get precise duration
+            # use ffprobe to get precise duration
             duration = get_audio_duration(output)
             duration_ms = int(duration * 1000)
             logger.info(f"✅ Gemini TTS saved: {output} ({duration:.2f}s)")
@@ -3073,19 +3106,430 @@ class GeminiTTSClient:
             return {"success": True, "output": output, "duration": duration, "duration_ms": duration_ms}
 
         except Exception as e:
-            logger.error(f"❌ Gemini TTS failed: {e}")
+            logger.error(f"❌ Gemini TTSfailed: {e}")
             return {"success": False, "error": str(e)}
+
+
+class ElevenLabsTTSClient:
+    """ElevenLabs TTS client（via fal.ai API）
+
+    three-step workflow：Design → Create → TTS
+    Priority: ElevenLabs TTS > Gemini TTS(fallback)
+    """
+
+    # fal.ai API endpoint
+    ENDPOINTS = {
+        "design": "fal-ai/elevenlabs/text-to-voice/design/eleven-v3",
+        "create": "fal-ai/elevenlabs/text-to-voice/create",
+        "tts": "fal-ai/elevenlabs/tts/eleven-v3"
+    }
+
+    # built-in voice（can directly use，no need Design/Create）
+    BUILTIN_VOICES = {
+        "rachel": "warmfemale voice，emotionally rich",
+        "adam": "deep male voice，professional and steady",
+        "charlotte": "clearfemale voice，energetic",
+        "callum": "youngmale voice，friendlynatural",
+        "george": "maturemale voice，steady and powerful",
+        "alice": "gentlefemale voice，softfriendly",
+        "aria": "drama female voice, high expressiveness"
+    }
+
+    # voice_style to built-in voice and stability mapping
+    VOICE_STYLE_MAP = {
+        # female voice
+        "female_narrator": {
+            "builtin": None,  # need to create new voice
+            "design_prompt": "Chinese Mandarin accent. Female, 30-35 years old. Medium-low pitch. Studio quality spoken performance. Character: Professional narrator, documentary style. Emotional arc: calm → informative → confident. Style: Clear and measured, with subtle warmth. Pace: Moderate, consistent delivery. Spoken, not sung.",
+            "stability": 0.32
+        },
+        "female_gentle": {
+            "builtin": "Alice",
+            "design_prompt": "Chinese Mandarin accent. Female, 25-30 years old. Medium pitch, soft tone. Studio quality spoken performance. Character: Gentle storyteller, warm and caring. Emotional arc: soft → tender → reassuring. Style: Gentle and flowing, with natural pauses. Pace: Slow to moderate, unhurried. Spoken, not sung.",
+            "stability": 0.28
+        },
+        "female_soft": {
+            "builtin": None,
+            "design_prompt": "Chinese Mandarin accent. Female, 20-25 years old. Soft, breathy quality. Studio quality spoken performance. Character: Soft-spoken companion, intimate and close. Emotional arc: quiet → intimate → peaceful. Style: Whispery and close, with gentle emphasis. Pace: Slow, deliberate. Spoken, not sung.",
+            "stability": 0.25
+        },
+        "female_bright": {
+            "builtin": "Charlotte",
+            "design_prompt": "Chinese Mandarin accent. Female, 20-25 years old. Bright, energetic pitch. Studio quality spoken performance. Character: Energetic presenter, upbeat and engaging. Emotional arc: bright → excited → enthusiastic. Style: Bright and animated, with dynamic energy. Pace: Quick, rhythmic. Spoken, not sung.",
+            "stability": 0.30
+        },
+        # male voice
+        "male_narrator": {
+            "builtin": "George",
+            "design_prompt": "Chinese Mandarin accent. Male, 35-40 years old. Deep, resonant pitch. Studio quality spoken performance. Character: Professional narrator, authoritative and clear. Emotional arc: steady → authoritative → confident. Style: Deep and measured, with gravitas. Pace: Moderate, controlled. Spoken, not sung.",
+            "stability": 0.32
+        },
+        "male_warm": {
+            "builtin": "Adam",
+            "design_prompt": "Chinese Mandarin accent. Male, 30-35 years old. Warm, rich timbre. Studio quality spoken performance. Character: Warm host, friendly and approachable. Emotional arc: warm → welcoming → sincere. Style: Warm and inviting, with natural warmth. Pace: Moderate, relaxed. Spoken, not sung.",
+            "stability": 0.28
+        },
+        "male_deep": {
+            "builtin": None,
+            "design_prompt": "Chinese Mandarin accent. Male, 40-45 years old. Very deep, powerful voice. Studio quality spoken performance. Character: Deep narrator, commanding presence. Emotional arc: powerful → authoritative → commanding. Style: Deep and resonant, with weight. Pace: Slow, deliberate. Spoken, not sung.",
+            "stability": 0.35
+        },
+        "male_bright": {
+            "builtin": "Callum",
+            "design_prompt": "Chinese Mandarin accent. Male, 25-30 years old. Bright, clear pitch. Studio quality spoken performance. Character: Energetic presenter, dynamic and engaging. Emotional arc: energetic → dynamic → animated. Style: Bright and punchy, with energy. Pace: Quick, rhythmic. Spoken, not sung.",
+            "stability": 0.30
+        }
+    }
+
+    # video type to stability mapping
+    STABILITY_MAP = {
+        "cinematic": 0.22,      # drama character，high expressiveness
+        "vlog": 0.28,           # emotional narrative，balancestable
+        "documentary": 0.35,    # professional narration，more stable
+        "commercial": 0.30,     # commercial，stable but flexible
+        "artistic": 0.20        # art/experimental，maximum expressiveness
+    }
+
+    # text enhancement tag
+    ENHANCE_TAGS = {
+        "emotion": ["[thoughtful]", "[curious]", "[excited]", "[calm]", "[reassuring]", "[hopeful]"],
+        "rhythm": ["[short pause]", "[long pause]", "[pause]", "[slows down]", "[deliberate]", "[emphasized]"],
+        "physio": ["[sighs]", "[exhales]", "[breathes]", "[clears throat]"]
+    }
+
+    def _pad_design_text(self, text: str, min_length: int = 100) -> str:
+        """ensure design sample text meets minimum length requirement"""
+        if len(text) >= min_length:
+            return text[:1000]
+        # supplemental filler text
+        filler = "This is a sample text for voice design，please ignore the content itself，focus on voice tone and expression。voice should be gentle and emotional，suitable for storytelling and memories。"
+        return f"{text} {filler}"[:1000]
+
+    def _enhance_text(self, text: str, video_type: str = None) -> str:
+        """text enhancement：insertemotion/rhythm/physiology tag
+
+        rule：do not rewrite original wording，only change punctuation、insert tag
+        """
+        if not text:
+            return text
+
+        # based on video typetype selection enhancement frequency
+        frequencies = {
+            "cinematic": 0.6,
+            "vlog": 0.4,
+            "documentary": 0.3,
+            "commercial": 0.5,
+            "artistic": 0.7
+        }
+        freq = frequencies.get(video_type, 0.4)
+
+        # split sentences（Chinese-English compatible）
+        import re
+        sentences = re.split(r'([。！？.!?])', text)
+
+        enhanced = []
+        tag_idx = 0
+
+        for i in range(0, len(sentences) - 1, 2):
+            sentence = sentences[i]
+            punct = sentences[i + 1] if i + 1 < len(sentences) else ""
+
+            if sentence.strip():
+                # determine whether to add tags by frequency
+                if (tag_idx % 3) < int(freq * 3):
+                    # select tag type
+                    tag_type = tag_idx % 3
+                    if tag_type == 0:
+                        tag = self.ENHANCE_TAGS["emotion"][tag_idx % len(self.ENHANCE_TAGS["emotion"])]
+                    elif tag_type == 1:
+                        tag = self.ENHANCE_TAGS["rhythm"][tag_idx % len(self.ENHANCE_TAGS["rhythm"])]
+                    else:
+                        tag = self.ENHANCE_TAGS["physio"][tag_idx % len(self.ENHANCE_TAGS["physio"])]
+
+                    enhanced.append(f"{tag} {sentence}{punct}")
+                else:
+                    enhanced.append(f"{sentence}{punct}")
+
+                tag_idx += 1
+
+        # process remaining part
+        if len(sentences) % 2 == 1 and sentences[-1].strip():
+            enhanced.append(sentences[-1])
+
+        return " ".join(enhanced)
+
+    async def _call_fal(self, endpoint: str, payload: dict) -> dict:
+        """call fal.ai API"""
+        import fal_client
+
+        # set FAL_KEY
+        if Config.FAL_API_KEY:
+            os.environ["FAL_KEY"] = Config.FAL_API_KEY
+
+        try:
+            result = fal_client.subscribe(endpoint, payload, with_logs=False)
+            return {"success": True, "result": result}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    async def _download_audio(self, url: str, output: str) -> bool:
+        """downloadaudio file"""
+        import requests
+        try:
+            resp = requests.get(url, timeout=120)
+            resp.raise_for_status()
+            Path(output).parent.mkdir(parents=True, exist_ok=True)
+            with open(output, "wb") as f:
+                f.write(resp.content)
+            return True
+        except Exception as e:
+            logger.error(f"❌ audio download failed: {e}")
+            return False
+
+    async def design_voice(self, design_prompt: str, sample_text: str = None) -> Dict[str, Any]:
+        """Design endpoint：generate voice preview
+
+        Args:
+            design_prompt: voice design description（follow template format）
+            sample_text: optional sample text（forpreview）
+
+        Returns:
+            {"success": True, "previews": [...], "selected_voice_id": "..."}
+        """
+        payload = {
+            "prompt": design_prompt,
+            "text": self._pad_design_text(sample_text or design_prompt),
+            "auto_generate_text": False,
+            "loudness": 0.5,
+            "guidance_scale": 5,
+            "output_format": "mp3_44100_128"
+        }
+
+        logger.info(f"📤 ElevenLabs Design: {design_prompt[:50]}...")
+        result = await self._call_fal(self.ENDPOINTS["design"], payload)
+
+        if not result.get("success"):
+            return result
+
+        previews = result["result"].get("previews", [])
+        if not previews:
+            return {"success": False, "error": "No voice previews generated"}
+
+        selected_id = previews[0].get("generated_voice_id")
+        preview_url = previews[0].get("audio", {}).get("url") if isinstance(previews[0].get("audio"), dict) else previews[0].get("audio")
+
+        logger.info(f"✅ ElevenLabs Design completion，selected voice_id: {selected_id}")
+
+        return {
+            "success": True,
+            "previews": previews,
+            "selected_voice_id": selected_id,
+            "preview_url": preview_url
+        }
+
+    async def create_voice(self, voice_name: str, voice_description: str,
+                          generated_voice_id: str) -> Dict[str, Any]:
+        """Create endpoint：create permanent voice_id
+
+        Args:
+            voice_name: unique voice name
+            voice_description: voice description（requires ≥20 characters）
+            generated_voice_id: Design returned preview ID
+
+        Returns:
+            {"success": True, "voice_id": "..."}
+        """
+        # ensure voice_description long enough
+        if len(voice_description) < 20:
+            voice_description = f"{voice_description}，high-quality professional recording-grade voice performance"
+
+        payload = {
+            "voice_name": voice_name,
+            "voice_description": voice_description,
+            "generated_voice_id": generated_voice_id,
+            "labels": {"locale": "zh"}
+        }
+
+        logger.info(f"📤 ElevenLabs Create: {voice_name}")
+        result = await self._call_fal(self.ENDPOINTS["create"], payload)
+
+        if not result.get("success"):
+            return result
+
+        voice_id = result["result"].get("voice_id", generated_voice_id)
+        logger.info(f"✅ ElevenLabs Create completion，voice_id: {voice_id}")
+
+        return {
+            "success": True,
+            "voice_id": voice_id,
+            "voice_name": voice_name
+        }
+
+    async def synthesize(
+        self,
+        text: str,
+        output: str,
+        voice_id: str = None,
+        voice_style: str = None,
+        stability: float = None,
+        video_type: str = None,
+        enhance_text: bool = True,
+        voice_name: str = None,
+        language: str = "zh"
+    ) -> Dict[str, Any]:
+        """TTS synthesize（completeworkflow）
+
+        Args:
+            text: text to read
+            output: output file path
+            voice_id: existing voice_id（skip Design/Create）
+            voice_style: voice style（map to design_prompt or builtin voice）
+            stability: stable param（0-1，lower is more dramatic）
+            video_type: video type（used for auto adjustment stability）
+            enhance_text: whether to enhance text（insert emotion tags）
+            voice_name: new voice name（for Create）
+            language: language code（ISO 639-1）
+
+        Returns:
+            {"success": True, "output": "...", "duration": ..., "voice_id": "..."}
+        """
+        # check FAL_API_KEY
+        if not Config.FAL_API_KEY:
+            return {
+                "success": False,
+                "error": "FAL_API_KEY not configured",
+                "hint": "please in config.json add FAL_API_KEY",
+                "fallback": True  # mark as degradable
+            }
+
+        # Step 1: confirm voice_id
+        final_voice_id = voice_id
+
+        if not final_voice_id and voice_style:
+            style_config = self.VOICE_STYLE_MAP.get(voice_style)
+
+            if style_config and style_config.get("builtin"):
+                # usebuilt-in voice
+                final_voice_id = style_config["builtin"]
+                logger.info(f"📝 usebuilt-in voice: {final_voice_id}")
+            elif style_config:
+                # need to create new voice
+                design_result = await self.design_voice(
+                    design_prompt=style_config["design_prompt"],
+                    sample_text=text[:50]
+                )
+
+                if not design_result.get("success"):
+                    return {
+                        "success": False,
+                        "error": design_result.get("error"),
+                        "fallback": True
+                    }
+
+                # Create voice
+                import time
+                vname = voice_name or f"{voice_style}_{int(time.time())}"
+                create_result = await self.create_voice(
+                    voice_name=vname,
+                    voice_description=style_config["design_prompt"][:200],
+                    generated_voice_id=design_result["selected_voice_id"]
+                )
+
+                if not create_result.get("success"):
+                    return {
+                        "success": False,
+                        "error": create_result.get("error"),
+                        "fallback": True
+                    }
+
+                final_voice_id = create_result["voice_id"]
+                logger.info(f"📝 create new voice: {vname} → {final_voice_id}")
+            else:
+                # unknown voice_style，use default built-in voice
+                final_voice_id = "alice"
+                logger.info(f"📝 unknown voice_style，use default: alice")
+
+        if not final_voice_id:
+            final_voice_id = "rachel"  # defaultbuilt-in voice
+
+        # Step 2: text enhancement（optional）
+        final_text = text
+        if enhance_text:
+            final_text = self._enhance_text(text, video_type)
+            if final_text != text:
+                logger.info(f"📝 text enhanced")
+
+        # Step 3: confirm stability
+        if stability is None:
+            if video_type and video_type in self.STABILITY_MAP:
+                stability = self.STABILITY_MAP[video_type]
+            elif voice_style and voice_style in self.VOICE_STYLE_MAP:
+                stability = self.VOICE_STYLE_MAP[voice_style].get("stability", 0.28)
+            else:
+                stability = 0.28
+
+        # Step 4: TTS synthesize
+        logger.info(f"📤 ElevenLabs TTS synthesis: {text[:30]}... (voice: {final_voice_id}, stability: {stability})")
+
+        payload = {
+            "text": final_text,
+            "voice": final_voice_id,
+            "stability": stability,
+            "language_code": language,
+            "apply_text_normalization": "auto",
+            "output_format": "mp3_44100_128"
+        }
+
+        result = await self._call_fal(self.ENDPOINTS["tts"], payload)
+
+        if not result.get("success"):
+            # try removing tag and retry
+            if enhance_text and final_text != text:
+                logger.warning(f"⚠️ TTS failed，remove tagretry")
+                payload["text"] = text
+                result = await self._call_fal(self.ENDPOINTS["tts"], payload)
+
+            if not result.get("success"):
+                return {
+                    "success": False,
+                    "error": result.get("error"),
+                    "fallback": True
+                }
+
+        # download audio
+        audio_data = result["result"].get("audio", {})
+        audio_url = audio_data.get("url") if isinstance(audio_data, dict) else audio_data
+
+        if not audio_url:
+            return {"success": False, "error": "No audio URL in response", "fallback": True}
+
+        if not await self._download_audio(audio_url, output):
+            return {"success": False, "error": "Audio download failed", "fallback": True}
+
+        # getduration
+        duration = get_audio_duration(output)
+        logger.info(f"✅ ElevenLabs TTS saved: {output} ({duration:.2f}s)")
+
+        return {
+            "success": True,
+            "output": output,
+            "duration": duration,
+            "duration_ms": int(duration * 1000),
+            "voice_id": final_voice_id,
+            "stability": stability,
+            "backend": "elevenlabs"
+        }
 
 
 def get_audio_duration(audio_path: str) -> float:
     """
-    Get audio precise duration with ffprobe (seconds)
+    use ffprobe to get precise audio duration (seconds）
 
     Args:
-        audio_path: audio file path
+        audio_path: audio filepath
 
     Returns:
-        Duration (seconds, float)
+        duration (seconds，float）
     """
     import subprocess
     result = subprocess.run(
@@ -3098,13 +3542,13 @@ def get_audio_duration(audio_path: str) -> float:
 
 def get_video_duration(video_path: str) -> float:
     """
-    Get video precise duration with ffprobe (seconds)
+    use ffprobe to get precise video duration (seconds）
 
     Args:
-        video_path: video file path
+        video_path: video filepath
 
     Returns:
-        Duration (seconds, float)
+        duration (seconds，float）
     """
     import subprocess
     result = subprocess.run(
@@ -3115,10 +3559,10 @@ def get_video_duration(video_path: str) -> float:
     return float(result.stdout.strip())
 
 
-# ============== Gemini Image Generation (via Yunwu API) ==============
+# ============== Gemini image generation（via Yunwu API）==============
 
 class ImageClient:
-    """Gemini image generation client (via Yunwu API)"""
+    """Gemini image generation client（via Yunwu API）"""
 
     STYLE_PRESETS = {
         "cinematic": "cinematic style, film grain, dramatic lighting, movie still",
@@ -3135,16 +3579,16 @@ class ImageClient:
         aspect_ratio: str = "9:16",
         reference_images: List[str] = None
     ) -> Dict[str, Any]:
-        """Generate image, supports multiple reference images"""
+        """generate image，supportmulti reference image"""
         import httpx
 
         style_suffix = self.STYLE_PRESETS.get(style, style)
         full_prompt = f"{prompt}, {style_suffix}"
 
-        # Build parts array
+        # build parts array
         parts = []
 
-        # Add reference images (Gemini gives more weight to last reference image, so put important characters at the end)
+        # add reference image（Gemini give more weight to the last reference image，so important characters placed later）
         if reference_images:
             for ref_path in reference_images:
                 if os.path.exists(ref_path):
@@ -3160,7 +3604,7 @@ class ImageClient:
                         }
                     })
 
-        # Add text prompt
+        # addtext prompt
         parts.append({"text": full_prompt})
 
         payload = {
@@ -3172,7 +3616,7 @@ class ImageClient:
         }
 
         ref_info = f" (with {len(reference_images)} reference images)" if reference_images else ""
-        logger.info(f"📤 Image generation{ref_info}: {prompt[:30]}...")
+        logger.info(f"📤 image generation{ref_info}: {prompt[:30]}...")
 
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
@@ -3205,28 +3649,28 @@ class ImageClient:
                 Path(output).parent.mkdir(parents=True, exist_ok=True)
                 with open(output, "wb") as f:
                     f.write(base64.b64decode(image_data))
-                logger.info(f"✅ Image saved: {output}")
+                logger.info(f"✅ image saved: {output}")
                 return {"success": True, "output": output}
 
             return {"success": True, "image_base64": image_data}
 
         except Exception as e:
-            logger.error(f"❌ Image generation failed: {e}")
+            logger.error(f"❌ image generationfailed: {e}")
             return {"success": False, "error": str(e)}
 
 
 class FalImageClient:
     """
-    Gemini image generation client (via fal.ai API)
+    Gemini image generation client（via fal.ai API）
 
     .. deprecated::
-        Fal Image is deprecated and no longer supported. Please use MigooImageClient (requires MIGOO_API_KEY).
+        Fal Image deprecated and no longer supported。please use MigooImageClient（need MIGOO_API_KEY）。
     """
 
     def __init__(self):
         import warnings
         warnings.warn(
-            "FalImageClient is deprecated, please use MigooImageClient",
+            "FalImageClient deprecated, please use MigooImageClient",
             DeprecationWarning,
             stacklevel=2
         )
@@ -3252,7 +3696,7 @@ class FalImageClient:
         aspect_ratio: str = "9:16",
         reference_images: List[str] = None
     ) -> Dict[str, Any]:
-        """Generate image, supports multiple reference images"""
+        """generate image，supportmulti reference image"""
         import httpx
 
         style_suffix = self.STYLE_PRESETS.get(style, style)
@@ -3267,16 +3711,16 @@ class FalImageClient:
             "num_images": 1,
         }
 
-        # Image-to-image mode: use edit endpoint when has reference images
+        # image-to-image mode：use when has reference image edit endpoint
         is_edit_mode = reference_images and len(reference_images) > 0
         url = self.FAL_IMAGE_EDIT_URL if is_edit_mode else self.FAL_IMAGE_URL
 
         if is_edit_mode:
-            # Upload reference image to temp storage or use base64
+            # upload reference image to temp storageoruse base64
             image_urls = []
             for ref_path in reference_images:
                 if os.path.exists(ref_path):
-                    # Convert to base64 data URI
+                    # convert to base64 data URI
                     with open(ref_path, 'rb') as f:
                         img_data = f.read()
                     ext = os.path.splitext(ref_path)[1].lower()
@@ -3286,9 +3730,9 @@ class FalImageClient:
                     image_urls.append(data_uri)
 
             payload["image_urls"] = image_urls
-            logger.info(f"📤 Image generation (fal edit, {len(image_urls)} reference images): {prompt[:30]}...")
+            logger.info(f"📤 image generation（fal edit，{len(image_urls)} reference image）: {prompt[:30]}...")
         else:
-            logger.info(f"📤 Image generation (fal t2i): {prompt[:30]}...")
+            logger.info(f"📤 image generation（fal t2i）: {prompt[:30]}...")
 
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
@@ -3311,7 +3755,7 @@ class FalImageClient:
             if not image_url:
                 return {"success": False, "error": "No image URL in response"}
 
-            # Download image
+            # download image
             if output:
                 Path(output).parent.mkdir(parents=True, exist_ok=True)
                 async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as dl_client:
@@ -3319,18 +3763,18 @@ class FalImageClient:
                     dl_resp.raise_for_status()
                     with open(output, "wb") as f:
                         f.write(dl_resp.content)
-                logger.info(f"✅ Image saved: {output}")
+                logger.info(f"✅ image saved: {output}")
                 return {"success": True, "output": output, "url": image_url}
 
             return {"success": True, "url": image_url}
 
         except Exception as e:
-            logger.error(f"❌ Image generation failed: {e}")
+            logger.error(f"❌ image generationfailed: {e}")
             return {"success": False, "error": str(e)}
 
 
 class MigooImageClient:
-    """Gemini image generation client (via Migoo LLM API)"""
+    """Gemini image generation client（via Migoo LLM API）"""
 
     STYLE_PRESETS = {
         "cinematic": "cinematic style, film grain, dramatic lighting, movie still",
@@ -3347,16 +3791,16 @@ class MigooImageClient:
         aspect_ratio: str = "9:16",
         reference_images: List[str] = None
     ) -> Dict[str, Any]:
-        """Generate image, supports multiple reference images"""
+        """generate image，supportmulti reference image"""
         import httpx
 
         style_suffix = self.STYLE_PRESETS.get(style, style)
         full_prompt = f"{prompt}, {style_suffix}"
 
-        # Build parts array
+        # build parts array
         parts = []
 
-        # Add reference images (image-to-image mode)
+        # add reference image（image-to-image mode）
         if reference_images:
             for ref_path in reference_images:
                 if os.path.exists(ref_path):
@@ -3372,7 +3816,7 @@ class MigooImageClient:
                         }
                     })
 
-        # Add text prompt
+        # addtext prompt
         parts.append({"text": full_prompt})
 
         payload = {
@@ -3388,7 +3832,7 @@ class MigooImageClient:
         }
 
         ref_info = f" (with {len(reference_images)} reference images)" if reference_images else ""
-        logger.info(f"📤 Image generation (migoo{ref_info}): {prompt[:30]}...")
+        logger.info(f"📤 image generation（migoo{ref_info}）: {prompt[:30]}...")
 
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
@@ -3421,28 +3865,28 @@ class MigooImageClient:
                 Path(output).parent.mkdir(parents=True, exist_ok=True)
                 with open(output, "wb") as f:
                     f.write(base64.b64decode(image_data))
-                logger.info(f"✅ Image saved: {output}")
+                logger.info(f"✅ image saved: {output}")
                 return {"success": True, "output": output}
 
             return {"success": True, "image_base64": image_data}
 
         except Exception as e:
-            logger.error(f"❌ Image generation failed: {e}")
+            logger.error(f"❌ image generationfailed: {e}")
             return {"success": False, "error": str(e)}
 
 
-# ============== Character Persona Management (Optional Tool) ==============
+# ============== character management（optional tool）==============
 
 class PersonaManager:
     """
-    Character persona manager (optional tool)
+    character manager（optional tool）
 
-    For managing character reference images in projects.
-    Only use when video involves characters, landscape/object videos do not need.
+    used to manage in projectcharacter reference image。
+    only when videoinvolves characterused when，pure landscape/object videos do not need。
 
-    Usage:
+    usage：
         manager = PersonaManager(project_dir)
-        manager.register("Xiaomei", "female", "path/to/reference.jpg", "long hair, round face, glasses")
+        manager.register("Xiaomei", "female", "path/to/reference.jpg", "long hair、round face、wearing glasses")
         ref_path = manager.get_reference("Xiaomei")
     """
 
@@ -3456,17 +3900,17 @@ class PersonaManager:
             self._load()
 
     def _load(self):
-        """Load character data from file"""
+        """load character data from file"""
         if self._persona_file and self._persona_file.exists():
             try:
                 with open(self._persona_file, "r", encoding="utf-8") as f:
                     self.personas = json.load(f)
             except Exception as e:
-                logger.warning(f"⚠️ Failed to load personas.json: {e}")
+                logger.warning(f"⚠️ load personas.json failed: {e}")
                 self.personas = {}
 
     def _save(self):
-        """Save character data to file"""
+        """save character data to file"""
         if self._persona_file:
             self._persona_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self._persona_file, "w", encoding="utf-8") as f:
@@ -3480,18 +3924,18 @@ class PersonaManager:
         features: str = ""
     ) -> str:
         """
-        Register character persona
+        register charactercharacter
 
         Args:
             name: character name
             gender: gender (male/female)
-            reference_image: reference image path (can be None, added in Phase 2)
+            reference_image: reference image path（can be None，Phase 2 supplement）
             features: appearance feature description
 
         Returns:
             persona_id
         """
-        # Generate unique ID
+        # generate uniqueID
         persona_id = name.lower().replace(" ", "_")
         counter = 1
         original_id = persona_id
@@ -3508,48 +3952,48 @@ class PersonaManager:
 
         self._save()
         if reference_image:
-            logger.info(f"✅ Character registered: {name} (ID: {persona_id}, reference image: {reference_image})")
+            logger.info(f"✅ registered character: {name} (ID: {persona_id}, reference image: {reference_image})")
         else:
-            logger.info(f"✅ Character registered: {name} (ID: {persona_id}, no reference image)")
+            logger.info(f"✅ registered character: {name} (ID: {persona_id}, no reference image)")
 
         return persona_id
 
     def update_reference_image(self, persona_id: str, reference_image: str) -> bool:
         """
-        Update character reference image (Phase 2 use)
+        updatecharacter reference image（Phase 2 use）
 
         Args:
-            persona_id: character ID
-            reference_image: new reference image path
+            persona_id: characterID
+            reference_image: newreference image path
 
         Returns:
-            Whether successful
+            success status
         """
         if persona_id not in self.personas:
-            logger.warning(f"⚠️ Character does not exist: {persona_id}")
+            logger.warning(f"⚠️ character does not exist: {persona_id}")
             return False
 
         self.personas[persona_id]["reference_image"] = reference_image
         self._save()
-        logger.info(f"✅ Updated reference image for {persona_id}: {reference_image}")
+        logger.info(f"✅ updated {persona_id} reference image: {reference_image}")
         return True
 
     def has_reference_image(self, persona_id: str) -> bool:
-        """Check if character has reference image"""
+        """check if character has reference image"""
         persona = self.personas.get(persona_id)
         if persona:
             return bool(persona.get("reference_image"))
         return False
 
     def list_personas_without_reference(self) -> List[str]:
-        """Return list of character IDs without reference images"""
+        """return all characters without reference imagesIDlist"""
         return [
             pid for pid, data in self.personas.items()
             if not data.get("reference_image")
         ]
 
     def get_reference(self, persona_id: str) -> Optional[str]:
-        """Get character reference image path"""
+        """getcharacter reference imagepath"""
         persona = self.personas.get(persona_id)
         if persona:
             return persona.get("reference_image")
@@ -3557,10 +4001,10 @@ class PersonaManager:
 
     def get_features(self, persona_id: str) -> str:
         """
-        Get character feature description (for prompt)
+        getcharacter featuresdescription（for prompt）
 
         Returns:
-            Feature description string, like "young woman with long hair, round face, glasses"
+            characteristic description string，like "young woman with long hair, round face, glasses"
         """
         persona = self.personas.get(persona_id)
         if not persona:
@@ -3568,19 +4012,19 @@ class PersonaManager:
 
         parts = []
 
-        # Gender
+        # gender
         gender = persona.get("gender", "")
         if gender == "female":
             parts.append("woman")
         elif gender == "male":
             parts.append("man")
 
-        # Features
+        # feature
         features = persona.get("features", "")
         if features:
             parts.append(features)
 
-        # Name as reference identifier
+        # name as reference identifier
         name = persona.get("name", "")
         if name:
             return f"{', '.join(parts)} (reference: {name})"
@@ -3589,9 +4033,9 @@ class PersonaManager:
 
     def get_persona_prompt(self, persona_id: str) -> str:
         """
-        Get character prompt for Vidu/Gemini
+        get for Vidu/Gemini character prompt
 
-        Format: "Reference for {GENDER} ({name}): MUST preserve exact appearance - {features}"
+        format: "Reference for {GENDER} ({name}): MUST preserve exact appearance - {features}"
         """
         persona = self.personas.get(persona_id)
         if not persona:
@@ -3610,7 +4054,7 @@ class PersonaManager:
         return prompt
 
     def list_personas(self) -> List[dict]:
-        """List all characters"""
+        """list all characters"""
         return [
             {"id": pid, **pdata}
             for pid, pdata in self.personas.items()
@@ -3618,15 +4062,15 @@ class PersonaManager:
 
     def export_for_storyboard(self) -> List[Dict[str, Any]]:
         """
-        Export to storyboard.json compatible characters format
+        export as storyboard.json compatible characters format
 
         Returns:
-            List compatible with storyboard.json elements.characters format
+            match storyboard.json elements.characters format list
         """
         characters = []
         for pid, pdata in self.personas.items():
             name = pdata.get("name", "")
-            # Generate name_en (pinyin/English)
+            # generate name_en（pinyin/English）
             name_en = pid.replace("_", " ").title().replace(" ", "")
 
             ref_image = pdata.get("reference_image")
@@ -3644,7 +4088,7 @@ class PersonaManager:
 
     def get_character_image_mapping(self) -> Dict[str, str]:
         """
-        Generate character_image_mapping (for storyboard.json)
+        generate character_image_mapping（for storyboard.json）
 
         Returns:
             {Element_Name: image_1, ...}
@@ -3657,11 +4101,11 @@ class PersonaManager:
         return mapping
 
     def has_personas(self) -> bool:
-        """Whether any character is registered"""
+        """whether hascharacter registration"""
         return len(self.personas) > 0
 
     def remove(self, persona_id: str) -> bool:
-        """Delete character"""
+        """delete character"""
         if persona_id in self.personas:
             del self.personas[persona_id]
             self._save()
@@ -3669,27 +4113,27 @@ class PersonaManager:
         return False
 
     def clear(self):
-        """Clear all characters"""
+        """clear all characters"""
         self.personas = {}
         self._save()
 
 
-# ============== Multimodal Image Analysis (Built-in Vision Capability) ==============
+# ============== multimodal image analysis（built-in Vision capability）==============
 
 class VisionClient:
     """
-    Multi-modal image analysis client
+    multimodal image analysis client
 
-    Fallback for non-multi-modal models, supports Kimi K2.5, GPT-4o and other vision models.
-    Uses Anthropic API compatible format.
+    for fallback for non-multimodal models，support Kimi K2.5、GPT-4o visual models etc。
+    use Anthropic API compatibleformat。
 
-    Usage:
+    usage：
         client = VisionClient()
-        result = await client.analyze_image("path/to/image.jpg", "Describe this image")
+        result = await client.analyze_image("path/to/image.jpg", "describe this image")
         results = await client.analyze_batch(["img1.jpg", "img2.jpg"])
     """
 
-    # Supported image formats
+    # supported image formats
     SUPPORTED_FORMATS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'}
 
     def __init__(self):
@@ -3699,13 +4143,13 @@ class VisionClient:
     async def analyze_image(
         self,
         image_path: str,
-        prompt: str = "Please describe this image in detail, including scene, subject, colors, atmosphere, etc.",
+        prompt: str = "please describe this in detailimage content，including scene、subject、color、atmosphere etc。",
     ) -> Dict[str, Any]:
-        """Analyze single image"""
+        """analyze single image"""
         if not os.path.exists(image_path):
-            return {"success": False, "error": f"Image not found: {image_path}"}
+            return {"success": False, "error": f"image does not exist: {image_path}"}
 
-        # Read and encode image
+        # read and encode image
         with open(image_path, 'rb') as f:
             image_data = f.read()
 
@@ -3722,7 +4166,7 @@ class VisionClient:
 
         base64_image = base64.b64encode(image_data).decode('utf-8')
 
-        # Get configuration
+        # get config
         api_key = Config.get("VISION_API_KEY", "")
         base_url = Config.get("VISION_BASE_URL", "https://coding.dashscope.aliyuncs.com/apps/anthropic")
         model = Config.get("VISION_MODEL", "kimi-k2.5")
@@ -3730,7 +4174,7 @@ class VisionClient:
         if not api_key:
             return {"success": False, "error": "VISION_API_KEY not configured"}
 
-        # Build API request (Anthropic API compatible format)
+        # build API request（Anthropic API compatibleformat）
         payload = {
             "model": model,
             "max_tokens": 1024,
@@ -3775,7 +4219,7 @@ class VisionClient:
 
             result = response.json()
 
-            # Extract response text
+            # extract response text
             content = result.get("content", [])
             description = None
             for item in content:
@@ -3784,7 +4228,7 @@ class VisionClient:
                     break
 
             if not description:
-                description = "Unable to parse response"
+                description = "cannot parse response"
 
             return {
                 "success": True,
@@ -3798,9 +4242,9 @@ class VisionClient:
     async def analyze_batch(
         self,
         image_paths: List[str],
-        prompt: str = "Please describe this image in detail, including scene, subject, colors, atmosphere, etc."
+        prompt: str = "please describe this in detailimage content，including scene、subject、color、atmosphere etc。"
     ) -> List[Dict[str, Any]]:
-        """Batch analyze multiple images"""
+        """batch analysismultiple images"""
         results = []
         for path in image_paths:
             result = await self.analyze_image(path, prompt)
@@ -3811,16 +4255,16 @@ class VisionClient:
         await self.client.aclose()
 
 
-# ============== CLI Entry Point ==============
+# ============== command line entry ==============
 
 async def cmd_vision(args):
-    """Image analysis command"""
+    """image analysis command"""
     api_key = Config.get("VISION_API_KEY", "")
     if not api_key:
         print(json.dumps({
             "success": False,
             "error": "VISION_API_KEY not configured",
-            "hint": "Please add VISION_API_KEY in config.json",
+            "hint": "please in config.json add VISION_API_KEY",
             "config_file": str(CONFIG_FILE)
         }, indent=2, ensure_ascii=False))
         return 1
@@ -3828,12 +4272,12 @@ async def cmd_vision(args):
     client = VisionClient()
     try:
         if args.batch:
-            # Batch analyze directory
+            # batch analysisdirectory
             directory = Path(args.image)
             if not directory.is_dir():
                 print(json.dumps({
                     "success": False,
-                    "error": f"Directory does not exist: {args.image}"
+                    "error": f"directory does not exist: {args.image}"
                 }, indent=2, ensure_ascii=False))
                 return 1
 
@@ -3845,11 +4289,11 @@ async def cmd_vision(args):
             if not image_files:
                 print(json.dumps({
                     "success": False,
-                    "error": f"No image files found in directory: {args.image}"
+                    "error": f"not found in directoryimage file: {args.image}"
                 }, indent=2, ensure_ascii=False))
                 return 1
 
-            logger.info(f"Found {len(image_files)} images, starting analysis...")
+            logger.info(f"found {len(image_files)} image，start analysis...")
             results = await client.analyze_batch(
                 [str(f) for f in sorted(image_files)],
                 args.prompt
@@ -3871,7 +4315,7 @@ async def cmd_vision(args):
             print(json.dumps(output, indent=2, ensure_ascii=False))
             return 0
         else:
-            # Single image analysis
+            # single image analysis
             result = await client.analyze_image(args.image, args.prompt)
             if result.get("success"):
                 output = {
@@ -3888,60 +4332,129 @@ async def cmd_vision(args):
         await client.close()
 
 
-# ============== CLI Entry Point ==============
+# ============== command line entry ==============
 
 async def cmd_video(args):
-    """Video generation command"""
-    # Parameter mutual exclusion check: must specify --prompt or (--storyboard + --scene)
+    """video generationcommand"""
+    # param mutual exclusion check：must specify --prompt or (--storyboard + --scene)
     has_prompt = bool(args.prompt)
     has_scene = bool(getattr(args, 'scene', None) and getattr(args, 'storyboard', None))
     if not has_prompt and not has_scene:
         print(json.dumps({
             "success": False,
-            "error": "Must specify --prompt or --storyboard + --scene"
+            "error": "must specify --prompt or --storyboard + --scene"
         }, indent=2, ensure_ascii=False))
         return 1
 
     provider = getattr(args, 'provider', None)
     backend = getattr(args, 'backend', 'kling')
 
-    # Provider auto-selection logic (if user not specified)
+    # Provider auto selection logic（likeif user not specified）
     if provider is None:
         if backend == 'seedance':
-            provider = 'piapi'  # seedance only has piapi provider
+            # seedance: fal > piapi（as defined in SKILL.md）
+            if Config.FAL_API_KEY:
+                provider = 'fal'
+            elif Config.SEEDANCE_API_KEY:
+                provider = 'piapi'
+            else:
+                provider = 'fal'  # default，will report error and hint config
         elif backend == 'veo3':
-            provider = 'migoo'  # veo3 only has migoo provider
+            provider = 'migoo'  # veo3 only migoo provider
         elif Config.KLING_ACCESS_KEY and Config.KLING_SECRET_KEY:
-            provider = 'official'  # prefer official API
+            provider = 'official'  # priority use official API
         elif Config.FAL_API_KEY:
             provider = 'fal'       # then use fal
         else:
-            provider = 'official'  # default, will report error
+            provider = 'official'  # default，will report error and hint config
 
-    logger.info(f"🔧 Using provider: {provider}, backend: {backend}")
+    logger.info(f"🔧 use provider: {provider}, backend: {backend}")
 
     # Priority: command line > storyboard.json > default value
     aspect_ratio = args.aspect_ratio
     if aspect_ratio is None and hasattr(args, 'storyboard') and args.storyboard:
         aspect_ratio = get_aspect_from_storyboard(args.storyboard)
         if aspect_ratio:
-            logger.info(f"📐 Read aspect ratio from storyboard.json: {aspect_ratio}")
+            logger.info(f"📐 read from storyboard.json aspect ratio: {aspect_ratio}")
     if aspect_ratio is None:
         aspect_ratio = "9:16"  # final default value
-        logger.info(f"📐 Using default aspect ratio: {aspect_ratio}")
+        logger.info(f"📐 use default aspect ratio: {aspect_ratio}")
 
     # ==================== fal.ai provider ====================
-    # fal uses unified Kling model, parameters and prompt writing same as official
+    # fal support Kling and Seedance backends，need to based on backend parameter distinction
     if provider == 'fal':
         if not Config.FAL_API_KEY:
             print(json.dumps({
                 "success": False,
                 "error": "FAL_API_KEY not configured",
-                "hint": "Please add FAL_API_KEY in config.json",
-                "get_key": "Visit https://fal.ai to get API key"
+                "hint": "please in config.json add FAL_API_KEY",
+                "get_key": "access https://fal.ai get API key"
             }, indent=2, ensure_ascii=False))
             return 1
 
+        # ===== Seedance backend (fal provider) =====
+        if backend == 'seedance':
+            client = FalSeedanceClient()
+            try:
+                duration = max(4, min(15, args.duration))
+                if duration != args.duration:
+                    logger.warning(f"⚠️ Seedance duration adjusted to {duration}s (range 4-15s)")
+                image_list = getattr(args, 'image_list', None)
+                audio_urls = getattr(args, 'audio_urls', None)
+                video_urls = getattr(args, 'video_urls', None)
+                scene_id = getattr(args, 'scene', None)
+                storyboard_path = getattr(args, 'storyboard', None)
+
+                # support --storyboard + --scene auto assemble
+                if storyboard_path and scene_id:
+                    storyboard_data = load_storyboard(storyboard_path)
+                    if not storyboard_data:
+                        print(json.dumps({"success": False, "error": f"cannot load storyboard: {storyboard_path}"}, indent=2, ensure_ascii=False))
+                        return 1
+                    target_scene = None
+                    for sc in storyboard_data.get("scenes", []):
+                        if sc.get("scene_id") == scene_id:
+                            target_scene = sc
+                            break
+                    if not target_scene:
+                        print(json.dumps({"success": False, "error": f"not found scene: {scene_id}"}, indent=2, ensure_ascii=False))
+                        return 1
+                    prompt, image_urls, duration = build_seedance_prompt(target_scene, storyboard_data, storyboard_path)
+                    aspect_ratio = storyboard_data.get("aspect_ratio", aspect_ratio)
+                    logger.info(f"🎬 Seedance auto assemble: scene={scene_id}, duration={duration}s, images={len(image_urls)}")
+
+                    result = await client.submit_task(
+                        prompt=prompt, duration=duration, aspect_ratio=aspect_ratio,
+                        image_urls=image_urls if image_urls else None,
+                        resolution=getattr(args, 'resolution', '720p'),
+                        seed=getattr(args, 'seed', None),
+                        model=getattr(args, 'model', 'fast'),
+                        output=args.output
+                    )
+                else:
+                    result = await client.submit_task(
+                        prompt=args.prompt,
+                        duration=duration,
+                        aspect_ratio=aspect_ratio,
+                        image_urls=image_list,
+                        video_urls=video_urls,
+                        audio_urls=audio_urls,
+                        resolution=getattr(args, 'resolution', '720p'),
+                        seed=getattr(args, 'seed', None),
+                        model=getattr(args, 'model', 'fast'),
+                        output=args.output
+                    )
+
+                if result.get("success"):
+                    print(json.dumps(result, indent=2, ensure_ascii=False))
+                    return 0
+                else:
+                    print(json.dumps(result, indent=2, ensure_ascii=False))
+                    return 1
+            finally:
+                await client.close()
+
+        # ===== Kling / Kling-Omni backend (fal provider) =====
         client = FalKlingClient()
         try:
             generate_audio = args.audio if hasattr(args, 'audio') else False
@@ -3962,41 +4475,41 @@ async def cmd_video(args):
                 print(json.dumps(result, indent=2, ensure_ascii=False))
                 return 0
             else:
-                print(f"Error: {result.get('error')}")
+                print(f"error: {result.get('error')}")
                 return 1
         finally:
             await client.close()
 
     # ==================== kling provider (official API) ====================
-    # BackendRouter: force switch by feature requirement
-    # - image-list: kling-omni and seedance both support, no force switch
-    # - tail-image: only kling supports, needs force switch
+    # BackendRouter: force switch by functional requirement
+    # - image-list: kling-omni and seedance both support，do not force switch
+    # - tail-image: only kling support，need force switch
     image_list = getattr(args, 'image_list', None)
     tail_image = getattr(args, 'tail_image', None)
     if tail_image and backend not in ['kling']:
         backend = 'kling'
-        logger.info("🔀 Detected --tail-image, auto switching to kling backend")
+        logger.info("🔀 detected --tail-image，auto switch to Kling backend")
 
     # ==================== official provider (official API) ====================
-    # Check corresponding backend's API key
+    # check corresponding backend's API key
     if backend == 'kling':
         if not Config.KLING_ACCESS_KEY or not Config.KLING_SECRET_KEY:
             print(json.dumps({
                 "success": False,
-                "error": "Kling API credentials not configured",
-                "hint": "Please add KLING_ACCESS_KEY and KLING_SECRET_KEY in config.json",
-                "get_key": "Visit https://klingai.kuaishou.com to get API credentials"
+                "error": "Kling API credentialnot configured",
+                "hint": "please in config.json add KLING_ACCESS_KEY and KLING_SECRET_KEY",
+                "get_key": "access https://klingai.kuaishou.com get API credential"
             }, indent=2, ensure_ascii=False))
             return 1
 
         client = KlingClient()
         try:
-            # Kling parameter conversion: audio -> sound
+            # Kling parameterconversion：audio -> sound
             sound = "on" if args.audio else "off"
-            # Kling duration range: 3-15s
+            # Kling durationrange：3-15s
             duration = max(3, min(15, args.duration))
 
-            # Process multi-shot parameters
+            # process multi-shot params
             multi_shot = getattr(args, 'multi_shot', False)
             shot_type = getattr(args, 'shot_type', None)
             multi_prompt = None
@@ -4040,7 +4553,7 @@ async def cmd_video(args):
                 print(json.dumps(result, indent=2, ensure_ascii=False))
                 return 0
             else:
-                print(f"Error: {result.get('error')}")
+                print(f"error: {result.get('error')}")
                 return 1
         finally:
             await client.close()
@@ -4049,9 +4562,9 @@ async def cmd_video(args):
         if not Config.KLING_ACCESS_KEY or not Config.KLING_SECRET_KEY:
             print(json.dumps({
                 "success": False,
-                "error": "Kling API credentials not configured",
-                "hint": "Please add KLING_ACCESS_KEY and KLING_SECRET_KEY in config.json",
-                "get_key": "Visit https://klingai.kuaishou.com to get API credentials"
+                "error": "Kling API credentialnot configured",
+                "hint": "please in config.json add KLING_ACCESS_KEY and KLING_SECRET_KEY",
+                "get_key": "access https://klingai.kuaishou.com get API credential"
             }, indent=2, ensure_ascii=False))
             return 1
 
@@ -4092,21 +4605,23 @@ async def cmd_video(args):
                 print(json.dumps(result, indent=2, ensure_ascii=False))
                 return 0
             else:
-                print(f"Error: {result.get('error')}")
+                print(f"error: {result.get('error')}")
                 return 1
         finally:
             await client.close()
 
     elif backend == 'seedance':
+        # Provider select: fal > piapi
         provider = getattr(args, 'provider', None)
+        use_fal = False
 
         if provider == 'fal':
             if not Config.FAL_API_KEY:
                 print(json.dumps({
                     "success": False,
                     "error": "FAL_API_KEY not configured",
-                    "hint": "Using --provider fal requires FAL_API_KEY"
-                }, indent=2))
+                    "hint": "use --provider fal need FAL_API_KEY"
+                }, indent=2, ensure_ascii=False))
                 return 1
             use_fal = True
         elif provider == 'piapi':
@@ -4114,12 +4629,12 @@ async def cmd_video(args):
                 print(json.dumps({
                     "success": False,
                     "error": "SEEDANCE_API_KEY not configured",
-                    "hint": "Using --provider piapi requires SEEDANCE_API_KEY"
-                }, indent=2))
+                    "hint": "use --provider piapi need SEEDANCE_API_KEY"
+                }, indent=2, ensure_ascii=False))
                 return 1
             use_fal = False
         else:
-            # Auto select: fal > piapi
+            # auto select：fal > piapi
             if Config.FAL_API_KEY:
                 use_fal = True
                 logger.info("🔵 Seedance auto select provider: fal")
@@ -4129,13 +4644,13 @@ async def cmd_video(args):
             else:
                 print(json.dumps({
                     "success": False,
-                    "error": "Seedance has no available Provider",
-                    "hint": "Please configure FAL_API_KEY (recommended) or SEEDANCE_API_KEY",
+                    "error": "Seedance no available Provider",
+                    "hint": "please configure FAL_API_KEY（recommend）or SEEDANCE_API_KEY",
                     "providers": {
                         "fal": {"key": "FAL_API_KEY", "url": "https://fal.ai", "priority": 1},
                         "piapi": {"key": "SEEDANCE_API_KEY", "url": "https://piapi.ai", "priority": 2}
                     }
-                }, indent=2))
+                }, indent=2, ensure_ascii=False))
                 return 1
 
         client = FalSeedanceClient() if use_fal else SeedanceClient()
@@ -4146,7 +4661,7 @@ async def cmd_video(args):
             if storyboard_path and scene_id:
                 storyboard_data = load_storyboard(storyboard_path)
                 if not storyboard_data:
-                    print(json.dumps({"success": False, "error": f"Unable to load storyboard: {storyboard_path}"}, indent=2))
+                    print(json.dumps({"success": False, "error": f"cannot load storyboard: {storyboard_path}"}, indent=2, ensure_ascii=False))
                     return 1
 
                 target_scene = None
@@ -4155,12 +4670,12 @@ async def cmd_video(args):
                         target_scene = sc
                         break
                 if not target_scene:
-                    print(json.dumps({"success": False, "error": f"Scene not found: {scene_id}", "available": [s.get("scene_id") for s in storyboard_data.get("scenes", [])]}, indent=2))
+                    print(json.dumps({"success": False, "error": f"not found scene: {scene_id}", "available": [s.get("scene_id") for s in storyboard_data.get("scenes", [])]}, indent=2, ensure_ascii=False))
                     return 1
 
                 prompt, image_urls, duration = build_seedance_prompt(target_scene, storyboard_data, storyboard_path)
                 aspect_ratio = storyboard_data.get("aspect_ratio", aspect_ratio)
-                logger.info(f"🎬 Seedance auto assembly: scene={scene_id}, duration={duration}s, images={len(image_urls)}")
+                logger.info(f"🎬 Seedance auto assemble: scene={scene_id}, duration={duration}s, images={len(image_urls)}")
 
                 if use_fal:
                     result = await client.submit_task(
@@ -4200,28 +4715,29 @@ async def cmd_video(args):
                         mode = 'omni_reference' if image_list else 'text_to_video'
                     result = await client.submit_task(
                         prompt=args.prompt, duration=duration, aspect_ratio=aspect_ratio,
-                        image_urls=image_list, mode=mode, audio_urls=audio_urls, video_urls=video_urls,
+                        image_urls=image_list, mode=mode,
+                        audio_urls=audio_urls, video_urls=video_urls,
                         output=args.output
                     )
 
             if result.get("success"):
-                print(json.dumps(result, indent=2))
+                print(json.dumps(result, indent=2, ensure_ascii=False))
                 return 0
             else:
-                print(f"Error: {result.get('error')}")
-                if result.get("message"):
-                    print(f"Message: {result.get('message')}")
+                print(f"error: {result.get('error')}")
                 return 1
         finally:
             await client.close()
 
     elif backend == 'veo3':
+        # Veo3 deprecated，but keep code backward compatible
+        logger.warning("⚠️ Veo3 backend is deprecated，recommended Kling、Kling-Omni or Seedance")
         if not Config.MIGOO_API_KEY:
             print(json.dumps({
                 "success": False,
                 "error": "MIGOO_API_KEY not configured",
-                "hint": "Please add MIGOO_API_KEY in config.json",
-                "get_key": "Migoo LLM API key is used to access Veo3 video generation"
+                "hint": "please in config.json add MIGOO_API_KEY",
+                "get_key": "Migoo LLM API key foraccess Veo3 video generation"
             }, indent=2, ensure_ascii=False))
             return 1
 
@@ -4247,54 +4763,54 @@ async def cmd_video(args):
                 print(json.dumps(result, indent=2, ensure_ascii=False))
                 return 0
             else:
-                print(f"Error: {result.get('error')}")
+                print(f"error: {result.get('error')}")
                 return 1
         finally:
             await client.close()
 
-    # Unknown backend
+    # unknown backend
     print(json.dumps({
         "success": False,
-        "error": f"Unsupported backend: {backend}",
-        "supported_backends": ["kling", "kling-omni", "seedance", "veo3"]
+        "error": f"unsupported backend: {backend}",
+        "supported_backends": ["kling", "kling-omni", "seedance"]
     }, indent=2, ensure_ascii=False))
     return 1
 
 
 async def cmd_music(args):
-    """Music generation command"""
-    # Priority: command line > creative.json > error
+    """music generation command"""
+    # Priority: command line > creative.json > report error
     prompt = args.prompt
     style = args.style
 
-    # Read prompt and style from creative.json
+    # read from creative.json prompt and style
     if hasattr(args, 'creative') and args.creative:
         config = get_music_config_from_creative(args.creative)
         if config:
             if prompt is None:
                 prompt = config.get("prompt")
                 if prompt:
-                    logger.info(f"🎵 Read music description from creative.json: {prompt[:50]}...")
+                    logger.info(f"🎵 read from creative.json music description: {prompt[:50]}...")
             if style is None:
                 style = config.get("style")
                 if style:
-                    logger.info(f"🎵 Read music style from creative.json: {style}")
+                    logger.info(f"🎵 read from creative.json music style: {style}")
 
-    # prompt must be provided
+    # prompt must provide
     if prompt is None:
         print(json.dumps({
             "success": False,
-            "error": "Must provide music description",
-            "hint": "Please provide music description via --prompt or --creative parameter"
+            "error": "must provide music description",
+            "hint": "please pass --prompt or --creative parameter provides music description"
         }, indent=2, ensure_ascii=False))
         return 1
 
-    # style must be provided
+    # style must provide
     if style is None:
         print(json.dumps({
             "success": False,
-            "error": "Must provide music style",
-            "hint": "Please provide music style via --style or --creative parameter"
+            "error": "must provide music style",
+            "hint": "please pass --style or --creative parameter provides music style"
         }, indent=2, ensure_ascii=False))
         return 1
 
@@ -4302,8 +4818,8 @@ async def cmd_music(args):
         print(json.dumps({
             "success": False,
             "error": "SUNO_API_KEY not configured",
-            "hint": "Please set environment variable: export SUNO_API_KEY='your-api-key'",
-            "get_key": "Visit https://sunoapi.org to get API key"
+            "hint": "please set environment variable: export SUNO_API_KEY='your-api-key'",
+            "get_key": "access https://sunoapi.org get API key"
         }, indent=2, ensure_ascii=False))
         return 1
 
@@ -4320,66 +4836,104 @@ async def cmd_music(args):
             print(json.dumps(result, indent=2, ensure_ascii=False))
             return 0
         else:
-            print(f"Error: {result.get('error')}")
+            print(f"error: {result.get('error')}")
             return 1
     finally:
         await client.close()
 
 
 async def cmd_tts(args):
-    """TTS synthesis command - using Gemini TTS (via Migoo LLM API)"""
-    if not Config.MIGOO_API_KEY:
-        print(json.dumps({
-            "success": False,
-            "error": "MIGOO_API_KEY not configured",
-            "hint": "Please configure MIGOO_API_KEY to use Gemini TTS",
-            "get_key": "Visit inner-api.us.migoo.shopee.io/inbeeai to get API key"
-        }, indent=2, ensure_ascii=False))
-        return 1
+    """TTS synthesiscommand - support ElevenLabs (priority) and Gemini (fallback)"""
+    backend = getattr(args, 'backend', 'elevenlabs')
 
-    logger.info("🔧 Using Gemini TTS (Migoo LLM)")
-    client = GeminiTTSClient()
-    result = await client.synthesize(
-        text=args.text,
-        output=args.output,
-        voice=args.voice,
-        emotion=args.emotion,
-        speed=args.speed,
-        prompt=getattr(args, 'prompt', None),
-    )
+    # ElevenLabs TTS（priority）
+    if backend == "elevenlabs":
+        if not Config.FAL_API_KEY:
+            logger.warning("⚠️ FAL_API_KEY not configured，degrade to Gemini TTS")
+            backend = "gemini"
+        else:
+            logger.info("🔧 use ElevenLabs TTS (via fal)")
+            client = ElevenLabsTTSClient()
+            result = await client.synthesize(
+                text=args.text,
+                output=args.output,
+                voice_id=getattr(args, 'voice_id', None),
+                voice_style=args.voice,
+                stability=getattr(args, 'stability', None),
+                video_type=getattr(args, 'video_type', None),
+                enhance_text=getattr(args, 'enhance_text', True),
+                voice_name=getattr(args, 'voice_name', None)
+            )
 
-    if result.get("success"):
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-        return 0
-    else:
-        print(f"Error: {result.get('error')}")
-        return 1
+            if result.get("success"):
+                print(json.dumps(result, indent=2, ensure_ascii=False))
+                return 0
+
+            # ElevenLabs failed，check if can degrade
+            if result.get("fallback"):
+                logger.warning(f"⚠️ ElevenLabs TTS failed: {result.get('error')}, degrade to Gemini")
+                backend = "gemini"
+            else:
+                print(f"error: {result.get('error')}")
+                return 1
+
+    # Gemini TTS(fallback)
+    if backend == "gemini":
+        if not Config.MIGOO_API_KEY:
+            print(json.dumps({
+                "success": False,
+                "error": "MIGOO_API_KEY not configured",
+                "hint": "please configure MIGOO_API_KEY to use Gemini TTS",
+                "get_key": "access Migoo LLM PROXY get API key（contact dongming.shen）"
+            }, indent=2, ensure_ascii=False))
+            return 1
+
+        logger.info("🔧 use Gemini TTS (Migoo LLM) - fallback mode")
+        client = GeminiTTSClient()
+        result = await client.synthesize(
+            text=args.text,
+            output=args.output,
+            voice=args.voice,
+            emotion=args.emotion,
+            speed=args.speed,
+            prompt=getattr(args, 'prompt', None),
+        )
+
+        if result.get("success"):
+            # marked as degradedresult
+            if backend == "gemini" and getattr(args, 'backend', 'elevenlabs') == 'elevenlabs':
+                result["backend"] = "gemini_fallback"
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+            return 0
+        else:
+            print(f"error: {result.get('error')}")
+            return 1
 
 
 async def cmd_image(args):
-    """Image generation command"""
-    # Provider auto-selection logic
+    """image generationcommand"""
+    # Provider auto selection logic
     provider = getattr(args, 'provider', None)
     if provider is None:
         # Priority: migoo → yunwu
         if Config.MIGOO_API_KEY:
             provider = 'migoo'
-        elif Config.GEMINI_API_KEY:  # GEMINI_API_KEY is actually YUNWU_API_KEY
+        elif Config.GEMINI_API_KEY:  # GEMINI_API_KEY actually is YUNWU_API_KEY
             provider = 'yunwu'
         else:
-            provider = 'migoo'  # default, will report error
+            provider = 'migoo'  # default，will report error and hint config
 
-    logger.info(f"🔧 Using provider: {provider}")
+    logger.info(f"🔧 use provider: {provider}")
 
     # Priority: command line > storyboard.json > default value
     aspect_ratio = args.aspect_ratio
     if aspect_ratio is None and hasattr(args, 'storyboard') and args.storyboard:
         aspect_ratio = get_aspect_from_storyboard(args.storyboard)
         if aspect_ratio:
-            logger.info(f"📐 Read aspect ratio from storyboard.json: {aspect_ratio}")
+            logger.info(f"📐 read from storyboard.json aspect ratio: {aspect_ratio}")
     if aspect_ratio is None:
         aspect_ratio = "9:16"  # final default value
-        logger.info(f"📐 Using default aspect ratio: {aspect_ratio}")
+        logger.info(f"📐 use default aspect ratio: {aspect_ratio}")
 
     # migoo provider
     if provider == 'migoo':
@@ -4387,7 +4941,7 @@ async def cmd_image(args):
             print(json.dumps({
                 "success": False,
                 "error": "MIGOO_API_KEY not configured",
-                "hint": "Please add MIGOO_API_KEY in config.json"
+                "hint": "please in config.json add MIGOO_API_KEY"
             }, indent=2, ensure_ascii=False))
             return 1
 
@@ -4405,9 +4959,9 @@ async def cmd_image(args):
         if not Config.GEMINI_API_KEY:
             print(json.dumps({
                 "success": False,
-                "error": "YUNWU_API_KEY not configured (for Gemini image generation)",
-                "hint": "Please set environment variable: export YUNWU_API_KEY='your-api-key'",
-                "get_key": "Visit https://yunwu.ai to register and get API key"
+                "error": "YUNWU_API_KEY not configured（for Gemini image generation）",
+                "hint": "please set environment variable: export YUNWU_API_KEY='your-api-key'",
+                "get_key": "access https://yunwu.ai register to get API key"
             }, indent=2, ensure_ascii=False))
             return 1
 
@@ -4424,17 +4978,17 @@ async def cmd_image(args):
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
     else:
-        print(f"Error: {result.get('error')}")
+        print(f"error: {result.get('error')}")
         return 1
 
 
 async def cmd_setup(args):
-    """Interactive API provider and key configuration"""
+    """Interactive API provider setup and key"""
 
-    # Define all available video generation providers and their required keys
+    # define all availablevideo generation provider and its required key
     VIDEO_PROVIDERS = {
         "1": {
-            "name": "Seedance (ByteDance, recommended for fictional/short drama/MV)",
+            "name": "Seedance（ByteDance，recommend fiction film/short drama/MV）",
             "backend": "seedance",
             "provider": "piapi",
             "keys": [
@@ -4442,7 +4996,7 @@ async def cmd_setup(args):
             ]
         },
         "2": {
-            "name": "Kling Official API (Kuaishou, recommended for realistic/ads)",
+            "name": "Kling official API（Kuaishou，recommend realistic/commercial）",
             "backend": "kling",
             "provider": "official",
             "keys": [
@@ -4451,7 +5005,7 @@ async def cmd_setup(args):
             ]
         },
         "3": {
-            "name": "Kling via fal.ai (bypass official concurrency limit)",
+            "name": "Kling via fal.ai（bypass official concurrency limit）",
             "backend": "kling-omni",
             "provider": "fal",
             "keys": [
@@ -4459,7 +5013,7 @@ async def cmd_setup(args):
             ]
         },
         "4": {
-            "name": "Veo3 via Migoo LLM (Google Veo3, high quality realistic short videos)",
+            "name": "Veo3 via Migoo（Google Veo3，global fallback model）",
             "backend": "veo3",
             "provider": "migoo",
             "keys": [
@@ -4479,7 +5033,7 @@ async def cmd_setup(args):
 
     config = load_config()
 
-    # Output as JSON for Claude to parse
+    # output as JSON，for convenience Claude parse
     setup_info = {
         "action": "setup",
         "video_providers": {},
@@ -4505,14 +5059,14 @@ async def cmd_setup(args):
                               for k in svc["keys"]]
         }
 
-    # Show currently configured keys
+    # displaycurrentconfigured keys
     for key in ["SEEDANCE_API_KEY", "KLING_ACCESS_KEY", "KLING_SECRET_KEY", "FAL_API_KEY",
                 "YUNWU_API_KEY", "SUNO_API_KEY", "VOLCENGINE_TTS_APP_ID",
                 "VOLCENGINE_TTS_ACCESS_TOKEN", "MIGOO_API_KEY"]:
         val = config.get(key) or os.getenv(key, "")
-        setup_info["current_config"][key] = f"{val[:4]}***" if val else "Not set"
+        setup_info["current_config"][key] = f"{val[:4]}***" if val else "not set"
 
-    # Non-interactive mode: configure directly when --provider parameter present
+    # non-interactive mode：pass --provider to directly configure
     provider_choice = getattr(args, 'provider_choice', None)
     set_keys = getattr(args, 'set_key', None) or []
 
@@ -4524,7 +5078,7 @@ async def cmd_setup(args):
                 setup_info["saved"] = setup_info.get("saved", [])
                 setup_info["saved"].append(k)
         save_config(config)
-        Config._cached_config = None  # Clear cache
+        Config._cached_config = None  # clear cache
         setup_info["status"] = "keys_saved"
     elif provider_choice and provider_choice in VIDEO_PROVIDERS:
         p = VIDEO_PROVIDERS[provider_choice]
@@ -4540,7 +5094,7 @@ async def cmd_setup(args):
 
 
 async def cmd_check(args):
-    """Environment check command"""
+    """environment checkcommand"""
     import shutil
     import platform
 
@@ -4587,12 +5141,12 @@ async def cmd_check(args):
     env_vars = {
         "SEEDANCE_API_KEY": {
             "value": Config.SEEDANCE_API_KEY,
-            "purpose": "Seedance video generation (piapi.ai proxy)",
+            "purpose": "Seedance video generation（piapi.ai proxy）",
             "get_key": "https://piapi.ai"
         },
         "MIGOO_API_KEY": {
             "value": Config.MIGOO_API_KEY,
-            "purpose": "Veo3 video + Gemini image + Gemini TTS (Migoo LLM proxy)",
+            "purpose": "Gemini image + Gemini TTS（Migoo LLM PROXY）",
             "get_key": "https://inner-api.us.migoo.shopee.io/inbeeai"
         },
         "YUNWU_API_KEY": {
@@ -4612,7 +5166,7 @@ async def cmd_check(args):
         },
         "FAL_API_KEY": {
             "value": Config.FAL_API_KEY,
-            "purpose": "fal.ai Kling video generation proxy (bypass official concurrency limit)",
+            "purpose": "fal.ai Kling video generation proxy（bypass official concurrency limit）",
             "get_key": "https://fal.ai"
         },
         "SUNO_API_KEY": {
@@ -4624,7 +5178,7 @@ async def cmd_check(args):
 
     for name, info in env_vars.items():
         is_set = bool(info["value"])
-        masked = f"{info['value'][:4]}***" if is_set else "Not set"
+        masked = f"{info['value'][:4]}***" if is_set else "not set"
         results["api_keys"][name] = {
             "set": is_set,
             "masked_value": masked,
@@ -4632,7 +5186,7 @@ async def cmd_check(args):
             "get_key_url": info["get_key"]
         }
 
-    # Check if at least one video provider is available
+    # checkwhether at least one existsvideo provider available
     has_video_provider = any([
         Config.SEEDANCE_API_KEY,
         Config.MIGOO_API_KEY,
@@ -4642,121 +5196,138 @@ async def cmd_check(args):
     results["has_video_provider"] = has_video_provider
     if not has_video_provider:
         results["ready"] = False
-        results["missing"].append("No video generation API key configured")
-        results["hints"].append("Please run setup command to configure API: python video_gen_tools.py setup")
+        results["missing"].append("no video generation configured API key")
+        results["hints"].append("please first run setup commandconfig API: python video_gen_tools.py setup")
 
     print(json.dumps(results, indent=2, ensure_ascii=False))
     return 0 if results["ready"] else 1
 
 
 async def cmd_validate(args):
-    """Validate storyboard.json"""
+    """validation storyboard.json"""
     result = validate_storyboard(args.storyboard)
 
-    # Output results
+    # output result
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
     if result["errors"]:
-        logger.error(f"❌ Validation failed: {len(result['errors'])} errors")
+        logger.error(f"❌ validationfailed: {len(result['errors'])} errors")
     if result["warnings"]:
         logger.warning(f"⚠️ {len(result['warnings'])} warnings")
     if result["valid"]:
-        logger.info("✅ Validation passed")
+        logger.info("✅ validation passed")
 
     return 0 if result["valid"] else 1
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Vico Tools - Video Creation API CLI Toolset",
+        description="Vico Tools - video creationAPIcommand line tool",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    subparsers = parser.add_subparsers(dest="command", help="available command")
 
-    # setup subcommand (interactive provider + API key configuration)
-    setup_parser = subparsers.add_parser("setup", help="Interactive API provider and key configuration")
-    setup_parser.add_argument("--provider", dest="provider_choice", choices=["1", "2", "3", "4"],
-                              help="Select video provider: 1=Seedance, 2=Kling official, 3=Kling(fal), 4=Veo3(migoo)")
+    # setup subcommand（interactive config provider + API key）
+    setup_parser = subparsers.add_parser("setup", help="Interactive API provider setup and key")
+    setup_parser.add_argument("--provider", dest="provider_choice", choices=["1", "2", "3"],
+                              help="select video provider: 1=Seedance, 2=Klingofficial, 3=Kling(fal)")
     setup_parser.add_argument("--set-key", nargs="+", metavar="KEY=VALUE",
-                              help="Set API key, format: KEY=VALUE (multiple allowed)")
+                              help="set API key，format: KEY=VALUE(can be multiple)")
 
     # check subcommand
-    subparsers.add_parser("check", help="Check environment dependencies and configuration")
+    subparsers.add_parser("check", help="check environment dependencies and config")
 
     # video subcommand
-    video_parser = subparsers.add_parser("video", help="Generate video")
-    video_parser.add_argument("--image", "-i", help="Input image path or URL (image-to-video)")
-    video_parser.add_argument("--prompt", "-p", default=None, help="Video description (can be omitted for Seedance --scene mode)")
-    video_parser.add_argument("--duration", "-d", type=int, default=5, help="Duration (seconds)")
-    video_parser.add_argument("--resolution", "-r", default="720p", help="Resolution")
-    video_parser.add_argument("--aspect-ratio", "-a", default=None, help="Aspect ratio (e.g., 16:9, 9:16)")
-    video_parser.add_argument("--storyboard", "-s", help="storyboard.json path, auto-read aspect_ratio")
-    video_parser.add_argument("--audio", action="store_true", help="Generate native audio")
-    video_parser.add_argument("--output", "-o", help="Output file path")
-    video_parser.add_argument("--provider", choices=["official", "fal", "migoo"], default=None,
-                              help="API provider (auto-selected by default; veo3 only supports migoo)")
-    video_parser.add_argument("--backend", "-b", choices=["kling", "kling-omni", "seedance", "veo3"], default="kling",
-                              help="Video generation backend (default kling; kling-omni for reference images; seedance for smart editing; veo3 for high-quality realistic clips)")
+    video_parser = subparsers.add_parser("video", help="generatevideo")
+    video_parser.add_argument("--image", "-i", help="inputimage pathorURL（image-to-video）")
+    video_parser.add_argument("--prompt", "-p", default=None, help="videodescription（Seedance --scene can be omitted in mode）")
+    video_parser.add_argument("--duration", "-d", type=int, default=5, help="duration(s)")
+    video_parser.add_argument("--resolution", "-r", default="720p", help="resolution")
+    video_parser.add_argument("--aspect-ratio", "-a", default=None, help="aspect ratio（like 16:9, 9:16）")
+    video_parser.add_argument("--storyboard", "-s", help="storyboard.json path，auto read aspect_ratio")
+    video_parser.add_argument("--audio", action="store_true", help="generate native audio")
+    video_parser.add_argument("--output", "-o", help="output file path")
+    video_parser.add_argument("--provider", choices=["official", "fal", "piapi", "migoo"], default=None,
+                              help="API provider (default auto select; seedance: fal > piapi; veo3 only supports migoo)")
+    video_parser.add_argument("--backend", "-b", choices=["kling", "kling-omni", "seedance"], default="kling",
+                              help="video generation backend (default kling; kling-omni for reference image; seedance for intelligent shot cutting; veo3 for global fallback)")
     video_parser.add_argument("--mode", "-m", choices=["std", "pro", "text_to_video", "first_last_frames", "omni_reference"], default="std",
-                              help="Generation mode (Kling: std or pro; Seedance: text_to_video, first_last_frames, omni_reference)")
+                              help="generation mode (Kling: std or pro; Seedance: text_to_video, first_last_frames, omni_reference)")
     video_parser.add_argument("--multi-shot", action="store_true",
-                              help="Enable Kling multi-shot mode")
+                              help="enable Kling multi-shotmode")
     video_parser.add_argument("--shot-type", choices=["intelligence", "customize"],
-                              help="Multi-shot type (intelligence: AI auto, customize: custom)")
+                              help="multi-shot storyboard type (intelligence: AIauto, customize: custom)")
     video_parser.add_argument("--multi-prompt", type=str,
-                              help="Multi-shot prompt list (JSON format)")
+                              help="multi-shot prompt list (JSON format)")
     video_parser.add_argument("--tail-image", type=str,
-                              help="Tail frame image path (for first-last frame control)")
+                              help="last frameimage path（forfirst/last framecontrol）")
     video_parser.add_argument("--image-list", nargs="+",
-                              help="Omni-Video multi-reference image path list (kling-omni only); or first/last frame images for Seedance first-last frame mode")
-    video_parser.add_argument("--scene", help="Scene ID (Seedance only: use with --storyboard to auto-assemble time-segmented prompt)")
+                              help="Omni-Video multi reference imagepath list（kling-omni dedicated）；or Seedance first/last frame images for first/last frame mode")
+    video_parser.add_argument("--scene", help="Scene ID（Seedance dedicated：coordinate with --storyboard auto assemble time segments prompt）")
     video_parser.add_argument("--audio-urls", nargs="+",
-                              help="Audio reference URL list (Seedance 2 only)")
+                              help="audioreference URL list（Seedance 2 dedicated）")
     video_parser.add_argument("--video-urls", nargs="+",
-                              help="Video reference URL list (Seedance 2 only)")
+                              help="videoreference URL list（Seedance 2 dedicated）")
+    video_parser.add_argument("--seed", type=int,
+                              help="random seed(only Seedance fal provider supports)")
+    video_parser.add_argument("--end-user-id",
+                              help="end userID（falcompliance requirement）")
+    video_parser.add_argument("--model", choices=["fast", "high_quality"], default="fast",
+                              help="Seedance modelversion(only fal provider supports)")
 
     # music subcommand
-    music_parser = subparsers.add_parser("music", help="Generate music")
-    music_parser.add_argument("--prompt", "-p", default=None, help="Music description (can be auto-read from creative.json)")
-    music_parser.add_argument("--style", "-s", default=None, help="Music style (can be auto-read from creative.json)")
-    music_parser.add_argument("--creative", "-c", help="creative.json path, auto-read prompt and style")
-    music_parser.add_argument("--no-instrumental", dest="instrumental", action="store_false", help="Include vocals (default instrumental)")
+    music_parser = subparsers.add_parser("music", help="generatemusic")
+    music_parser.add_argument("--prompt", "-p", default=None, help="musicdescription（can from creative.json auto read）")
+    music_parser.add_argument("--style", "-s", default=None, help="musicstyle（can from creative.json auto read）")
+    music_parser.add_argument("--creative", "-c", help="creative.json path，auto read prompt and style")
+    music_parser.add_argument("--no-instrumental", dest="instrumental", action="store_false", help="contains vocals（default pure music）")
     music_parser.set_defaults(instrumental=True)
-    music_parser.add_argument("--output", "-o", help="Output file path")
+    music_parser.add_argument("--output", "-o", help="output file path")
 
     # tts subcommand
-    tts_parser = subparsers.add_parser("tts", help="Generate voice")
-    tts_parser.add_argument("--text", "-t", required=True, help="Text to synthesize")
-    tts_parser.add_argument("--output", "-o", required=True, help="Output file path")
+    tts_parser = subparsers.add_parser("tts", help="generatevoice（ElevenLabs priority，Gemini fallback）")
+    tts_parser.add_argument("--text", "-t", required=True, help="text to synthesize")
+    tts_parser.add_argument("--output", "-o", required=True, help="output file path")
+    tts_parser.add_argument("--backend", "-b", choices=["elevenlabs", "gemini"],
+                           default="elevenlabs", help="TTS backend（default elevenlabs，gemini as fallback）")
     tts_parser.add_argument("--voice", "-v", default="female_narrator",
                            choices=["female_narrator", "female_gentle", "female_soft", "female_bright",
                                     "male_narrator", "male_warm", "male_deep", "male_bright"],
-                           help="Voice type")
+                           help="voice style（map to ElevenLabs built-in voiceorcreate new voice）")
+    tts_parser.add_argument("--voice-id", help="existing ElevenLabs voice_id（skip Design/Create）")
+    tts_parser.add_argument("--stability", type=float, help="stable param（0-1，drama character 0.20-0.25，emotional narrative 0.25-0.35）")
+    tts_parser.add_argument("--video-type", choices=["cinematic", "vlog", "documentary", "commercial", "artistic"],
+                           help="video type（used for auto adjustment stability and text enhancement)")
+    tts_parser.add_argument("--enhance-text", action="store_true", default=True,
+                           help="auto enhance text（insertemotion/rhythm tag）")
+    tts_parser.add_argument("--no-enhance-text", dest="enhance_text", action="store_false",
+                           help="not enhance text，read as-is")
+    tts_parser.add_argument("--voice-name", help="new voice name（for Create）")
     tts_parser.add_argument("--emotion", "-e", choices=["neutral", "happy", "sad", "gentle", "serious"],
-                           help="Emotion (deprecated, recommend using --prompt)")
-    tts_parser.add_argument("--prompt", "-p", help="Style instruction, control accent/emotion/tone/persona (e.g., humorous narration, slightly teasing)")
-    tts_parser.add_argument("--speed", type=float, default=1.0, help="Speech speed")
+                           help="emotion（deprecated，recommended --prompt）")
+    tts_parser.add_argument("--prompt", "-p", help="style instruction（Gemini TTS dedicated，ElevenLabs use text enhancement）")
+    tts_parser.add_argument("--speed", type=float, default=1.0, help="speech rate(only Gemini TTS supports)")
 
     # image subcommand
-    image_parser = subparsers.add_parser("image", help="Generate image")
-    image_parser.add_argument("--prompt", "-p", required=True, help="Image description")
-    image_parser.add_argument("--output", "-o", help="Output file path")
+    image_parser = subparsers.add_parser("image", help="generate image")
+    image_parser.add_argument("--prompt", "-p", required=True, help="image description")
+    image_parser.add_argument("--output", "-o", help="output file path")
     image_parser.add_argument("--style", "-s", default="cinematic",
-                              help="Style (free text, e.g., cinematic, watercolor illustration, etc.)")
-    image_parser.add_argument("--aspect-ratio", "-a", default=None, help="Aspect ratio")
-    image_parser.add_argument("--storyboard", help="storyboard.json path, auto-read aspect_ratio")
-    image_parser.add_argument("--reference", "-r", nargs="+", help="Reference image paths (multiple allowed, important characters at the end)")
+                              help="style（free text，like cinematic, watercolor illustration, etc)")
+    image_parser.add_argument("--aspect-ratio", "-a", default=None, help="aspect ratio")
+    image_parser.add_argument("--storyboard", help="storyboard.json path，auto read aspect_ratio")
+    image_parser.add_argument("--reference", "-r", nargs="+", help="reference image path（support multiple，important characterput later）")
     image_parser.add_argument("--provider", choices=["migoo", "yunwu"], default=None,
-                              help="API provider (auto-selected by default: migoo preferred)")
+                              help="API provider (default auto select: migoo priority)")
 
-    # vision subcommand (built-in multimodal analysis)
-    vision_parser = subparsers.add_parser("vision", help="Analyze image content")
-    vision_parser.add_argument("image", help="Image path or directory")
-    vision_parser.add_argument("--batch", "-b", action="store_true", help="Batch analyze images in directory")
-    vision_parser.add_argument("--prompt", "-p", default="Please describe this image in detail, including scene, subject, colors, atmosphere, etc.", help="Analysis prompt")
+    # vision subcommand（built-in multimodal analysis）
+    vision_parser = subparsers.add_parser("vision", help="analyze image content")
+    vision_parser.add_argument("image", help="image pathordirectory")
+    vision_parser.add_argument("--batch", "-b", action="store_true", help="batch analyze images in directory")
+    vision_parser.add_argument("--prompt", "-p", default="please describe this in detailimage content，including scene、subject、color、atmosphere etc。", help="analyze prompt")
 
     # validate subcommand
-    validate_parser = subparsers.add_parser("validate", help="Validate storyboard.json")
+    validate_parser = subparsers.add_parser("validate", help="validation storyboard.json")
     validate_parser.add_argument("--storyboard", "-s", required=True, help="storyboard.json path")
 
     args = parser.parse_args()
@@ -4765,7 +5336,7 @@ def main():
         parser.print_help()
         return 1
 
-    # Run corresponding command
+    # run corresponding command
     commands = {
         "setup": cmd_setup,
         "check": cmd_check,
