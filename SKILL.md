@@ -27,7 +27,7 @@ Non-multimodal models will automatically call vision models for image analysis. 
 | `seedance` | **fal > piapi** | fal preferred, piapi as fallback |
 | `kling-omni` | official, fal | Switch when official API encounters limits |
 | `kling` | official, fal | Switch when official API encounters limits |
-| `veo3` | **compass only** | Veo3 has only one provider: compass |
+| `veo3` | **Migoo LLM only** | Veo3 has only one provider: Migoo LLM |
 
 When Kling official API encounters concurrency limits (429), you can use `--provider fal`:
 
@@ -140,8 +140,8 @@ Output includes all available providers and their key configuration status. **If
 >
 > **3. Kling via fal.ai** — Bypass official concurrency limits
 >    - Requires: fal.ai API Key (from fal.ai)
-> **4. Veo3 via Compass** — Google Veo3, global fallback model (4/6/8s)
->    - Requires: Compass API Key (from compass.llm.shopee.io)
+> **4. Veo3 via Migoo LLM** — Google Veo3, global fallback model (4/6/8s)
+>    - Requires: Migoo LLM API Key (from inner-api.us.migoo.shopee.io/inbeeai)
 >    - Note: Only use when all other backends fail, or when user explicitly requests
 
 After user selects, request corresponding API key, then save:
@@ -157,7 +157,7 @@ python video_gen_tools.py setup --set-key KLING_ACCESS_KEY=xxx KLING_SECRET_KEY=
 python video_gen_tools.py setup --set-key FAL_API_KEY=xxx
 
 # Example: User selects Veo3
-python video_gen_tools.py setup --set-key COMPASS_API_KEY=xxx
+python video_gen_tools.py setup --set-key MIGOO_API_KEY=xxx
 ```
 
 **Optional Services** (ask after saving key):

@@ -200,13 +200,13 @@ class Config:
 
     GEMINI_IMAGE_URL: str = "https://yunwu.ai/v1beta/models/gemini-3.1-flash-image-preview:generateContent"
 
-    # Compass API
+    # Migoo LLM API
     @property
-    def COMPASS_API_KEY(self) -> str:
-        return self.get("COMPASS_API_KEY", "")
+    def MIGOO_API_KEY(self) -> str:
+        return self.get("MIGOO_API_KEY", "")
 
-    COMPASS_IMAGE_URL: str = "https://compass.llm.shopee.io/compass-api/v1/publishers/google/models/gemini-3.1-flash-image-preview:generateContent"
-    COMPASS_VIDEO_URL: str = "https://compass.llm.shopee.io/compass-api/v1/publishers/google/models/veo-3.1-generate-001"
+    MIGOO_IMAGE_URL: str = "https://inner-api.us.migoo.shopee.io/inbeeai/compass-api/v1/publishers/google/models/gemini-3.1-flash-image-preview:generateContent"
+    MIGOO_VIDEO_URL: str = "https://inner-api.us.migoo.shopee.io/inbeeai/compass-api/v1/publishers/google/models/veo-3.1-generate-001"
 
     # Kling API
     @property
@@ -291,7 +291,7 @@ BACKEND_PROVIDER_KEYS = {
     "seedance": ["FAL_API_KEY", "SEEDANCE_API_KEY"],  # fal preferred
     "kling": ["KLING_ACCESS_KEY", "FAL_API_KEY"],
     "kling-omni": ["KLING_ACCESS_KEY", "FAL_API_KEY"],
-    "veo3": ["COMPASS_API_KEY"],
+    "veo3": ["MIGOO_API_KEY"],
 }
 
 
@@ -2545,13 +2545,13 @@ class FalSeedanceClient:
 
 
 class Veo3Client:
-    """Google Veo3 video generation client (via Compass proxy)"""
+    """Google Veo3 video generation client (via Migoo LLM proxy)"""
 
     def __init__(self):
         import httpx
         self.client = httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0))
-        self.api_key = Config.COMPASS_API_KEY
-        self.base_url = Config.COMPASS_VIDEO_URL
+        self.api_key = Config.MIGOO_API_KEY
+        self.base_url = Config.MIGOO_VIDEO_URL
 
     async def close(self):
         await self.client.aclose()
@@ -2859,7 +2859,7 @@ class TTSClient:
     Volcano Engine TTS client
 
     .. deprecated::
-        Volcano Engine TTS is deprecated and no longer supported. Please use Gemini TTS (requires COMPASS_API_KEY).
+        Volcano Engine TTS is deprecated and no longer supported. Please use Gemini TTS (requires MIGOO_API_KEY).
         This class is retained for backward compatibility and will be removed in a future version.
     """
 
@@ -2963,10 +2963,10 @@ class TTSClient:
             return {"success": False, "error": str(e)}
 
 
-# ============== Gemini TTS (via Compass API) ==============
+# ============== Gemini TTS (via Migoo LLM API) ==============
 
 class GeminiTTSClient:
-    """Gemini TTS client (via Compass API)"""
+    """Gemini TTS client (via Migoo LLM API)"""
 
     # Gemini TTS voices
     VOICE_TYPES = {
@@ -3006,11 +3006,11 @@ class GeminiTTSClient:
         from google.cloud import texttospeech
         from google.api_core import client_options
 
-        if not Config.COMPASS_API_KEY:
+        if not Config.MIGOO_API_KEY:
             return {
                 "success": False,
-                "error": "COMPASS_API_KEY not configured",
-                "hint": "Please add COMPASS_API_KEY in config.json"
+                "error": "MIGOO_API_KEY not configured",
+                "hint": "Please add MIGOO_API_KEY in config.json"
             }
 
         # Auto add speed instruction for Chinese narration
@@ -3030,8 +3030,8 @@ class GeminiTTSClient:
             # Create client
             client = texttospeech.TextToSpeechClient(
                 client_options=client_options.ClientOptions(
-                    api_endpoint="https://compass.llm.shopee.io/compass-api/v1",
-                    api_key=Config.COMPASS_API_KEY,
+                    api_endpoint="https://inner-api.us.migoo.shopee.io/inbeeai/compass-api/v1",
+                    api_key=Config.MIGOO_API_KEY,
                 ),
                 transport="rest",
             )
@@ -3220,13 +3220,13 @@ class FalImageClient:
     Gemini image generation client (via fal.ai API)
 
     .. deprecated::
-        Fal Image is deprecated and no longer supported. Please use CompassImageClient (requires COMPASS_API_KEY).
+        Fal Image is deprecated and no longer supported. Please use MigooImageClient (requires MIGOO_API_KEY).
     """
 
     def __init__(self):
         import warnings
         warnings.warn(
-            "FalImageClient is deprecated, please use CompassImageClient",
+            "FalImageClient is deprecated, please use MigooImageClient",
             DeprecationWarning,
             stacklevel=2
         )
@@ -3329,8 +3329,8 @@ class FalImageClient:
             return {"success": False, "error": str(e)}
 
 
-class CompassImageClient:
-    """Gemini image generation client (via Compass API)"""
+class MigooImageClient:
+    """Gemini image generation client (via Migoo LLM API)"""
 
     STYLE_PRESETS = {
         "cinematic": "cinematic style, film grain, dramatic lighting, movie still",
@@ -3388,16 +3388,16 @@ class CompassImageClient:
         }
 
         ref_info = f" (with {len(reference_images)} reference images)" if reference_images else ""
-        logger.info(f"📤 Image generation (compass{ref_info}): {prompt[:30]}...")
+        logger.info(f"📤 Image generation (migoo{ref_info}): {prompt[:30]}...")
 
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    Config.COMPASS_IMAGE_URL,
+                    Config.MIGOO_IMAGE_URL,
                     json=payload,
                     headers={
                         "Content-Type": "application/json",
-                        "Authorization": f"Bearer {Config.COMPASS_API_KEY}",
+                        "Authorization": f"Bearer {Config.MIGOO_API_KEY}",
                     }
                 )
                 response.raise_for_status()
@@ -3910,7 +3910,7 @@ async def cmd_video(args):
         if backend == 'seedance':
             provider = 'piapi'  # seedance only has piapi provider
         elif backend == 'veo3':
-            provider = 'compass'  # veo3 only has compass provider
+            provider = 'migoo'  # veo3 only has migoo provider
         elif Config.KLING_ACCESS_KEY and Config.KLING_SECRET_KEY:
             provider = 'official'  # prefer official API
         elif Config.FAL_API_KEY:
@@ -4216,12 +4216,12 @@ async def cmd_video(args):
             await client.close()
 
     elif backend == 'veo3':
-        if not Config.COMPASS_API_KEY:
+        if not Config.MIGOO_API_KEY:
             print(json.dumps({
                 "success": False,
-                "error": "COMPASS_API_KEY not configured",
-                "hint": "Please add COMPASS_API_KEY in config.json",
-                "get_key": "Compass API key is used to access Veo3 video generation"
+                "error": "MIGOO_API_KEY not configured",
+                "hint": "Please add MIGOO_API_KEY in config.json",
+                "get_key": "Migoo LLM API key is used to access Veo3 video generation"
             }, indent=2, ensure_ascii=False))
             return 1
 
@@ -4327,17 +4327,17 @@ async def cmd_music(args):
 
 
 async def cmd_tts(args):
-    """TTS synthesis command - using Gemini TTS (via Compass API)"""
-    if not Config.COMPASS_API_KEY:
+    """TTS synthesis command - using Gemini TTS (via Migoo LLM API)"""
+    if not Config.MIGOO_API_KEY:
         print(json.dumps({
             "success": False,
-            "error": "COMPASS_API_KEY not configured",
-            "hint": "Please configure COMPASS_API_KEY to use Gemini TTS",
-            "get_key": "Visit compass.llm.shopee.io to get API key"
+            "error": "MIGOO_API_KEY not configured",
+            "hint": "Please configure MIGOO_API_KEY to use Gemini TTS",
+            "get_key": "Visit inner-api.us.migoo.shopee.io/inbeeai to get API key"
         }, indent=2, ensure_ascii=False))
         return 1
 
-    logger.info("🔧 Using Gemini TTS (Compass)")
+    logger.info("🔧 Using Gemini TTS (Migoo LLM)")
     client = GeminiTTSClient()
     result = await client.synthesize(
         text=args.text,
@@ -4361,13 +4361,13 @@ async def cmd_image(args):
     # Provider auto-selection logic
     provider = getattr(args, 'provider', None)
     if provider is None:
-        # Priority: compass → yunwu
-        if Config.COMPASS_API_KEY:
-            provider = 'compass'
+        # Priority: migoo → yunwu
+        if Config.MIGOO_API_KEY:
+            provider = 'migoo'
         elif Config.GEMINI_API_KEY:  # GEMINI_API_KEY is actually YUNWU_API_KEY
             provider = 'yunwu'
         else:
-            provider = 'compass'  # default, will report error
+            provider = 'migoo'  # default, will report error
 
     logger.info(f"🔧 Using provider: {provider}")
 
@@ -4381,17 +4381,17 @@ async def cmd_image(args):
         aspect_ratio = "9:16"  # final default value
         logger.info(f"📐 Using default aspect ratio: {aspect_ratio}")
 
-    # compass provider
-    if provider == 'compass':
-        if not Config.COMPASS_API_KEY:
+    # migoo provider
+    if provider == 'migoo':
+        if not Config.MIGOO_API_KEY:
             print(json.dumps({
                 "success": False,
-                "error": "COMPASS_API_KEY not configured",
-                "hint": "Please add COMPASS_API_KEY in config.json"
+                "error": "MIGOO_API_KEY not configured",
+                "hint": "Please add MIGOO_API_KEY in config.json"
             }, indent=2, ensure_ascii=False))
             return 1
 
-        client = CompassImageClient()
+        client = MigooImageClient()
         result = await client.generate(
             prompt=args.prompt,
             output=args.output,
@@ -4459,11 +4459,11 @@ async def cmd_setup(args):
             ]
         },
         "4": {
-            "name": "Veo3 via Compass (Google Veo3, high quality realistic short videos)",
+            "name": "Veo3 via Migoo LLM (Google Veo3, high quality realistic short videos)",
             "backend": "veo3",
-            "provider": "compass",
+            "provider": "migoo",
             "keys": [
-                {"key": "COMPASS_API_KEY", "label": "Compass API Key", "url": "https://compass.llm.shopee.io"}
+                {"key": "MIGOO_API_KEY", "label": "Migoo LLM API Key", "url": "https://inner-api.us.migoo.shopee.io/inbeeai"}
             ]
         },
     }
@@ -4508,7 +4508,7 @@ async def cmd_setup(args):
     # Show currently configured keys
     for key in ["SEEDANCE_API_KEY", "KLING_ACCESS_KEY", "KLING_SECRET_KEY", "FAL_API_KEY",
                 "YUNWU_API_KEY", "SUNO_API_KEY", "VOLCENGINE_TTS_APP_ID",
-                "VOLCENGINE_TTS_ACCESS_TOKEN", "COMPASS_API_KEY"]:
+                "VOLCENGINE_TTS_ACCESS_TOKEN", "MIGOO_API_KEY"]:
         val = config.get(key) or os.getenv(key, "")
         setup_info["current_config"][key] = f"{val[:4]}***" if val else "Not set"
 
@@ -4590,10 +4590,10 @@ async def cmd_check(args):
             "purpose": "Seedance video generation (piapi.ai proxy)",
             "get_key": "https://piapi.ai"
         },
-        "COMPASS_API_KEY": {
-            "value": Config.COMPASS_API_KEY,
-            "purpose": "Veo3 video + Gemini image + Gemini TTS (Compass proxy)",
-            "get_key": "https://compass.llm.shopee.io"
+        "MIGOO_API_KEY": {
+            "value": Config.MIGOO_API_KEY,
+            "purpose": "Veo3 video + Gemini image + Gemini TTS (Migoo LLM proxy)",
+            "get_key": "https://inner-api.us.migoo.shopee.io/inbeeai"
         },
         "YUNWU_API_KEY": {
             "value": Config.YUNWU_API_KEY,
@@ -4635,7 +4635,7 @@ async def cmd_check(args):
     # Check if at least one video provider is available
     has_video_provider = any([
         Config.SEEDANCE_API_KEY,
-        Config.COMPASS_API_KEY,
+        Config.MIGOO_API_KEY,
         Config.KLING_ACCESS_KEY and Config.KLING_SECRET_KEY,
         Config.FAL_API_KEY,
     ])
@@ -4676,7 +4676,7 @@ def main():
     # setup subcommand (interactive provider + API key configuration)
     setup_parser = subparsers.add_parser("setup", help="Interactive API provider and key configuration")
     setup_parser.add_argument("--provider", dest="provider_choice", choices=["1", "2", "3", "4"],
-                              help="Select video provider: 1=Seedance, 2=Kling official, 3=Kling(fal), 4=Veo3(compass)")
+                              help="Select video provider: 1=Seedance, 2=Kling official, 3=Kling(fal), 4=Veo3(migoo)")
     setup_parser.add_argument("--set-key", nargs="+", metavar="KEY=VALUE",
                               help="Set API key, format: KEY=VALUE (multiple allowed)")
 
@@ -4693,8 +4693,8 @@ def main():
     video_parser.add_argument("--storyboard", "-s", help="storyboard.json path, auto-read aspect_ratio")
     video_parser.add_argument("--audio", action="store_true", help="Generate native audio")
     video_parser.add_argument("--output", "-o", help="Output file path")
-    video_parser.add_argument("--provider", choices=["official", "fal", "compass"], default=None,
-                              help="API provider (auto-selected by default; veo3 only supports compass)")
+    video_parser.add_argument("--provider", choices=["official", "fal", "migoo"], default=None,
+                              help="API provider (auto-selected by default; veo3 only supports migoo)")
     video_parser.add_argument("--backend", "-b", choices=["kling", "kling-omni", "seedance", "veo3"], default="kling",
                               help="Video generation backend (default kling; kling-omni for reference images; seedance for smart editing; veo3 for high-quality realistic clips)")
     video_parser.add_argument("--mode", "-m", choices=["std", "pro", "text_to_video", "first_last_frames", "omni_reference"], default="std",
@@ -4746,8 +4746,8 @@ def main():
     image_parser.add_argument("--aspect-ratio", "-a", default=None, help="Aspect ratio")
     image_parser.add_argument("--storyboard", help="storyboard.json path, auto-read aspect_ratio")
     image_parser.add_argument("--reference", "-r", nargs="+", help="Reference image paths (multiple allowed, important characters at the end)")
-    image_parser.add_argument("--provider", choices=["compass", "yunwu"], default=None,
-                              help="API provider (auto-selected by default: compass preferred)")
+    image_parser.add_argument("--provider", choices=["migoo", "yunwu"], default=None,
+                              help="API provider (auto-selected by default: migoo preferred)")
 
     # vision subcommand (built-in multimodal analysis)
     vision_parser = subparsers.add_parser("vision", help="Analyze image content")

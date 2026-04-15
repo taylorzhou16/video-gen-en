@@ -54,7 +54,7 @@ Below are demo videos generated using video-gen:
   - **Veo3**: 4/6/8 seconds, global fallback model
 - ✅ **AI Music Generation** - Suno V3.5 background music
 - ✅ **TTS Voice Synthesis** - Gemini TTS (multiple voices, style prompts)
-- ✅ **AI Image Generation** - Gemini 3.1 Flash Image (compass/yunwu)
+- ✅ **AI Image Generation** - Gemini 3.1 Flash Image (Migoo LLM/yunwu)
 - ✅ **Video Editing** - Transitions, subtitles, color grading, speed changes, audio mixing
 
 ## 💡 Usage Recommendations
@@ -198,19 +198,19 @@ export KLING_ACCESS_KEY="your-access-key"
 export KLING_SECRET_KEY="your-secret-key"
 
 # Veo3 API - Google Veo3 video generation (global fallback model)
-export COMPASS_API_KEY="your-compass-api-key"
+export MIGOO_API_KEY="your-Migoo LLM-api-key"
 
 # Suno music generation
 export SUNO_API_KEY="your-api-key"
 
-# Gemini image generation (compass priority)
-export COMPASS_API_KEY="your-compass-api-key"
+# Gemini image generation (Migoo LLM priority)
+export MIGOO_API_KEY="your-Migoo LLM-api-key"
 export YUNWU_API_KEY="your-yunwu-api-key"  # backup
 ```
 
 **Note**:
-- **Video Generation Provider**: Seedance (piapi), Kling (official/fal), Veo3 (compass)
-- **Image Generation Provider Priority**: compass → yunwu
+- **Video Generation Provider**: Seedance (piapi), Kling (official/fal), Veo3 (Migoo LLM)
+- **Image Generation Provider Priority**: Migoo LLM → yunwu
 
 ## 🔄 Workflow
 
@@ -252,8 +252,8 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 
 #### Deprecation Cleanup
 - 🗑️ **Remove yunwu video generation Provider** — Vidu/Kling/Kling-Omni yunwu providers all deprecated, yunwu only retains Gemini image generation
-- 🗑️ **Remove FalImageClient** — Image generation only retains compass/yunwu providers
-- 🗑️ **Deprecate Volcano Engine TTS** — TTS only retains Gemini TTS (via Compass API)
+- 🗑️ **Remove FalImageClient** — Image generation only retains Migoo LLM/yunwu providers
+- 🗑️ **Deprecate Volcano Engine TTS** — TTS only retains Gemini TTS (via Migoo LLM API)
 - 🗑️ **Remove Vidu backend** — No longer supports Vidu video generation
 
 #### Seedance 2 Upgrade
@@ -264,7 +264,7 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 - ✨ **First/last frame control** — `mode: first_last_frames` supports precise first/last frame control
 
 #### Architecture Optimization
-- 🔄 **Provider matrix simplification** — Video 4 backends (Seedance/Kling/Kling-Omni/Veo3), Image 2 providers (compass/yunwu)
+- 🔄 **Provider matrix simplification** — Video 4 backends (Seedance/Kling/Kling-Omni/Veo3), Image 2 providers (Migoo LLM/yunwu)
 - 🔄 **TTS unified to Gemini** — Removed Volcano Engine TTS call paths
 - 📝 **Documentation fully updated** — SKILL.md, backend-guide.md, api-reference.md synchronized updates
 
@@ -274,16 +274,16 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 | Video | Seedance 2 | piapi |
 | Video | Kling v3 | official / fal |
 | Video | Kling v3 Omni | official / fal |
-| Video | Veo3 | compass |
-| Image | Gemini 3.1 Flash Image | compass / yunwu |
-| TTS | Gemini TTS | compass |
+| Video | Veo3 | Migoo LLM |
+| Image | Gemini 3.1 Flash Image | Migoo LLM / yunwu |
+| TTS | Gemini TTS | Migoo LLM |
 | Music | Suno V3.5 | official |
 
 ### v1.5.1 (2026-04-03)
 🎤 **Gemini TTS Integration**
 
 #### New Features
-- ✨ **GeminiTTSClient** — New Gemini TTS client (via Compass API)
+- ✨ **GeminiTTSClient** — New Gemini TTS client (via Migoo LLM API)
   - Higher priority than Volcano Engine TTS
   - Supports style prompts (prompt parameter)
   - Supports inline emotion markers: `[brightly]`, `[sigh]`, `[pause]`
@@ -299,7 +299,7 @@ Material Analysis → Creative Generation → Storyboard Design → Content Gene
 | `male_warm` | Orus | Male (steady) |
 
 #### TTS Priority
-- **Gemini TTS** (COMPASS_API_KEY) → Volcano Engine TTS (VOLCENGINE_TTS_*)
+- **Gemini TTS** (MIGOO_API_KEY) → Volcano Engine TTS (VOLCENGINE_TTS_*)
 
 ### v1.5.0 (2026-04-03)
 🎬 **Seedance Intelligent Shot Cutting + fal Image Generation**
