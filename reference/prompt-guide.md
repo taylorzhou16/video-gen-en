@@ -469,4 +469,138 @@ Frame stability: {keep stable/slight shake}
 {dialogue information}
 Maintain {ratio} composition, do not break aspect ratio
 {BGM constraint}
+``````
+
+---
+
+## Three-View Character Reference Prompt (Fiction/Short Drama Only)
+
+**Trigger Condition**: Only for fiction/short drama projects. Other types keep single reference image.
+
+**Core Concept**: Three-view is the character reference image itself, containing front view + three-quarter side view + rear three-quarter view in one sheet. This is passed directly during storyboard design and video generation.
+
+### Structural Elements (in order)
+
+1. **Subject Definition** — Three-view full-body character reference sheet
+2. **Style Anchor** — Film style reference (realistic/anime)
+3. **Composition Layout** — Three figures side by side (front/three-quarter/rear three-quarter)
+4. **Character Details** — Body, face, hair, costume (layered description)
+5. **Lighting Design** — Key light, rim light, shadows
+6. **Color Scheme** — Color quantification
+7. **Render Precision** — Micro textures
+8. **Mood Closing** — Metaphorical expression
+
+### Realistic Template (visual_style = realistic)
+
+```
+A three-view full-body character reference sheet of {character description},
+PHOTOREALISTIC real human style. NOT ANIME, NOT CARTOON, NOT ILLUSTRATION.
+Inspired by cinematic realism with classical portrait aesthetic.
+
+The sheet presents three medium-to-wide shots arranged side by side on a clean neutral backdrop:
+front view, three-quarter view, and rear three-quarter view — each capturing the complete figure
+from head to toe, ensuring no part of the silhouette is cropped.
+
+{body description}, {posture description}
+{face details}
+{hair description}
+{costume layered description}
+
+Lighting: {lighting description}
+Color grading: {color description}
+Fine photorealistic rendering: {material details}
+Mood: {mood keywords}
+
+Style: PHOTOREALISTIC, real human actress/actor, actual skin texture, cinematic film grain,
+shallow depth of field, clean neutral backdrop, 16:9 aspect ratio for three-view layout
+```
+
+**Complete Example (Realistic)**:
+
+```
+A three-view full-body character reference sheet of a young woman named Alice,
+PHOTOREALISTIC real human style. NOT ANIME, NOT CARTOON, NOT ILLUSTRATION.
+Inspired by cinematic realism with classical portrait aesthetic.
+
+The sheet presents three medium-to-wide shots arranged side by side on a clean neutral backdrop:
+front view, three-quarter view, and rear three-quarter view — each capturing the complete figure
+from head to toe, ensuring no part of the silhouette is cropped.
+
+The character is a young woman, late teens, slender and ethereal in physique — waist narrow,
+posture elegant with shoulders slightly inward. Face: porcelain-pale skin with soft undertone;
+softly arched brows; large, liquid eyes; delicately sculpted nose; faintly compressed lips.
+Her jet-black hair is styled in an elegant updo secured with a jade hairpin,
+with two loose tendrils framing her temples.
+
+Costume: a layered traditional ensemble — fitted inner robe in soft pink with embroidered cuffs,
+beneath a flowing outer robe in pale green with ribbon ties at waist and draped sleeves.
+Fabric rendered as weightless silk with subtle sheen.
+
+Lighting: soft diffused overcast natural light from high-left key, thin cool rim light outlining silhouette
+Color grading: pale green and pink dominate 80% of palette, warm ivory for skin
+Fine photorealistic rendering: individual silk thread texture, hair-strand detail, subtle skin pore depth
+Mood: poetic vulnerability, classical feminine elegance
+
+Style: PHOTOREALISTIC, real human actress, actual skin texture, cinematic film grain,
+shallow depth of field, clean neutral backdrop, 16:9 aspect ratio for three-view layout
+```
+
+### Anime Style Template (visual_style = anime)
+
+```
+A three-view full-body character reference sheet of {character description},
+Anime style 2D animation character design sheet.
+
+Three poses arranged side by side on a clean backdrop:
+front view, three-quarter view, and rear three-quarter view — full body from head to toe.
+
+{body description}
+{face features (anime style)}
+{hair description}
+{costume description}
+
+Style: Anime style, 2D animation, cel shading, vibrant colors, clean lines,
+character design sheet format, white/neutral backdrop
+```
+
+**Complete Example (Anime)**:
+
+```
+A three-view full-body character reference sheet of a young girl named Sakura,
+Anime style 2D animation character design sheet.
+
+Three poses arranged side by side on a clean backdrop:
+front view, three-quarter view, and rear three-quarter view — full body from head to toe.
+
+The character is a teenage girl, petite and energetic in physique — lively posture,
+bright expressive eyes with characteristic anime sparkle, small nose, cheerful smile.
+Pink hair styled in twin braids with ribbon hair accessories, bangs framing forehead.
+
+Costume: school uniform — white blouse with sailor collar, navy blue skirt with pleats,
+white knee-high socks, brown loafers. Clean crisp fabric lines.
+
+Style: Anime style, 2D animation, cel shading, vibrant colors, clean lines,
+character design sheet format, white backdrop, consistent proportions across all three views
+```
+
+### Based on User Photo
+
+When user provides a photo as reference, use `--reference` parameter. Prompt must emphasize preserving original appearance:
+
+```
+A three-view full-body character reference sheet preserving the exact facial features,
+body proportions, and skin tone from the reference photo.
+
+PHOTOREALISTIC real human style. NOT ANIME, NOT CARTOON, NOT ILLUSTRATION.
+
+The sheet presents three medium-to-wide shots arranged side by side on a clean neutral backdrop:
+front view, three-quarter view, and rear three-quarter view — each capturing the complete figure
+from head to toe.
+
+IMPORTANT: Preserve exact facial identity from reference — same face shape, same eye shape,
+same nose, same lip shape, same skin tone, same body proportions. Only adjust posture and
+add simple costume/attire suitable for the character concept.
+
+Lighting: soft diffused studio lighting, clean neutral backdrop
+Style: PHOTOREALISTIC, real human, identity-preserving, 16:9 aspect ratio
 ```

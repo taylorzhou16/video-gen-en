@@ -337,31 +337,82 @@ Create project directory `~/video-gen-projects/{project_name}_{timestamp}/`, pro
 
 **Trigger Condition**: Check personas.json, triggers when character with null/empty `reference_image` exists.
 
-**Check Logic**:
-```python
-manager = PersonaManager(project_dir)
-for persona_id in manager.list_personas_without_reference():
-    # Ask user about this character's reference image source
-    ask_user_for_reference(persona_id)
-```
+| Project Type | Reference Image Format | Notes |
+|-------------|----------------------|-------|
+| **Fiction/Short Drama** | Three-view (front + side + back) | Multiple angles ensure character consistency |
+| Other types (Vlog/Commercial/MV) | Single reference image | Keep existing workflow |
 
-**Ask Content** (for each character without reference image):
+**Ask Content (Fiction/Short Drama type)**:
 
 > **Character "{name}" needs a reference image**
 >
 > Please select reference image source:
-> - **A. AI-generated character image** (Recommended, automatically generate standard reference image)
+> - **A. AI-generated character reference** (Recommended, auto-generate three-view format: front + side + back)
+> - **B. Upload photo and generate reference** (Generate three-view based on user photo, preserving original appearance)
+> - **C. Upload single reference image** (Not recommended, character consistency may decrease)
+> - **D. Accept text-only generation** (Character appearance may be inconsistent across different shots)
+
+**Ask Content (Other types)**:
+
+> **Character "{name}" needs a reference image**
+>
+> Please select reference image source:
+> - **A. AI-generated character image** (Recommended, auto-generate standard reference image)
 > - **B. Upload reference image** (User provides character photo)
 > - **C. Accept text-only generation** (Character appearance may be inconsistent across different shots)
 
 **Post-selection Processing**:
 
-**A. AI Generation** (determine style based on visual_style):
+#### Fiction/Short Drama type: Three-view Format
+
+**A. AI-generate three-view** (determine style based on visual_style):
+
+See [reference/prompt-guide.md](reference/prompt-guide.md) → "Three-view Character Reference Prompt"
+
 ```python
 # Read visual_style
 visual_style = creative.get("visual_style", "realistic")
 
-# Generate reference image with corresponding style based on art style
+# Use three-view prompt template
+if visual_style == "anime":
+    prompt = anime_three_view_template.format(...)
+else:  # realistic
+    prompt = realistic_three_view_template.format(...)
+
+python video_gen_tools.py image \
+  --prompt "{three-view prompt}" \
+  --output materials/personas/{name}_three_view.png
+
+# Update personas.json
+manager.update_reference_image(persona_id, "materials/personas/{name}_three_view.png")
+```
+
+**B. Upload photo and generate three-view**:
+- Ask user to upload photo
+- Use `--reference` parameter to pass user photo
+- Prompt emphasizes preserving original appearance (see prompt-guide.md)
+```python
+python video_gen_tools.py image \
+  --prompt "A three-view reference sheet preserving exact facial features from reference photo..." \
+  --reference {user_photo_path} \
+  --output materials/personas/{name}_three_view.png
+```
+
+**C. Upload single reference image** (Not recommended):
+- Ask user to upload image
+- Save to `materials/personas/{name}_ref.{ext}`
+- Record warning: character consistency may decrease
+
+**D. Text only**:
+- Record warning to `creative/decision_log`
+- Phase 3 will **force storyboard image generation**
+
+#### Other types: Single Reference Image Format
+
+**A. AI Generation** (determine style based on visual_style):
+```python
+visual_style = creative.get("visual_style", "realistic")
+
 if visual_style == "anime":
     style_suffix = "anime style, 2D animation, vibrant colors"
 else:  # realistic
@@ -371,7 +422,6 @@ python video_gen_tools.py image \
   --prompt "{character appearance description}, {style_suffix}, front half-body shot, solid background, high-quality portrait" \
   --output materials/personas/{name}_ref.png
 
-# Update personas.json
 manager.update_reference_image(persona_id, "materials/personas/{name}_ref.png")
 ```
 
@@ -385,7 +435,7 @@ manager.update_reference_image(persona_id, "materials/personas/{name}_ref.png")
 - Subsequent Phase 3 will **force storyboard image generation**, then use img2video or reference2video
 
 **Key Rules**:
-- **Must generate reference image**: When character needs to appear in **multiple shots**
+- **Fiction/Short Drama must use three-view**: Character appears in multiple shots, needs multiple angles for consistency
 - **Can use text2video**: Single scene appearance, pure scenery, user explicitly accepts appearance variation
 - **When AI generates reference images must follow visual_style**: anime style or realistic style
 
