@@ -1115,6 +1115,9 @@ python video_gen_editor.py concat --inputs <video-list> --output <output> --stor
 # Voiceover insertion (Insert by overall_time_range)
 python video_gen_editor.py narration --video <video> --storyboard storyboard/storyboard.json --narration-dir generated/narration --output <output>
 
+# Smart narration synthesis (Auto-measure audio duration, avoid overlap)
+python video_gen_editor.py smart-narration --video <video> --storyboard storyboard/storyboard.json --narration-dir generated/narration --output <output>
+
 # Other editing commands
 python video_gen_editor.py mix --video <video> --bgm <music> --output <output>
 python video_gen_editor.py transition --inputs <v1> <v2> --type <type> --output <output>
