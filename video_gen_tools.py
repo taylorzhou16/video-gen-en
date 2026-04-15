@@ -5012,14 +5012,7 @@ async def cmd_setup(args):
                 {"key": "FAL_API_KEY", "label": "fal.ai API Key", "url": "https://fal.ai"}
             ]
         },
-        "4": {
-            "name": "Veo3 via Migoo（Google Veo3，global fallback model）",
-            "backend": "veo3",
-            "provider": "migoo",
-            "keys": [
-                {"key": "MIGOO_API_KEY", "label": "Migoo LLM API Key", "url": "https://inner-api.us.migoo.shopee.io/inbeeai"}
-            ]
-        },
+        # "4": Veo3 deprecated - removed from setup options
     }
 
     OPTIONAL_SERVICES = {

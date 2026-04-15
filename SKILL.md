@@ -27,7 +27,7 @@ Non-multimodal models will automatically call vision models for image analysis. 
 | `seedance` | **fal > piapi** | fal preferred, piapi as fallback |
 | `kling-omni` | official, fal | Switch when official API encounters limits |
 | `kling` | official, fal | Switch when official API encounters limits |
-| `veo3` | **Migoo LLM only** | Veo3 has only one provider: Migoo LLM |
+| `veo3` | ~~deprecated~~ | **Deprecated** - no longer supported, use Kling/Kling-Omni/Seedance |
 
 When Kling official API encounters concurrency limits (429), you can use `--provider fal`:
 
@@ -36,7 +36,7 @@ When Kling official API encounters concurrency limits (429), you can use `--prov
 python video_gen_tools.py video --provider fal --backend kling-omni --image-list ref.jpg ...
 ```
 
-**Note**: Seedance auto-selects provider (fal preferred), Veo3 does not need `--provider` specified.
+**Note**: Seedance auto-selects provider (fal preferred).
 
 **Provider auto-selection priority**: Official API → fal
 
@@ -60,9 +60,9 @@ python video_gen_tools.py video --provider fal --backend kling-omni --image-list
 | **Commercial (with real materials)** | Has | Kling-3.0 | — | Precise first-frame control, real materials |
 | **MV Short Film** | None (Anime) | **Seedance** | Kling-Omni | Long shots + music-driven |
 | **MV Short Film** | **Has Real Person** | **Kling-Omni** | — | Real person materials disable Seedance |
-| **Vlog/Realistic** | Has | Kling-3.0 | Veo3 | Precise first-frame control, not using Seedance |
+| **Vlog/Realistic** | Has | Kling-3.0 | Kling-Omni | Precise first-frame control, not using Seedance |
 
-**Veo3 as Global Fallback Video Generation Model**: Unless user explicitly requests Veo3, do not proactively call Veo3. Veo3 has fixed duration (4/6/8s), max resolution 720p, only use as final backup when all other backends fail.
+**Veo3 Deprecated**: Veo3 backend is deprecated and no longer supported. Use Kling, Kling-Omni, or Seedance instead. Veo3 had fixed duration (4/6/8s) and max 720p resolution.
 
 **visual_style only affects how user photos are processed (if user photos exist)**:
 
@@ -140,9 +140,8 @@ Output includes all available providers and their key configuration status. **If
 >
 > **3. Kling via fal.ai** — Bypass official concurrency limits
 >    - Requires: fal.ai API Key (from fal.ai)
-> **4. Veo3 via Migoo LLM** — Google Veo3, global fallback model (4/6/8s)
->    - Requires: Migoo LLM API Key (from inner-api.us.migoo.shopee.io/inbeeai)
->    - Note: Only use when all other backends fail, or when user explicitly requests
+>
+> **~~4. Veo3~~ (Deprecated)** — No longer supported, use Kling/Kling-Omni/Seedance instead
 
 After user selects, request corresponding API key, then save:
 
@@ -155,9 +154,6 @@ python video_gen_tools.py setup --set-key KLING_ACCESS_KEY=xxx KLING_SECRET_KEY=
 
 # Example: User selects fal
 python video_gen_tools.py setup --set-key FAL_API_KEY=xxx
-
-# Example: User selects Veo3
-python video_gen_tools.py setup --set-key MIGOO_API_KEY=xxx
 ```
 
 **Optional Services** (ask after saving key):
@@ -582,14 +578,14 @@ First read `creative.json`'s `backend_selection` field:
 | **Commercial (with real materials)** | Has | Kling-3.0 | — | Precise first-frame control, real materials |
 | **MV Short Film** | None (Anime) | **Seedance** | Kling-Omni | Long shots + music-driven |
 | **MV Short Film** | **Has Real Person** | **Kling-Omni** | — | Real person materials disable Seedance |
-| **Vlog/Realistic** | Has | Kling-3.0 | Veo3 | Precise first-frame control, not using Seedance |
+| **Vlog/Realistic** | Has | Kling-3.0 | Kling-Omni | Precise first-frame control, not using Seedance |
 
 **First-frame Control Capability Comparison**:
 
 | Backend | First-frame Control | Note |
 |---------|-------------------|------|
 | **Kling-3.0** | ✅ `--image` | Video starts from this image |
-| **Veo3** | ✅ `--image` | Precise first-frame control |
+| **~~Veo3~~** | ~~deprecated~~ | Use Kling-3.0 instead |
 | **Seedance** | ❌ Reference image | Storyboard image is visual style reference, not first frame |
 | **Kling-Omni** | ❌ Reference image | Only reference2video, no img2video |
 
@@ -735,7 +731,7 @@ Validation content: Whether Seedance duration is within 4-15s range, whether bac
 | **Seedance** | scene-level storyboard image (scene_1_frame.png), no shot-level storyboard | No special requirements |
 | **Kling-Omni** | **Each shot has image_prompt and frame_path** | Missing shot-level storyboard structure |
 | **Kling img2video** | Each shot has frame_path, frame_strategy = first_frame_only | Missing first-frame image |
-| **Veo3** | No special storyboard requirements | None |
+| **~~Veo3~~** | ~~deprecated~~ | Use Kling/Kling-Omni/Seedance instead |
 
 **Kling-Omni Path Consistency Check**:
 
@@ -1085,20 +1081,7 @@ python video_gen_tools.py video \
   --duration 10 \
   --output output.mp4
 
-# Veo3 text-to-video (Global fallback, only supports 4/6/8s)
-python video_gen_tools.py video \
-  --backend veo3 \
-  --prompt <description> \
-  --duration 8 \
-  --output generated/videos/shot.mp4
-
-# Veo3 image-to-video (First-frame control)
-python video_gen_tools.py video \
-  --backend veo3 \
-  --image <first-frame-image> \
-  --prompt <description> \
-  --duration 8 \
-  --output generated/videos/shot.mp4
+# ~~Veo3~~ (Deprecated - use Kling/Kling-Omni/Seedance instead)
 
 # Music (Must pass --creative, reads prompt and style from creative.json)
 python video_gen_tools.py music --creative creative/creative.json --output <output>
