@@ -714,9 +714,67 @@ If `creative.narration.type` is not `none`, plan voiceover segmentation while ge
 
 **Voiceover Segmentation Specification**: See [reference/storyboard-spec.md](reference/storyboard-spec.md) → "Voiceover Segmentation Planning"
 
-### Step 4: Present to User for Confirmation (Mandatory Step)
+### Step 4: Consistency Review (Auto Execute)
+
+**Must execute**: After storyboard generation, **before user confirmation**, auto run consistency review.
+
+Consistency review checks **prompt text descriptions** in storyboard.json, not generated frames. Frames are generated later in Phase 4.
+
+#### Review Pre-read
+
+```
+Read: reference/consistency-guide.md   # Consistency principles detailed spec
+```
+
+#### Review Principles Overview
+
+| Principle | Scope | Requirement |
+|-----------|-------|-------------|
+| **Time-Lighting Consistency** | Same scene | Lighting must match `time_state` semantically |
+| **Spatial Element Consistency** | Same scene | Key elements must keep style consistent |
+| **Character Costume Consistency** | Same scene | Costume/hair/makeup must be locked |
+| **image/video Matching** | Same shot | Two prompts must describe same elements consistently |
+| **Cross-scene Continuity** | Continuous scenes | Key assets should stay visually continuous |
+
+#### Execution Flow
+
+1. Read storyboard.json
+2. Build review prompt (use structure in reference/consistency-guide.md)
+3. Model analyzes all shots, outputs issue list and fix suggestions
+4. Auto apply fixes to storyboard.json fields
+5. Save and notify user
+
+#### Output Format
+
+```
+📋 Consistency Review Result
+
+【Issues Found】
+
+1. [scene_1/scene1_shot2] Time inconsistency:
+   - time_state: "afternoon, soft sunlight"
+   - Lighting: "twilight" → should be "afternoon soft light"
+
+【Fixes Applied】
+
+Fix scene_1/scene1_shot2 image_prompt Lighting:
+Old: "twilight, low angle backlight"
+New: "afternoon soft light, warm tone"
+
+---
+
+Found N consistency issues, auto fixed storyboard.json
+```
+
+#### No User Confirmation Needed
+
+Auto fix obvious inconsistencies, notify user after fix. User can manually adjust storyboard.json if needed.
+
+### Step 5: Present to User for Confirmation (Mandatory Step)
 
 **Must get user's explicit confirmation before entering Phase 4!**
+
+Shows **consistency-reviewed and fixed** storyboard.
 
 Present each shot's:
 - Scene information
@@ -740,136 +798,6 @@ Provide options: Confirm and Execute / Modify Storyboard / Adjust Voiceover / Ad
 - `storyboard/storyboard.json` — Storyboard script (including generation_mode, reference_images, backend selection, narration_segments)
 
 ---
-
-## Phase 3.5: Consistency Review (Model-driven)
-
-**Position**: After Phase 3 storyboard design completion, before Phase 4 execution
-
-**Principle**: Model semantic review → Auto-fix → Notify user (no user confirmation required)
-
-### Core Concept
-
-Consistency issues require **semantic understanding**, not keyword matching:
-- "weeping willow" → "willow with drooping branches" → "old tree" - this gradual drift cannot be caught by keyword detection
-- Model can understand the time semantic conflict between "twilight" and "spring afternoon"
-- Model can judge whether "ancient tree" semantically deviates from "weeping willow"
-
-### Must Read Before Review
-
-**Before executing consistency review, must read the following specification**:
-
-```
-Read: reference/consistency-guide.md   # Consistency principle detailed specification
-```
-
-### Review Principles Overview
-
-| Principle | Detection Scope | Core Requirement |
-|-----------|-----------------|------------------|
-| **Time-Lighting Consistency** | Within same scene | Lighting description must be semantically consistent with `time_state` |
-| **Spatial Element Consistency** | Within same scene | Key element descriptions must maintain style consistency |
-| **Character Costume/Makeup Consistency** | Within same scene | Costume/hair/makeup must be locked |
-| **image/video Matching** | Within same shot | Both prompts must have consistent descriptions for key elements |
-| **Cross-scene Continuity** | Consecutive scenes | Key assets should maintain visual continuity |
-
-### Review Execution Flow
-
-**Step 1: Read storyboard.json**
-
-**Step 2: Build Review Prompt**
-
-Use the following prompt structure for semantic review:
-
-```
-You are a consistency reviewer, responsible for checking storyboard.json's cross-shot consistency.
-
-## Review Principles
-
-### 1. Time-Lighting Consistency
-- All lighting descriptions in shots within the same scene must be semantically consistent with time_state
-- When time_state="spring afternoon", forbidden: twilight, evening, sunset, night
-- Exception: If plot requires time progression, must be explained in narrative_goal
-
-### 2. Spatial Element Consistency
-- All descriptions of key elements in shots within the same scene must maintain style consistency
-- When spatial_setting mentions "weeping willow", forbidden drift to: dead tree, ancient tree, old tree
-- Not just matching names, but consistent style descriptions (branch form, color, etc.)
-
-### 3. Character Costume/Makeup Consistency
-- Same character within same scene must have locked costume/hair
-- Check all shots' costume descriptions against locked_costume or visual_description
-- Cross-scene costume change requires plot explanation
-
-### 4. image/video Description Matching
-- image_prompt and video_prompt descriptions of the same element in the same shot must match
-- Specifically check: scene elements, lighting descriptions, character costume
-
-### 5. Cross-scene Asset Continuity
-- Consecutive scenes (similar spatial_setting, close time) should maintain asset consistency
-- Character costume defaults to locked, unless plot has costume change explanation
-
-## Review Task
-
-Please review the following storyboard.json and output:
-
-1. **Issue List** (format: `[scene_id/shot_id] issue type: specific description`)
-2. **Fix Suggestions** (format: `[scene_id/shot_id] field: original value → fixed value`)
-
-If issues exist, directly provide complete fixed field content, I will auto-apply.
-
----
-
-{storyboard.json content}
-```
-
-**Step 3: Model Analysis**
-
-Model analyzes all shots, outputs issue list and fix suggestions.
-
-**Step 4: Auto-apply Fixes**
-
-Based on model output fix suggestions, directly modify corresponding fields in storyboard.json.
-
-**Step 5: Save and Notify**
-
-Save fixed storyboard.json, output review result to user.
-
-### Review Output Format
-
-```
-📋 Consistency Review Result
-
-【Issues Found】
-
-1. [scene_1/scene1_shot2] Time inconsistency:
-   - time_state: "spring afternoon, soft sunlight"
-   - Lighting: "twilight light" → Should be "spring afternoon soft sunlight"
-
-2. [scene_2/scene2_shot4] Spatial drift:
-   - spatial_setting: "under weeping willow"
-   - Scene description: "under old tree" → Should be "under weeping willow"
-
-【Fixes Applied】
-
-Fix scene_1/scene1_shot2 image_prompt Lighting line:
-Original: "twilight light, low angle backlight"
-Fixed to: "spring afternoon soft sunlight, warm tones"
-
-Fix scene_2/scene2_shot4 image_prompt Scene line:
-Original: "under old tree, sparse willow branches"
-Fixed to: "under weeping willow, long drooping branches"
-
----
-
-Found N consistency issues, auto-fixed storyboard.json
-```
-
-### No User Confirmation Required
-
-When obvious inconsistency issues are found, fix directly, then notify user. User can manually modify storyboard.json if adjustments needed.
-
----
-
 ## Phase 4: Execute Generation
 
 Execute video generation based on storyboard.json.
