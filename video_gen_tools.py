@@ -4990,9 +4990,10 @@ async def cmd_setup(args):
         "1": {
             "name": "Seedance（ByteDance，recommend fiction film/short drama/MV）",
             "backend": "seedance",
-            "provider": "piapi",
+            "provider": "fal > piapi",
             "keys": [
-                {"key": "SEEDANCE_API_KEY", "label": "Seedance API Key (piapi)", "url": "https://piapi.ai"}
+                {"key": "FAL_API_KEY", "label": "fal.ai API Key (preferred)", "url": "https://fal.ai"},
+                {"key": "SEEDANCE_API_KEY", "label": "Seedance API Key (piapi fallback)", "url": "https://piapi.ai"}
             ]
         },
         "2": {
