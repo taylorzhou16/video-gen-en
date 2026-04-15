@@ -4988,7 +4988,7 @@ async def cmd_setup(args):
     # define all availablevideo generation provider and its required key
     VIDEO_PROVIDERS = {
         "1": {
-            "name": "Seedance（ByteDance，recommend fiction film/short drama/MV）",
+            "name": "Seedance（recommend fiction film/short drama/MV）",
             "backend": "seedance",
             "provider": "fal > piapi",
             "keys": [
@@ -4997,7 +4997,7 @@ async def cmd_setup(args):
             ]
         },
         "2": {
-            "name": "Kling official API（Kuaishou，recommend realistic/commercial）",
+            "name": "Kling official API（recommend realistic/commercial）",
             "backend": "kling",
             "provider": "official",
             "keys": [

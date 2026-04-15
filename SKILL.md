@@ -132,10 +132,10 @@ Output includes all available providers and their key configuration status. **If
 
 > Please select video generation API (can change later):
 >
-> **1. Seedance (Recommended)** — From ByteDance, smart shot switching + multiple reference images, suitable for fiction/short drama/MV
+> **1. Seedance (Recommended)** — Smart shot switching + multiple reference images, suitable for fiction/short drama/MV
 >    - Requires: FAL_API_KEY (preferred) or SEEDANCE_API_KEY (piapi fallback)
 >
-> **2. Kling Official** — From Kuaishou, precise first-frame control, suitable for realistic/commercial videos
+> **2. Kling Official** — Precise first-frame control, suitable for realistic/commercial videos
 >    - Requires: Kling Access Key + Secret Key (from klingai.kuaishou.com)
 >
 > **3. Kling via fal.ai** — Bypass official concurrency limits
@@ -264,7 +264,7 @@ Create project directory `~/video-gen-projects/{project_name}_{timestamp}/`, pro
 - Note: Affects number of shots and pacing
 
 **Question 3: Aspect Ratio**
-- Options: 9:16 (Douyin/Xiaohongshu) | 16:9 (Bilibili/YouTube) | 1:1 (Instagram)
+- Options: 9:16 (TikTok/Reels) | 16:9 (YouTube) | 1:1 (Square)
 - Note: Choose based on publishing platform
 
 **Question 4: Music Needs**
@@ -859,7 +859,7 @@ python video_gen_tools.py video \
   --backend seedance \
   --aspect-ratio 16:9 \
   --prompt "Referencing the scene1_frame composition... @image1..." \
-  --image-list generated/frames/scene1_frame.png materials/personas/xiaomei_ref.jpg \
+  --image-list generated/frames/scene1_frame.png materials/personas/character_ref.jpg \
   --duration 10 \
   --output generated/videos/scene1.mp4
 ```
