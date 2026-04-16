@@ -4,58 +4,58 @@
 
 ```bash
 # Environment check
-python ~/.claude/skills/video-gen/video_gen_tools.py check
+python ~/.claude/skills/video-gen-en/video_gen_tools.py check
 
 # Storyboard validation (must pass before Phase 4 execution)
-python ~/.claude/skills/video-gen/video_gen_tools.py validate --storyboard storyboard/storyboard.json
+python ~/.claude/skills/video-gen-en/video_gen_tools.py validate --storyboard storyboard/storyboard.json
 
 # Video generation (Kling backend, default)
-python ~/.claude/skills/video-gen/video_gen_tools.py video --prompt <description> --duration 5 --output <output>
-python ~/.claude/skills/video-gen/video_gen_tools.py video --image <first_frame_image> --prompt <description> --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --prompt <description> --duration 5 --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --image <first_frame_image> --prompt <description> --output <output>
 
 # Kling first/last frame control
-python ~/.claude/skills/video-gen/video_gen_tools.py video --image <first_frame_image> --tail-image <last_frame_image> --prompt "action description" --backend kling --duration 5
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --image <first_frame_image> --tail-image <last_frame_image> --prompt "action description" --backend kling --duration 5
 
 # Kling multi-shot mode
-python ~/.claude/skills/video-gen/video_gen_tools.py video --prompt "story description" --backend kling --multi-shot --shot-type intelligence --duration 10
-python ~/.claude/skills/video-gen/video_gen_tools.py video --prompt "overall description" --backend kling --multi-shot --shot-type customize --multi-prompt '[{"index":1,"prompt":"shot 1 description","duration":"3"},{"index":2,"prompt":"shot 2 description","duration":"4"}]' --duration 7
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --prompt "story description" --backend kling --multi-shot --shot-type intelligence --duration 10
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --prompt "overall description" --backend kling --multi-shot --shot-type customize --multi-prompt '[{"index":1,"prompt":"shot 1 description","duration":"3"},{"index":2,"prompt":"shot 2 description","duration":"4"}]' --duration 7
 
 # Video generation (Kling Omni backend - reference image mode)
-python ~/.claude/skills/video-gen/video_gen_tools.py video --backend kling-omni --prompt "character <<<image_1>>> in scene" --image-list <reference_image> --duration 5 --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --backend kling-omni --prompt "character <<<image_1>>> in scene" --image-list <reference_image> --duration 5 --output <output>
 
 # Kling Omni multi-reference + multi-shot
-python ~/.claude/skills/video-gen/video_gen_tools.py video --backend kling-omni --prompt "story" --image-list <ref1> <ref2> --multi-shot --shot-type customize --multi-prompt '[{"index":1,"prompt":"<<<image_1>>> shot 1","duration":"3"}]' --duration 7
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --backend kling-omni --prompt "story" --image-list <ref1> <ref2> --multi-shot --shot-type customize --multi-prompt '[{"index":1,"prompt":"<<<image_1>>> shot 1","duration":"3"}]' --duration 7
 
 # Auto backend selection (providing --image-list auto-uses kling-omni, providing --tail-image auto-uses kling)
-python ~/.claude/skills/video-gen/video_gen_tools.py video --prompt "<<<image_1>>> on the field" --image-list ref.jpg --output out.mp4
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --prompt "<<<image_1>>> on the field" --image-list ref.jpg --output out.mp4
 
 # Seedance 2 auto-assembly mode (recommended: automatically calculate time segments, assemble prompts, and arrange image_urls from storyboard)
-python ~/.claude/skills/video-gen/video_gen_tools.py video --backend seedance --storyboard storyboard/storyboard.json --scene scene_1 --output generated/videos/scene_1.mp4
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --backend seedance --storyboard storyboard/storyboard.json --scene scene_1 --output generated/videos/scene_1.mp4
 
 # Seedance 2 manual mode (fallback)
-python ~/.claude/skills/video-gen/video_gen_tools.py video --backend seedance --prompt "time-segmented prompt..." --image-list frame.png ref.jpg --duration 8 --output out.mp4
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --backend seedance --prompt "time-segmented prompt..." --image-list frame.png ref.jpg --duration 8 --output out.mp4
 
 # Seedance 2 first/last frame control mode
-python ~/.claude/skills/video-gen/video_gen_tools.py video --backend seedance --mode first_last_frames --image-list <first_frame> <last_frame> --prompt "action description" --duration 5 --output out.mp4
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --backend seedance --mode first_last_frames --image-list <first_frame> <last_frame> --prompt "action description" --duration 5 --output out.mp4
 
 # Veo3 text-to-video (Google Veo3, only supports 4/6/8s)
-python ~/.claude/skills/video-gen/video_gen_tools.py video --backend veo3 --prompt "description..." --duration 8 --output out.mp4
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --backend veo3 --prompt "description..." --duration 8 --output out.mp4
 
 # Veo3 image-to-video (first frame control)
-python ~/.claude/skills/video-gen/video_gen_tools.py video --backend veo3 --image first_frame.png --prompt "description..." --duration 8 --output out.mp4
+python ~/.claude/skills/video-gen-en/video_gen_tools.py video --backend veo3 --image first_frame.png --prompt "description..." --duration 8 --output out.mp4
 
 # Music generation
-python ~/.claude/skills/video-gen/video_gen_tools.py music --prompt <description> --style <style> --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_tools.py music --prompt <description> --style <style> --output <output>
 
 # TTS voice
-python ~/.claude/skills/video-gen/video_gen_tools.py tts --text <text> --voice <voice> --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_tools.py tts --text <text> --voice <voice> --output <output>
 
 # Image generation
-python ~/.claude/skills/video-gen/video_gen_tools.py image --prompt <description> --style <style> --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_tools.py image --prompt <description> --style <style> --output <output>
 
 # Image analysis (built-in multimodal capability)
-python ~/.claude/skills/video-gen/video_gen_tools.py vision <image_path> [--prompt "analysis prompt"]
-python ~/.claude/skills/video-gen/video_gen_tools.py vision <directory_path> --batch [--prompt "analysis prompt"]
+python ~/.claude/skills/video-gen-en/video_gen_tools.py vision <image_path> [--prompt "analysis prompt"]
+python ~/.claude/skills/video-gen-en/video_gen_tools.py vision <directory_path> --batch [--prompt "analysis prompt"]
 ```
 
 ### Kling / Kling Omni Parameters
@@ -164,16 +164,16 @@ python video_gen_tools.py video --backend seedance --provider piapi \
 
 ```bash
 # Concatenate (auto-validate resolution + normalize)
-python ~/.claude/skills/video-gen/video_gen_editor.py concat --inputs <video_list> --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_editor.py concat --inputs <video_list> --output <output>
 
 # Audio mixing
-python ~/.claude/skills/video-gen/video_gen_editor.py mix --video <video> --bgm <music> --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_editor.py mix --video <video> --bgm <music> --output <output>
 
 # Transition
-python ~/.claude/skills/video-gen/video_gen_editor.py transition --inputs <video1> <video2> --type <type> --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_editor.py transition --inputs <video1> <video2> --type <type> --output <output>
 
 # Color grading
-python ~/.claude/skills/video-gen/video_gen_editor.py color --video <video> --preset <preset> --output <output>
+python ~/.claude/skills/video-gen-en/video_gen_editor.py color --video <video> --preset <preset> --output <output>
 ```
 
 **Transition Types**: fade | dissolve | wipeleft | wiperight | wipeup | wipedown | slideleft | slideright | slideup | slidedown | circleopen | circleclose | pixelize | hblur

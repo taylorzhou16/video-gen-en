@@ -31,7 +31,7 @@
 | **Seed Parameter** | -- | -- | **✓ (fal only)** | -- |
 | **Max Resolution** | 1080p | 1080p | **720p** ⚠️ | **720p** |
 | **Aspect Ratio** | 16:9/9:16/1:1 | 16:9/9:16/1:1 | **16:9/9:16/4:3/3:4/1:1/21:9/auto** | 16:9/9:16 |
-| **Best Use Case** | First frame precise control, scene consistency | Character consistency, multi-character | **Fiction/short drama, smart multi-shot, MV** | **Global fallback** |
+| **Best Use Case** | First frame precise control, scene consistency | Character consistency, multi-character | **Fiction/short drama, smart multi-shot, MV** | ~~deprecated~~ |
 
 **Key Differences**:
 - Kling `--image` is a **first frame image** (video starts from this image)
@@ -139,16 +139,16 @@ Disable Seedance → Force use Kling-Omni
 | **Commercial (With Real Footage)** | Yes | Kling-3.0 | — | First frame precise control, real footage |
 | **MV Short Film** | No (anime) | **Seedance** | Kling-Omni | Long shots + music-driven |
 | **MV Short Film** | **Has real-person** | **Kling-Omni** | — | Real-person material disables Seedance |
-| **Vlog/Documentary Style** | Yes | Kling-3.0 | Veo3 | First frame precise control, avoid Seedance |
+| **Vlog/Documentary Style** | Yes | Kling-3.0 | — | First frame precise control, avoid Seedance |
 
-**Veo3 as Global Fallback Video Generation Model**: Unless users explicitly request Veo3, do not proactively call Veo3. Veo3 has fixed duration (4/6/8s), max resolution 720p, only use as final fallback when all other backends fail.
+**Veo3 Deprecated**: Veo3 is no longer a recommended backend. Fixed duration (4/6/8s), max resolution 720p. Use Kling/Kling-Omni/Seedance instead.
 
 **First Frame Control Capability Comparison**:
 
 | Backend | First Frame Control | Description |
 |------|---------|------|
 | **Kling-3.0** | ✅ `--image` | Video starts from this image |
-| **Veo3** | ✅ `--image` | First frame precise control |
+| **~~Veo3~~** | ~~deprecated~~ | Deprecated, use Kling-3.0 instead |
 | **Seedance** | ❌ Reference image | Storyboard is visual style reference, not first frame |
 | **Kling-Omni** | ❌ Reference image | Only reference2video, no img2video |
 
@@ -282,7 +282,7 @@ python video_gen_tools.py video \
 | **Commercial (No Real Footage)** | **Seedance 2** | Kling-Omni | Long shots + smart multi-shot |
 | **Commercial (With Real Footage)** | Kling-3.0 / Vidu | — | First frame precise control, real footage |
 | **MV Short Film** | **Seedance 2** | Kling-Omni | Long shots + music-driven |
-| **Vlog/Documentary Style** | Kling-3.0 | Vidu | First frame precise control, avoid Seedance |
+| **Vlog/Documentary Style** | Kling-3.0 | — | First frame precise control, avoid Seedance |
 
 ---
 

@@ -60,7 +60,7 @@ python video_gen_tools.py video --provider fal --backend kling-omni --image-list
 | **Commercial (with real materials)** | Has | Kling-3.0 | — | Precise first-frame control, real materials |
 | **MV Short Film** | None (Anime) | **Seedance** | Kling-Omni | Long shots + music-driven |
 | **MV Short Film** | **Has Real Person** | **Kling-Omni** | — | Real person materials disable Seedance |
-| **Vlog/Realistic** | Has | Kling-3.0 | Kling-Omni | Precise first-frame control, not using Seedance |
+| **Vlog/Realistic** | Has | Kling-3.0 | — | Precise first-frame control, not using Seedance |
 
 **Veo3 Deprecated**: Veo3 backend is deprecated and no longer supported. Use Kling, Kling-Omni, or Seedance instead. Veo3 had fixed duration (4/6/8s) and max 720p resolution.
 
@@ -158,6 +158,9 @@ python video_gen_tools.py setup --set-key FAL_API_KEY=xxx
 
 **Optional Services** (ask after saving key):
 - Music generation (Suno): `SUNO_API_KEY`
+- **ElevenLabs TTS (Priority)**: `FAL_API_KEY`
+- **Gemini TTS (Fallback)**: `COMPASS_API_KEY`
+- **Gemini Image Generation**: `COMPASS_API_KEY`
 
 User can skip optional services.
 
@@ -628,7 +631,7 @@ First read `creative.json`'s `backend_selection` field:
 | **Commercial (with real materials)** | Has | Kling-3.0 | — | Precise first-frame control, real materials |
 | **MV Short Film** | None (Anime) | **Seedance** | Kling-Omni | Long shots + music-driven |
 | **MV Short Film** | **Has Real Person** | **Kling-Omni** | — | Real person materials disable Seedance |
-| **Vlog/Realistic** | Has | Kling-3.0 | Kling-Omni | Precise first-frame control, not using Seedance |
+| **Vlog/Realistic** | Has | Kling-3.0 | — | Precise first-frame control, not using Seedance |
 
 **First-frame Control Capability Comparison**:
 
@@ -1043,23 +1046,64 @@ Reason: Read `prompt` (music description) and `style` (music style) from `creati
 
 **Trigger Condition**: Read `storyboard.json`'s `narration_segments`, if exists then trigger.
 
+**TTS Backend Priority**: ElevenLabs TTS > Gemini TTS
+
 **Generation Flow**:
 
 1. **Read narration_config and narration_segments**
 2. **Call TTS for each segment**:
 
 ```bash
-# Generate each voiceover segment separately
+# ElevenLabs TTS (default, high quality)
 python video_gen_tools.py tts \
   --text "This is a peaceful afternoon..." \
-  --voice-style "Gentle female voice, moderate pace" \
+  --voice female_narrator \
+  --video-type documentary \
   --output generated/narration/narr_1.mp3
 
+# Reuse existing voice_id (skip Design/Create, faster)
 python video_gen_tools.py tts \
   --text "She sits by the window..." \
-  --voice-style "Gentle female voice, moderate pace" \
+  --voice-id "abc123xyz" \
   --output generated/narration/narr_2.mp3
+
+# Force use Gemini TTS (fallback)
+python video_gen_tools.py tts \
+  --text "Thoughts drift far away..." \
+  --backend gemini \
+  --voice female_narrator \
+  --output generated/narration/narr_3.mp3
 ```
+
+**voice Parameter Mapping**:
+
+| Parameter | ElevenLabs Voice | Gemini Voice (Fallback) |
+|-------|----------------|-------------------|
+| `female_narrator` | Create new voice (professional female) | Kore |
+| `female_gentle` | Built-in Alice (gentle) | Aoede |
+| `female_bright` | Built-in Charlotte (bright) | Leda |
+| `male_narrator` | Built-in George (professional male) | Charon |
+| `male_warm` | Built-in Adam (warm) | Orus |
+
+**stability Parameter (ElevenLabs only)**:
+
+| Video Type | Stability | Description |
+|---------|-----------|------|
+| cinematic | 0.22 | Dramatic character, high expressiveness |
+| vlog | 0.28 | Emotional narrative, balanced stability |
+| documentary | 0.35 | Professional narration, stable output |
+| commercial | 0.30 | Commercial, stable but flexible |
+
+**Text Enhancement** (ElevenLabs auto-applies):
+
+Automatically inserts emotion/rhythm/physiological tags without rewriting original text:
+- Emotion: `[thoughtful]`, `[excited]`, `[calm]`
+- Rhythm: `[short pause]`, `[slows down]`, `[emphasized]`
+- Physiological: `[sighs]`, `[exhales]`
+
+**Fallback Mechanism**:
+- When ElevenLabs fails, automatically falls back to Gemini TTS
+- Return result will indicate `backend: gemini_fallback`
 
 3. **Output File Naming**: Named by `segment_id` (`narr_1.mp3`, `narr_2.mp3`...)
 
@@ -1100,7 +1144,7 @@ python video_gen_editor.py concat --inputs video1.mp4 video2.mp4 --output final.
 ### Synthesis Flow
 
 1. **Concatenate** → Connect by storyboard order (auto normalize)
-2. **Insert Voiceover** → Place voiceover audio at correct position according to `narration_segments`'s `overall_time_range` (if any)
+2. **Insert Voiceover** → Smart narration synthesis (auto-measure duration, calculate non-overlapping insertion points)
 3. **Transitions** → Add transition effects between shots
 4. **Color Grading** → Apply overall color grading style
 5. **Music** → Mix background music
@@ -1139,11 +1183,11 @@ python video_gen_editor.py concat --inputs video1.mp4 video2.mp4 --output final.
 
 **Trigger Condition**: Read `storyboard.json`'s `narration_segments`, if exists then trigger.
 
-**Insertion Method**: Use FFmpeg to insert voiceover audio at specified time points.
+**Insertion Method**: Use FFmpeg smart narration synthesis, auto-measure audio duration and calculate non-overlapping insertion points.
 
 ```bash
-# Insert voiceover by overall_time_range
-python video_gen_editor.py narration \
+# Smart narration synthesis (auto-measure audio duration, avoid overlap)
+python video_gen_editor.py smart-narration \
   --video concat_output.mp4 \
   --storyboard storyboard/storyboard.json \
   --narration-dir generated/narration \
@@ -1151,9 +1195,9 @@ python video_gen_editor.py narration \
 ```
 
 **Timing Calculation**:
-- `overall_time_range` format: `"0-3s"` means starts at 0 seconds, ends at 3 seconds
-- Voiceover audio is inserted at the start time of `overall_time_range`
-- Multiple voiceover segments are overlaid in chronological order
+- Uses ffprobe to measure actual duration of each narration audio segment
+- Automatically calculates non-overlapping time points with gap intervals (default 0.5 seconds)
+- Dynamically compresses gaps when space is tight
 
 ### Phase 5 Output
 
@@ -1193,8 +1237,14 @@ python video_gen_tools.py video \
 # Music (Must pass --creative, reads prompt and style from creative.json)
 python video_gen_tools.py music --creative creative/creative.json --output <output>
 
-# Voiceover (Call by narration_segments)
-python video_gen_tools.py tts --text <segment-script> --voice female_narrator --emotion gentle --output generated/narration/narr_1.mp3
+# Voiceover (ElevenLabs priority, Gemini fallback)
+python video_gen_tools.py tts --text <segment-script> --voice female_narrator --video-type documentary --output generated/narration/narr_1.mp3
+
+# Voiceover (reuse existing voice_id)
+python video_gen_tools.py tts --text <segment-script> --voice-id <voice_id> --output generated/narration/narr_2.mp3
+
+# Voiceover (force Gemini)
+python video_gen_tools.py tts --text <segment-script> --backend gemini --voice female_narrator --output generated/narration/narr_3.mp3
 
 # Image generation
 python video_gen_tools.py image --prompt <description> --aspect-ratio {aspect_ratio} --output <output>
@@ -1202,10 +1252,7 @@ python video_gen_tools.py image --prompt <description> --aspect-ratio {aspect_ra
 # Editing (concat must pass --storyboard, reads aspect_ratio from storyboard.json)
 python video_gen_editor.py concat --inputs <video-list> --output <output> --storyboard storyboard/storyboard.json
 
-# Voiceover insertion (Insert by overall_time_range)
-python video_gen_editor.py narration --video <video> --storyboard storyboard/storyboard.json --narration-dir generated/narration --output <output>
-
-# Smart narration synthesis (Auto-measure audio duration, avoid overlap)
+# Smart narration synthesis (Auto-measure audio duration, avoid overlap — recommended)
 python video_gen_editor.py smart-narration --video <video> --storyboard storyboard/storyboard.json --narration-dir generated/narration --output <output>
 
 # Other editing commands

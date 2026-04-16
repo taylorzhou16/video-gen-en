@@ -67,10 +67,63 @@ Adopts **Scene-Shot two-layer structure**: `scenes[] → shots[]`
 - `scene_name`: Scene name
 - `duration`: Total scene duration = sum of all shot durations within
 - `narrative_goal`: Main narrative objective
-- `spatial_setting`: Spatial setting
-- `time_state`: Time state
+- `spatial_setting`: Spatial setting (**must be precise, see specification below**)
+- `time_state`: Time state (**must be precise, see specification below**)
 - `visual_style`: Visual master style
 - `shots[]`: Shot list
+
+#### Field Precision Specification (Required for Consistency Detection)
+
+**time_state Precision Requirements**:
+
+| Precision Level | Example | Acceptable? |
+|----------------|---------|-------------|
+| **Precise** | "2-4 PM, soft sunlight", "One hour before dusk, golden hour warm light" | ✅ Acceptable |
+| **Vague** | "Daytime", "Afternoon", "Day" | ❌ Not acceptable (cannot lock lighting) |
+
+**Must include**:
+- Time period: e.g., "2-4 PM", "one hour before dusk"
+- Lighting characteristics: e.g., "soft sunlight", "golden hour warm light"
+
+**spatial_setting Precision Requirements**:
+
+| Precision Level | Example | Acceptable? |
+|----------------|---------|-------------|
+| **Precise** | "Weeping willow (slender drooping branches), stone path (grey-blue), waterside pavilion (upturned eaves)" | ✅ Acceptable |
+| **Vague** | "Garden", "Under a tree", "Park" | ❌ Not acceptable (cannot lock element styles) |
+
+**Must include**:
+- Key element styles: e.g., "weeping willow (slender drooping branches)"
+- Architectural features: e.g., "waterside pavilion (upturned eaves)"
+
+#### Character Costume Locking Fields (elements.characters)
+
+```json
+{
+  "elements": {
+    "characters": [
+      {
+        "element_id": "Element_Alice",
+        "name": "Alice",
+        "name_en": "Alice",
+        "reference_images": ["materials/personas/alice_three_view.png"],
+        "visual_description": "Classical beauty...",
+        
+        "locked_costume": "Light celadon green wide-sleeved robe, cream inner garment, dark green wide waist sash",
+        "locked_hairstyle": "Classical updo with side tendrils",
+        "locked_makeup": "Thin arched brows, soft pink lips, porcelain base",
+        "costume_scope": "scene_1, scene_2"
+      }
+    ]
+  }
+}
+```
+
+**Scope Notes**:
+- `costume_scope` specifies which scenes the character's costume remains consistent within
+- Leave empty for global consistency (all scenes)
+- Separate multiple scenes with commas
+- When costume change is needed, update the locking fields at the start of the new scene and set new scope
 
 ### Shot Fields
 

@@ -354,34 +354,40 @@ python video_gen_tools.py tts \
   --output generated/narration/narr_1.mp3
 ```
 
-**voice Parameters (Volcano Engine TTS Voices)**:
+**TTS Backend Priority**: ElevenLabs TTS > Gemini TTS
 
-| Parameter Value | Voice Description | Volcano Engine ID |
+**voice Parameter Mapping**:
+
+| Parameter Value | ElevenLabs Voice | Gemini Voice (Fallback) |
 |-------|----------------|-------------------|
-| `female_narrator` | Female narration, professional and steady | BV700_streaming |
-| `female_gentle` | Female gentle, soft and friendly | BV034_streaming |
-| `male_narrator` | Male narration, professional and steady | BV701_streaming |
-| `male_warm` | Male warm, magnetic and friendly | BV033_streaming |
+| `female_narrator` | Create new voice (professional female) | Kore |
+| `female_gentle` | Built-in Alice (gentle) | Aoede |
+| `female_bright` | Built-in Charlotte (bright) | Leda |
+| `male_narrator` | Built-in George (professional male) | Charon |
+| `male_warm` | Built-in Adam (warm) | Orus |
 
-**emotion Parameters (Optional)**:
+**stability Parameter (ElevenLabs only)**:
 
-| Parameter Value | Emotion Style |
-|-------|-------------|
-| `neutral` | Neutral (default) |
-| `happy` | Happy |
-| `sad` | Sad |
-| `gentle` | Gentle |
-| `serious` | Serious |
+| Video Type | Stability | Description |
+|---------|-----------|------|
+| cinematic | 0.22 | Dramatic character, high expressiveness |
+| vlog | 0.28 | Emotional narrative, balanced stability |
+| documentary | 0.35 | Professional narration, stable output |
+| commercial | 0.30 | Commercial, stable but flexible |
+
+**Text Enhancement** (ElevenLabs auto-applies): Automatically inserts emotion/rhythm/physiological tags without rewriting original text.
+
+**Fallback Mechanism**: When ElevenLabs fails, automatically falls back to Gemini TTS.
 
 **narration_config.voice_style Mapping Rules**:
 
 The voice_style specified by user in Phase 2 (e.g., "gentle female voice") is mapped to specific TTS parameters in Phase 3:
-- "gentle female voice" → `voice: female_gentle, emotion: gentle`
-- "professional female narrator" → `voice: female_narrator, emotion: neutral`
-- "magnetic male voice" → `voice: male_warm, emotion: neutral`
-- "serious male voice" → `voice: male_narrator, emotion: serious`
+- "gentle female voice" → `voice: female_gentle`
+- "professional female narrator" → `voice: female_narrator`
+- "magnetic male voice" → `voice: male_warm`
+- "serious male voice" → `voice: male_narrator`
 
-**Important**: Use the same voice + emotion parameters within one video to ensure consistent narration style.
+**Important**: Use the same voice parameters within one video to ensure consistent narration style. Reuse `voice-id` within the same project to skip Design/Create steps for faster generation.
 
 ### BGM Constraints
 
