@@ -165,14 +165,16 @@ class Config:
         config = cls._get_config()
         return config.get(key, os.getenv(key, default))
 
-    # Vidu (Yunwu) API
+    # Vidu (deprecated, kept for backward compatibility only)
+    VIDU_MODEL: str = os.getenv("VIDU_MODEL", "viduq3-pro")
+    VIDU_RESOLUTION: str = os.getenv("VIDU_RESOLUTION", "720p")
+
+    # Yunwu API (deprecated, kept for backward compatibility only)
     @property
     def YUNWU_API_KEY(self) -> str:
         return self.get("YUNWU_API_KEY", "")
 
     YUNWU_BASE_URL: str = os.getenv("YUNWU_BASE_URL", "https://yunwu.ai")
-    VIDU_MODEL: str = os.getenv("VIDU_MODEL", "viduq3-pro")
-    VIDU_RESOLUTION: str = os.getenv("VIDU_RESOLUTION", "720p")
 
     # Suno API
     @property
@@ -192,13 +194,6 @@ class Config:
         return self.get("VOLCENGINE_TTS_ACCESS_TOKEN", "")
 
     VOLCENGINE_TTS_CLUSTER: str = os.getenv("VOLCENGINE_TTS_CLUSTER", "volcano_tts")
-
-    # Gemini Image（via Yunwu API，sharing YUNWU_API_KEY）
-    @property
-    def GEMINI_API_KEY(self) -> str:
-        return self.get("YUNWU_API_KEY", "")
-
-    GEMINI_IMAGE_URL: str = "https://yunwu.ai/v1beta/models/gemini-3.1-flash-image-preview:generateContent"
 
     # Migoo LLM API
     @property
@@ -3559,10 +3554,23 @@ def get_video_duration(video_path: str) -> float:
     return float(result.stdout.strip())
 
 
-# ============== Gemini image generation（via Yunwu API）==============
+# ============== Gemini Image Generation (Deprecated)==============
 
 class ImageClient:
-    """Gemini image generation client（via Yunwu API）"""
+    """
+    Gemini image generation client (via Yunwu API)
+
+    .. deprecated::
+        Yunwu Image deprecated and no longer supported. Please use MigooImageClient or FalImageClient.
+    """
+
+    def __init__(self):
+        import warnings
+        warnings.warn(
+            "ImageClient deprecated, please use MigooImageClient or FalImageClient",
+            DeprecationWarning,
+            stacklevel=2
+        )
 
     STYLE_PRESETS = {
         "cinematic": "cinematic style, film grain, dramatic lighting, movie still",
@@ -3659,21 +3667,16 @@ class ImageClient:
             return {"success": False, "error": str(e)}
 
 
+# ============== Gemini Image Generation (fal.ai fallback)==============
+
+
 class FalImageClient:
     """
-    Gemini image generation client（via fal.ai API）
+    Gemini image generation client (via fal.ai API)
 
-    .. deprecated::
-        Fal Image deprecated and no longer supported。please use MigooImageClient（need MIGOO_API_KEY）。
+    Fallback option when MIGOO_API_KEY is not configured.
+    Requires FAL_API_KEY.
     """
-
-    def __init__(self):
-        import warnings
-        warnings.warn(
-            "FalImageClient deprecated, please use MigooImageClient",
-            DeprecationWarning,
-            stacklevel=2
-        )
 
     FAL_IMAGE_URL = "https://fal.run/fal-ai/gemini-3.1-flash-image-preview"
     FAL_IMAGE_EDIT_URL = "https://fal.run/fal-ai/gemini-3.1-flash-image-preview/edit"
@@ -3687,6 +3690,10 @@ class FalImageClient:
 
     # fal supported aspect_ratio
     ASPECT_RATIOS = ["auto", "21:9", "16:9", "3:2", "4:3", "5:4", "1:1", "4:5", "3:4", "2:3", "9:16", "4:1", "1:4", "8:1", "1:8"]
+
+    def __init__(self):
+        import httpx
+        self.client = httpx.AsyncClient(timeout=120.0)
 
     async def generate(
         self,
@@ -4911,17 +4918,20 @@ async def cmd_tts(args):
 
 
 async def cmd_image(args):
-    """image generationcommand"""
-    # Provider auto selection logic
+    """image generation command"""
+    # Provider auto selection logic (new priority: migoo > fal)
     provider = getattr(args, 'provider', None)
     if provider is None:
-        # Priority: migoo → yunwu
         if Config.MIGOO_API_KEY:
             provider = 'migoo'
-        elif Config.GEMINI_API_KEY:  # GEMINI_API_KEY actually is YUNWU_API_KEY
-            provider = 'yunwu'
+        elif Config.FAL_API_KEY:
+            provider = 'fal'
         else:
-            provider = 'migoo'  # default，will report error and hint config
+            provider = 'migoo'  # default, will report error and hint config
+
+    # yunwu explicitly specified warning but backward compatible
+    if provider == 'yunwu':
+        logger.warning("⚠️ yunwu provider deprecated, recommend use migoo or fal")
 
     logger.info(f"🔧 use provider: {provider}")
 
@@ -4941,7 +4951,7 @@ async def cmd_image(args):
             print(json.dumps({
                 "success": False,
                 "error": "MIGOO_API_KEY not configured",
-                "hint": "please in config.json add MIGOO_API_KEY"
+                "hint": "please in config.json add MIGOO_API_KEY, or use --provider fal"
             }, indent=2, ensure_ascii=False))
             return 1
 
@@ -4954,18 +4964,17 @@ async def cmd_image(args):
             reference_images=args.reference
         )
 
-    # yunwu provider (Gemini via Yunwu)
-    else:
-        if not Config.GEMINI_API_KEY:
+    # fal provider (fallback)
+    elif provider == 'fal':
+        if not Config.FAL_API_KEY:
             print(json.dumps({
                 "success": False,
-                "error": "YUNWU_API_KEY not configured（for Gemini image generation）",
-                "hint": "please set environment variable: export YUNWU_API_KEY='your-api-key'",
-                "get_key": "access https://yunwu.ai register to get API key"
+                "error": "FAL_API_KEY not configured",
+                "hint": "please in config.json add FAL_API_KEY"
             }, indent=2, ensure_ascii=False))
             return 1
 
-        client = ImageClient()
+        client = FalImageClient()
         result = await client.generate(
             prompt=args.prompt,
             output=args.output,
@@ -4973,6 +4982,20 @@ async def cmd_image(args):
             aspect_ratio=aspect_ratio,
             reference_images=args.reference
         )
+
+    # yunwu provider (deprecated, backward compatible)
+    else:
+        logger.warning("⚠️ yunwu provider deprecated, please configure MIGOO_API_KEY or FAL_API_KEY")
+        print(json.dumps({
+            "success": False,
+            "error": "Yunwu provider deprecated",
+            "hint": "please use --provider migoo or --provider fal",
+            "providers": {
+                "migoo": {"key": "MIGOO_API_KEY", "priority": 1},
+                "fal": {"key": "FAL_API_KEY", "priority": 2}
+            }
+        }, indent=2, ensure_ascii=False))
+        return 1
 
     if result.get("success"):
         print(json.dumps(result, indent=2, ensure_ascii=False))
@@ -5145,8 +5168,9 @@ async def cmd_check(args):
         },
         "YUNWU_API_KEY": {
             "value": Config.YUNWU_API_KEY,
-            "purpose": "Vidu video generation + Gemini image generation",
-            "get_key": "https://yunwu.ai"
+            "purpose": "deprecated (Vidu/Yunwu video generation)",
+            "get_key": "https://yunwu.ai",
+            "deprecated": True
         },
         "KLING_ACCESS_KEY": {
             "value": Config.KLING_ACCESS_KEY,
@@ -5312,8 +5336,8 @@ def main():
     image_parser.add_argument("--aspect-ratio", "-a", default=None, help="aspect ratio")
     image_parser.add_argument("--storyboard", help="storyboard.json path，auto read aspect_ratio")
     image_parser.add_argument("--reference", "-r", nargs="+", help="reference image path（support multiple，important characterput later）")
-    image_parser.add_argument("--provider", choices=["migoo", "yunwu"], default=None,
-                              help="API provider (default auto select: migoo priority)")
+    image_parser.add_argument("--provider", choices=["migoo", "fal"], default=None,
+                              help="API provider (default auto select: migoo > fal)")
 
     # vision subcommand（built-in multimodal analysis）
     vision_parser = subparsers.add_parser("vision", help="analyze image content")
