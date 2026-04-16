@@ -491,7 +491,7 @@ Define `bgm` field in creative.json:
 
 **elements.characters**: Character registry, written after Phase 1 identification
 - `element_id`: Technical ID, format `Element_` + English name/Pinyin
-- `name`: Chinese display name
+- `name`: Display name
 - `name_en`: English name
 - `reference_images`: Reference image path list
 - `visual_description`: Visual feature description

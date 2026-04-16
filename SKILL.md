@@ -86,7 +86,7 @@ User provides real photo →
 **Key Rules**:
 - **Seedance preferred for fictional content** (smart shot switching is core advantage)
 - **Kling-Omni as fallback when Seedance fails**
-- **Use Kling/Vidu when having real materials** (precise first-frame control)
+- **Use Kling when having real materials** (precise first-frame control)
 - **Use the same model for the same project**, no mixing (except mixed mode)
 
 Detailed backend comparison and degradation strategy: See [reference/backend-guide.md](reference/backend-guide.md)
@@ -340,6 +340,16 @@ Create project directory `~/video-gen-projects/{project_name}_{timestamp}/`, pro
 
 **Trigger Condition**: Check personas.json, triggers when character with null/empty `reference_image` exists.
 
+**Check Logic**:
+```python
+manager = PersonaManager(project_dir)
+for persona_id in manager.list_personas_without_reference():
+    # Ask user for reference image source
+    ask_user_for_reference(persona_id)
+```
+
+**Project Type Judgment** (determines reference image format):
+
 | Project Type | Reference Image Format | Notes |
 |-------------|----------------------|-------|
 | **Fiction/Short Drama** | Three-view (front + side + back) | Multiple angles ensure character consistency |
@@ -408,7 +418,7 @@ python video_gen_tools.py image \
 
 **D. Text only**:
 - Record warning to `creative/decision_log`
-- Phase 3 will **force storyboard image generation**
+- Subsequent Phase 3 will **force storyboard image generation**
 
 #### Other types: Single Reference Image Format
 
@@ -435,12 +445,11 @@ manager.update_reference_image(persona_id, "materials/personas/{name}_ref.png")
 
 **C. Text Only**:
 - Record warning to `creative/decision_log`
-- Subsequent Phase 3 will **force storyboard image generation**, then use img2video or reference2video
 
 **Key Rules**:
 - **Fiction/Short Drama must use three-view**: Character appears in multiple shots, needs multiple angles for consistency
-- **Can use text2video**: Single scene appearance, pure scenery, user explicitly accepts appearance variation
 - **When AI generates reference images must follow visual_style**: anime style or realistic style
+- **Subsequent workflow needs no changes**: Storyboard design and video generation directly use the three-view image itself
 
 ---
 
@@ -651,7 +660,7 @@ First read `creative.json`'s `backend_selection` field:
 1. **Real Person Material Detection → Disable Seedance** (top-level filter)
 2. **Use the same model for the same project**
 3. **Fiction does not use text2video**
-4. **When needing first-frame control, only use Kling or Vidu**
+4. **When needing first-frame control, only use Kling**
 5. **Seedance/Omni storyboard images are references, not precise first-frame control**
 
 **Execution Method Difference (Key)**:
@@ -709,8 +718,8 @@ If `creative.narration.type` is not `none`, plan voiceover segmentation while ge
     "voice_style": "Gentle female voice"
   },
   "narration_segments": [
-    {"segment_id": "narr_1", "overall_time_range": "0-3s", "text": "This is a peaceful afternoon..."},
-    {"segment_id": "narr_2", "overall_time_range": "8-11s", "text": "She sits by the window..."}
+    {"segment_id": "narr_1", "time_range": "0-3s", "text": "This is a peaceful afternoon..."},
+    {"segment_id": "narr_2", "time_range": "8-11s", "text": "She sits by the window..."}
   ]
 }
 ```
@@ -739,13 +748,72 @@ Read: reference/consistency-guide.md   # Consistency principles detailed spec
 | **image/video Matching** | Same shot | Two prompts must describe same elements consistently |
 | **Cross-scene Continuity** | Continuous scenes | Key assets should stay visually continuous |
 
+#### Core Concept
+
+Consistency issues require **semantic understanding**, not keyword matching:
+- "weeping willow" → "drooping branches tree" → "old tree" — this gradual drift can't be caught by keyword detection
+- Model can understand the semantic conflict between "twilight" and "spring afternoon"
+- Model can judge whether "ancient tree" semantically drifts from "weeping willow"
+
 #### Execution Flow
 
-1. Read storyboard.json
-2. Build review prompt (use structure in reference/consistency-guide.md)
-3. Model analyzes all shots, outputs issue list and fix suggestions
-4. Auto apply fixes to storyboard.json fields
-5. Save and notify user
+**1. Read storyboard.json**
+
+**2. Build Review Prompt** (use the following structure):
+
+```
+You are a consistency reviewer, responsible for checking cross-shot consistency in storyboard.json.
+
+## Review Principles
+
+### 1. Time-Lighting Consistency
+- All shots within the same scene must have lighting descriptions semantically consistent with time_state
+- When time_state="spring afternoon", forbidden: twilight, dusk, sunset, nighttime
+- Exception: if plot requires time passage, must explain in narrative_goal
+
+### 2. Spatial Element Consistency
+- All shots within the same scene must keep key element descriptions style-consistent
+- When spatial_setting mentions "weeping willow", forbidden drift to: dead tree, ancient tree, old tree
+- Not just same name, but consistent style description (branch form, color, etc.)
+
+### 3. Character Costume Consistency
+- Same character within same scene must have locked costume/hairstyle
+- Check all shots' character costume descriptions against locked_costume or visual_description
+- Cross-scene costume change requires plot justification
+
+### 4. image/video Description Matching
+- Same shot's image_prompt and video_prompt must describe same elements consistently
+- Especially check: scene elements, lighting description, character costume
+
+### 5. Cross-scene Asset Continuity
+- Continuous scenes (similar spatial_setting, close in time) should maintain asset consistency
+- Character costume locked by default, unless plot-driven costume change
+
+## Review Task
+
+Please review the following storyboard.json, output:
+
+1. **Issue List** (format: `[scene_id/shot_id] Issue type: specific description`)
+2. **Fix Suggestions** (format: `[scene_id/shot_id] Field: old value → fix value`)
+
+If issues found, give the complete fixed field content directly, I will auto apply.
+
+---
+
+{storyboard.json content}
+```
+
+**3. Model Analysis**
+
+Model analyzes all shots, outputs issue list and fix suggestions.
+
+**4. Auto Apply Fixes**
+
+Based on model's fix suggestions, directly modify corresponding fields in storyboard.json.
+
+**5. Save and Notify**
+
+Save fixed storyboard.json, output review results to user.
 
 #### Output Format
 

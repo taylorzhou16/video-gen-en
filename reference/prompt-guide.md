@@ -20,7 +20,7 @@
 | Level | Purpose | Naming Convention | Example |
 |------|---------|------------------|---------|
 | **Element ID** | Technical ID, character identifier in JSON/Prompt | `Element_` + English name/Pinyin | `Element_Chuyue` |
-| **Display Name** | Display name for user interaction, Chinese description | Character name | `Chuyue` |
+| **Display Name** | Display name for user interaction and descriptions | Character name | `Chuyue` |
 | **Reference Tag** | Image placeholder in Prompt | `<<<image_N>>>` | `<<<image_1>>>`, `<<<image_2>>>` |
 
 ### Single Data Source
@@ -414,71 +414,6 @@ Voice clear and pleasant, moderate to slow pace.
 
 ---
 
-## Appendix: Quick Templates
-
-### Image Prompt Template (Omni Storyboard Frame, realistic)
-
-```
-PHOTOREALISTIC real human start frame. NOT ANIME, NOT CARTOON, NOT ILLUSTRATION.
-
-Referencing the facial features, face shape, skin tone, and clothing details of:
-- image_1: Element_{Name}, {detailed appearance description}
-
-Scene: {scene description}
-Location details: {environment details}
-
-Element_{Name}: {pose}, {expression}, {position}
-
-Shot scale: {wide/medium/close-up}
-Camera angle: {eye-level/high/low}
-Lighting: {lighting description}
-Color grade: {color tone}
-Aspect ratio: {aspect ratio}
-
-Style: PHOTOREALISTIC, real human actress, actual skin texture, cinematic film grain, shallow depth of field
-```
-
-### Video Prompt Template (Omni Video)
-
-```
-Referencing the {frame_name} composition for scene layout and character positioning.
-
-Element_{Name}'s appearance from {image_N} ({appearance reference}),
-positioned as shown in {frame_name}.
-
-Overall: {overall action description}
-
-Motion sequence ({duration}s):
-{time_range}: Element_{Name} {action}{, with lip-synced dialogue}
-
-Dialogue exchange:
-- Element_{Name} ({emotion}): "{line}"
-
-Camera movement: {static/pan/tracking/etc.}
-Sound effects: {sound design}
-
-Style: Cinematic realistic style. No music, no subtitles.
-```
-
-### Video Prompt Template (Standard Kling, without Omni)
-
-```
-Overall: {overall shot action description}
-
-Segmented actions ({duration}s):
-{time_range_1}: {action description}
-{time_range_2}: {action description + dialogue sync}
-
-Camera movement: {camera movement description}
-Rhythm: {motion rhythm}
-Frame stability: {keep stable/slight shake}
-{dialogue information}
-Maintain {ratio} composition, do not break aspect ratio
-{BGM constraint}
-``````
-
----
-
 ## Three-View Character Reference Prompt (Fiction/Short Drama Only)
 
 **Trigger Condition**: Only for fiction/short drama projects. Other types keep single reference image.
@@ -609,4 +544,69 @@ add simple costume/attire suitable for the character concept.
 
 Lighting: soft diffused studio lighting, clean neutral backdrop
 Style: PHOTOREALISTIC, real human, identity-preserving, 16:9 aspect ratio
+```
+
+---
+
+## Appendix: Quick Templates
+
+### Image Prompt Template (Omni Storyboard Frame, realistic)
+
+```
+PHOTOREALISTIC real human start frame. NOT ANIME, NOT CARTOON, NOT ILLUSTRATION.
+
+Referencing the facial features, face shape, skin tone, and clothing details of:
+- image_1: Element_{Name}, {detailed appearance description}
+
+Scene: {scene description}
+Location details: {environment details}
+
+Element_{Name}: {pose}, {expression}, {position}
+
+Shot scale: {wide/medium/close-up}
+Camera angle: {eye-level/high/low}
+Lighting: {lighting description}
+Color grade: {color tone}
+Aspect ratio: {aspect ratio}
+
+Style: PHOTOREALISTIC, real human actress, actual skin texture, cinematic film grain, shallow depth of field
+```
+
+### Video Prompt Template (Omni Video)
+
+```
+Referencing the {frame_name} composition for scene layout and character positioning.
+
+Element_{Name}'s appearance from {image_N} ({appearance reference}),
+positioned as shown in {frame_name}.
+
+Overall: {overall action description}
+
+Motion sequence ({duration}s):
+{time_range}: Element_{Name} {action}{, with lip-synced dialogue}
+
+Dialogue exchange:
+- Element_{Name} ({emotion}): "{line}"
+
+Camera movement: {static/pan/tracking/etc.}
+Sound effects: {sound design}
+
+Style: Cinematic realistic style. No music, no subtitles.
+```
+
+### Video Prompt Template (Standard Kling, without Omni)
+
+```
+Overall: {overall shot action description}
+
+Segmented actions ({duration}s):
+{time_range_1}: {action description}
+{time_range_2}: {action description + dialogue sync}
+
+Camera movement: {camera movement description}
+Rhythm: {motion rhythm}
+Frame stability: {keep stable/slight shake}
+{dialogue information}
+Maintain {ratio} composition, do not break aspect ratio
+{BGM constraint}
 ```
