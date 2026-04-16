@@ -3629,11 +3629,11 @@ class ImageClient:
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    Config.GEMINI_IMAGE_URL,
+                    f"{Config.YUNWU_BASE_URL}/v1beta/models/gemini-3.1-flash-image-preview:generateContent",
                     json=payload,
                     headers={
                         "Content-Type": "application/json",
-                        "x-goog-api-key": Config.GEMINI_API_KEY,
+                        "x-goog-api-key": Config.YUNWU_API_KEY,
                     }
                 )
                 response.raise_for_status()
@@ -3690,10 +3690,6 @@ class FalImageClient:
 
     # fal supported aspect_ratio
     ASPECT_RATIOS = ["auto", "21:9", "16:9", "3:2", "4:3", "5:4", "1:1", "4:5", "3:4", "2:3", "9:16", "4:1", "1:4", "8:1", "1:8"]
-
-    def __init__(self):
-        import httpx
-        self.client = httpx.AsyncClient(timeout=120.0)
 
     async def generate(
         self,
@@ -4919,7 +4915,7 @@ async def cmd_tts(args):
 
 async def cmd_image(args):
     """image generation command"""
-    # Provider auto selection logic (new priority: migoo > fal)
+    # Provider auto selection logic (priority: migoo > fal)
     provider = getattr(args, 'provider', None)
     if provider is None:
         if Config.MIGOO_API_KEY:
@@ -4928,10 +4924,6 @@ async def cmd_image(args):
             provider = 'fal'
         else:
             provider = 'migoo'  # default, will report error and hint config
-
-    # yunwu explicitly specified warning but backward compatible
-    if provider == 'yunwu':
-        logger.warning("⚠️ yunwu provider deprecated, recommend use migoo or fal")
 
     logger.info(f"🔧 use provider: {provider}")
 
@@ -4983,17 +4975,12 @@ async def cmd_image(args):
             reference_images=args.reference
         )
 
-    # yunwu provider (deprecated, backward compatible)
     else:
-        logger.warning("⚠️ yunwu provider deprecated, please configure MIGOO_API_KEY or FAL_API_KEY")
+        # Unreachable (argparse choices already limited)
         print(json.dumps({
             "success": False,
-            "error": "Yunwu provider deprecated",
-            "hint": "please use --provider migoo or --provider fal",
-            "providers": {
-                "migoo": {"key": "MIGOO_API_KEY", "priority": 1},
-                "fal": {"key": "FAL_API_KEY", "priority": 2}
-            }
+            "error": f"unknown provider: {provider}",
+            "hint": "please use --provider migoo or --provider fal"
         }, indent=2, ensure_ascii=False))
         return 1
 
@@ -5201,7 +5188,8 @@ async def cmd_check(args):
             "set": is_set,
             "masked_value": masked,
             "purpose": info["purpose"],
-            "get_key_url": info["get_key"]
+            "get_key_url": info["get_key"],
+            "deprecated": info.get("deprecated", False)
         }
 
     # checkwhether at least one existsvideo provider available
