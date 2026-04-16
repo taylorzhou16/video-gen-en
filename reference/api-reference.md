@@ -70,7 +70,7 @@ python ~/.claude/skills/video-gen-en/video_gen_tools.py vision <directory_path> 
 | `--multi-shot` | kling, kling-omni | Enable multi-shot mode |
 | `--shot-type` | kling, kling-omni | `intelligence` (AI auto) or `customize` (custom) |
 | `--multi-prompt` | kling, kling-omni | Custom shot list (JSON format) |
-| `--audio` | kling, kling-omni | Enable audio generation with video |
+| `--audio` | kling, kling-omni | Audio generation with video (enabled by default, use `--no-audio` to disable) |
 | `--mode` | kling, kling-omni | `std` (standard) or `pro` (high quality) |
 
 ### Seedance 2 Parameters
