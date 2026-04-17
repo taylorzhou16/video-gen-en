@@ -256,11 +256,20 @@ Create project directory `~/video-gen-projects/{project_name}_{timestamp}/`, pro
 
 ## Phase 2: Creative Confirmation
 
-**⚠️ AUTO MODE RULES**: Even in auto/continuous mode, the following steps are MANDATORY and must NOT be skipped or hardcoded:
-- **Question 6** (Art style selection) — determines backend routing
-- **Question 7** (Character reference image collection) — determines character consistency
-- **Real Person Material Detection checkpoint** — determines whether Seedance is disabled
-In auto mode, you MAY use reasonable defaults for Questions 1-5 (style, duration, ratio, music, voiceover) based on user context, but Questions 6-7 and the detection checkpoint must always execute their full logic, including generating three-view images for Fiction projects.
+**⚠️ AUTO MODE RULES**: Even in auto/continuous mode, ALL 7 questions MUST be executed — no exceptions. The difference is presentation, not execution:
+- **Interactive mode**: Present question cards, wait for user response
+- **Auto mode**: Infer answers from user context (script, materials, instructions), execute each question's logic, then present ALL decisions as a summary for user to review before proceeding
+Auto mode example output:
+> **Phase 2 Creative Decisions (auto-inferred, please review):**
+> 1. Style: Cinematic (inferred from palace drama script)
+> 2. Duration: 10s (3 shots × ~3s each)
+> 3. Aspect Ratio: 9:16 (vertical, default for short video)
+> 4. Music: None (dialogue-driven scene)
+> 5. Voiceover: None (character dialogue is primary)
+> 6. Art Style: Realistic (user provided real photo)
+> 7. Character References: Empress → photo-based three-view, Concubine → AI three-view
+>
+> Proceed? (or tell me what to change)
 
 **Interact with user using question cards**, collect key information.
 
