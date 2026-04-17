@@ -315,6 +315,17 @@ def validate_storyboard(storyboard_path: str) -> Dict[str, Any]:
     characters = data.get("elements", {}).get("characters", [])
     known_element_ids = {c.get("element_id") for c in characters if c.get("element_id")}
 
+    # --- validate character reference images ---
+    for char in characters:
+        char_id = char.get("element_id", "unknown")
+        char_name = char.get("name", char_id)
+        ref_images = char.get("reference_images", [])
+        if not ref_images or all(not r for r in ref_images):
+            errors.append(
+                f"[{char_id}] character '{char_name}' has no reference image. "
+                f"Run Phase 2 Question 7 to generate character reference images before proceeding."
+            )
+
     # --- validate each Scene ---
     for scene in scenes:
         scene_id = scene.get("scene_id", "unknown")
