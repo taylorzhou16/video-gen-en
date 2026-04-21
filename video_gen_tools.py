@@ -315,6 +315,17 @@ def validate_storyboard(storyboard_path: str) -> Dict[str, Any]:
     characters = data.get("elements", {}).get("characters", [])
     known_element_ids = {c.get("element_id") for c in characters if c.get("element_id")}
 
+    # --- validate character reference images ---
+    for char in characters:
+        char_id = char.get("element_id", "unknown")
+        char_name = char.get("name", char_id)
+        ref_images = char.get("reference_images", [])
+        if not ref_images or all(not r for r in ref_images):
+            errors.append(
+                f"[{char_id}] character '{char_name}' has no reference image. "
+                f"Run Phase 2 Question 7 to generate character reference images before proceeding."
+            )
+
     # --- validate each Scene ---
     for scene in scenes:
         scene_id = scene.get("scene_id", "unknown")
@@ -1883,13 +1894,31 @@ class FalKlingClient:
     - first/last frame：pass image_url + tail_image_url
     """
 
-    MODEL_ID = "fal-ai/kling-video/o3/pro/reference-to-video"
+    FAL_MODELS = {
+        "o3": "fal-ai/kling-video/o3/pro/reference-to-video",
+        "v3": "fal-ai/kling-video/v3/pro/image-to-video",
+    }
 
-    def __init__(self):
+    def __init__(self, model: str = None):
         import fal_client
         import httpx
+        self._explicit_model = model
         self.fal_client = fal_client.AsyncClient(key=Config.FAL_API_KEY)
         self.http_client = httpx.AsyncClient(timeout=300.0)
+
+    def _resolve_model(self, image_url: str = None, image_urls: list = None) -> str:
+        """Auto-select fal model based on usage pattern.
+
+        - Explicit --fal-model always wins
+        - image_url (single first frame) → v3 (image-to-video)
+        - image_urls (multi-reference) → o3 (reference-to-video)
+        - text-only (no images) → o3 (reference-to-video, supports text2video)
+        """
+        if self._explicit_model:
+            return self.FAL_MODELS[self._explicit_model]
+        if image_url:
+            return self.FAL_MODELS["v3"]
+        return self.FAL_MODELS["o3"]
 
     async def create_video(
         self,
@@ -1934,7 +1963,7 @@ class FalKlingClient:
         if tail_image_url:
             payload["end_image_url"] = self._prepare_image_url(tail_image_url)
 
-        return await self._submit_and_wait(payload, output)
+        return await self._submit_and_wait(payload, output, model_id=self._resolve_model(image_url, image_urls))
 
     def _prepare_image_url(self, image_path: str) -> str:
         """prepare images URL（local file convert data URI）"""
@@ -1951,15 +1980,16 @@ class FalKlingClient:
             data = base64.b64encode(f.read()).decode('utf-8')
         return f"data:image/{ext};base64,{data}"
 
-    async def _submit_and_wait(self, payload: dict, output: str = None) -> Dict[str, Any]:
+    async def _submit_and_wait(self, payload: dict, output: str = None, model_id: str = None) -> Dict[str, Any]:
         """submit task and wait for completion"""
         import time
 
-        logger.info(f"📤 create fal Kling task: {payload.get('prompt', '')[:50]}...")
+        resolved_model = model_id or self.FAL_MODELS["v3"]
+        logger.info(f"📤 create fal Kling task ({resolved_model}): {payload.get('prompt', '')[:50]}...")
 
         try:
             # use fal_client submit task，return AsyncRequestHandle
-            handle = await self.fal_client.submit(self.MODEL_ID, arguments=payload)
+            handle = await self.fal_client.submit(resolved_model, arguments=payload)
             request_id = handle.request_id
             logger.info(f"✅ fal task submitted: {request_id}")
         except Exception as e:
@@ -4458,7 +4488,8 @@ async def cmd_video(args):
                 await client.close()
 
         # ===== Kling / Kling-Omni backend (fal provider) =====
-        client = FalKlingClient()
+        fal_model = getattr(args, 'fal_model', None)
+        client = FalKlingClient(model=fal_model)
         try:
             generate_audio = args.audio
             duration = max(3, min(15, args.duration))
@@ -5281,6 +5312,8 @@ def main():
                               help="end userID（falcompliance requirement）")
     video_parser.add_argument("--model", choices=["fast", "high_quality"], default="fast",
                               help="Seedance modelversion(only fal provider supports)")
+    video_parser.add_argument("--fal-model", choices=["v3", "o3"], default=None,
+                              help="Fal Kling model override (auto-selects based on input: image_url→v3, image_urls→o3). v3: image-to-video, o3: reference-to-video")
 
     # music subcommand
     music_parser = subparsers.add_parser("music", help="generatemusic")

@@ -10,6 +10,8 @@ argument-hint: <material_directory_or_video_file>
 
 **Language Requirement**: Respond in the same language the user uses.
 
+**Dialogue/Script Language Rule (CRITICAL)**: When the user provides dialogue, script, or voiceover text, the `video_prompt` and `storyboard.json` MUST preserve the original language verbatim. NEVER translate user-provided dialogue into another language. The video generation model will produce speech in whatever language the prompt contains — if the user wrote Chinese dialogue, the prompt must contain Chinese dialogue.
+
 ---
 
 ## Recommended Configuration
@@ -254,6 +256,21 @@ Create project directory `~/video-gen-projects/{project_name}_{timestamp}/`, pro
 
 ## Phase 2: Creative Confirmation
 
+**⚠️ AUTO MODE RULES**: Even in auto/continuous mode, ALL 7 questions MUST be executed — no exceptions. The difference is presentation, not execution:
+- **Interactive mode**: Present question cards, wait for user response
+- **Auto mode**: Infer answers from user context (script, materials, instructions), execute each question's logic, then present ALL decisions as a summary for user to review before proceeding
+Auto mode example output:
+> **Phase 2 Creative Decisions (auto-inferred, please review):**
+> 1. Style: Cinematic (inferred from palace drama script)
+> 2. Duration: 10s (3 shots × ~3s each)
+> 3. Aspect Ratio: 9:16 (vertical, default for short video)
+> 4. Music: None (dialogue-driven scene)
+> 5. Voiceover: None (character dialogue is primary)
+> 6. Art Style: Realistic (user provided real photo)
+> 7. Character References: Empress → photo-based three-view, Concubine → AI three-view
+>
+> Proceed? (or tell me what to change)
+
 **Interact with user using question cards**, collect key information.
 
 ### Question Card Design
@@ -338,7 +355,11 @@ Create project directory `~/video-gen-projects/{project_name}_{timestamp}/`, pro
 
 ### Question 7: Character Reference Image Collection
 
-**Trigger Condition**: Check personas.json, triggers when character with null/empty `reference_image` exists.
+**⚠️ MANDATORY — DO NOT SKIP EVEN IN AUTO MODE**: This step directly determines character consistency across shots. Skipping it (e.g. using raw user selfies as-is, or generating single-angle images for Fiction) will cause visible quality degradation in the final video. In auto mode, default to Option A (AI-generated three-view) for characters without user photos, and Option B (photo-based three-view) for characters with user photos. Only skip if the user explicitly says to skip.
+
+**User-uploaded photos require conversion**: Raw selfies/portraits are NOT character reference images. They must be converted to the correct format (three-view for Fiction, styled portrait for other types) preserving facial features but adapting to the character's costume/setting.
+
+**Trigger Condition**: Check personas.json, triggers when character with null/empty `reference_image` exists, OR when a character's reference_image is a raw user photo (not yet converted to proper reference format).
 
 **Check Logic**:
 ```python
