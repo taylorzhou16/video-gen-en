@@ -4621,6 +4621,10 @@ async def cmd_video(args):
                     return 1
 
             image_list = getattr(args, 'image_list', None)
+            # Compatibility: treat --image as --image-list when no image-list is provided
+            if not image_list and getattr(args, 'image', None):
+                image_list = [args.image]
+                logger.info(f"🔄 Kling-Omni: --image converted to --image-list for reference")
 
             result = await client.create_omni_video(
                 prompt=args.prompt,
@@ -4731,6 +4735,10 @@ async def cmd_video(args):
                 if duration != args.duration:
                     logger.warning(f"⚠️ Seedance 2 duration adjusted to {duration}s")
                 image_list = getattr(args, 'image_list', None)
+                # Compatibility: treat --image as --image-list when no image-list is provided
+                if not image_list and getattr(args, 'image', None):
+                    image_list = [args.image]
+                    logger.info(f"🔄 Seedance: --image converted to --image-list for reference")
                 audio_urls = getattr(args, 'audio_urls', None)
                 video_urls = getattr(args, 'video_urls', None)
 
